@@ -100,10 +100,11 @@ class Freestash:
         self.recent.flush()
         await self.http.aclose()
 
-    async def _run(self, cls: type[Provider], query: SearchQuery) -> tuple[ProviderStatus, list[Asset]]:
+    async def _run(self, cls: type[Provider], query: SearchQuery,
+                   settings: Settings) -> tuple[ProviderStatus, list[Asset]]:
         media = set(query.media_types)
         hints = SearchHints(commercial_only=query.use_case != UseCase.REFERENCE)
-        provider = cls(self.http, self.settings)
+        provider = cls(self.http, settings)
         started = time.perf_counter()
         try:
             page = await asyncio.wait_for(
@@ -120,10 +121,12 @@ class Freestash:
         return ProviderStatus(provider=cls.info.id, ok=False, error=err,
                               elapsed_ms=int((time.perf_counter() - started) * 1000)), []
 
-    async def search_stream(self, query: SearchQuery) -> AsyncIterator[ProviderBatch]:
-        classes = select_providers(self.settings, set(query.media_types), query.providers)
+    async def search_stream(self, query: SearchQuery, settings: Settings | None = None) -> AsyncIterator[ProviderBatch]:
+        """`settings` overrides the engine's own for one call: the API passes each user's keys this way."""
+        settings = settings or self.settings
+        classes = select_providers(settings, set(query.media_types), query.providers)
         seen: set[str] = set()
-        tasks = [asyncio.create_task(self._run(c, query)) for c in classes]
+        tasks = [asyncio.create_task(self._run(c, query, settings)) for c in classes]
         try:
             for fut in asyncio.as_completed(tasks):
                 status, assets = await fut
@@ -146,22 +149,24 @@ class Freestash:
             for t in tasks:
                 t.cancel()
 
-    async def search(self, query: SearchQuery) -> SearchResponse:
-        order = {c.info.id: i for i, c in enumerate(select_providers(self.settings, set(query.media_types), query.providers))}
-        batches = [b async for b in self.search_stream(query)]
+    async def search(self, query: SearchQuery, settings: Settings | None = None) -> SearchResponse:
+        settings = settings or self.settings
+        order = {c.info.id: i for i, c in enumerate(select_providers(settings, set(query.media_types), query.providers))}
+        batches = [b async for b in self.search_stream(query, settings)]
         batches.sort(key=lambda b: order.get(b.status.provider, 99))  # stable, registry order
         return SearchResponse(
             query=query, results=_interleave([b.results for b in batches]), providers=[b.status for b in batches],
             hidden_by_tier=sum(b.hidden for b in batches), generated_at=datetime.now(UTC),
         )
 
-    async def get_asset(self, uid: str, use_case: UseCase = UseCase.DEMO, *, fresh: bool = False) -> ScoredAsset:
+    async def get_asset(self, uid: str, use_case: UseCase = UseCase.DEMO, *, fresh: bool = False,
+                        settings: Settings | None = None) -> ScoredAsset:
         """Resolve a uid ('provider:source_id'). Uses the recent-results cache unless the asset needs detail."""
         cached = self.recent.get(uid)
         if cached and not cached.detail_required and not fresh:
             return ScoredAsset(uid=uid, asset=cached, verdict=evaluate(cached, use_case))
         provider_id, _, source_id = uid.partition(":")
-        provider = build(provider_id, self.http, self.settings)
+        provider = build(provider_id, self.http, settings or self.settings)
         try:
             asset = await provider.get(source_id)
         except Exception:

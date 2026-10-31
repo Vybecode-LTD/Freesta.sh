@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -47,10 +48,16 @@ class Settings(BaseSettings):
     openverse_client_id: str | None = _key("OPENVERSE_CLIENT_ID")
     openverse_client_secret: str | None = _key("OPENVERSE_CLIENT_SECRET")
 
-    # --- web API / team mode -------------------------------------------
-    auth_mode: str = "none"  # "none" (local, single user) | "supabase"
-    supabase_url: str | None = _key("SUPABASE_URL")
-    supabase_jwt_secret: str | None = _key("SUPABASE_JWT_SECRET")  # legacy HS256 projects
+    # --- web API / accounts ----------------------------------------------
+    auth_mode: str = "none"  # "none" (local, single user) | "accounts" (sign-up + JWT, the hosted app)
+    secret_key: str | None = None  # signs session tokens; required in accounts mode (>= 32 chars)
+    secrets_key: str | None = None  # Fernet key that encrypts users' provider keys at rest
+    token_days: int = 30
+    signup_open: bool = True
+    share_server_keys: bool = False  # True: users without their own key fall back to the server's env keys
+    public_url: str = "https://freesta.sh"  # used in password-reset links
+    resend_api_key: str | None = _key("RESEND_API_KEY")
+    email_from: str = "Freesta.sh <hello@freesta.sh>"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
 
     @property
@@ -59,8 +66,16 @@ class Settings(BaseSettings):
 
     @property
     def resolved_database_url(self) -> str:
-        if self.database_url:
-            return self.database_url
+        """FREESTASH_DATABASE_URL, else Railway's DATABASE_URL, else a local SQLite file.
+
+        Railway hands out `postgresql://…`; SQLAlchemy needs the psycopg 3 driver named explicitly.
+        """
+        url = self.database_url or os.environ.get("DATABASE_URL")
+        if url:
+            for prefix in ("postgres://", "postgresql://"):
+                if url.startswith(prefix):
+                    return "postgresql+psycopg://" + url[len(prefix):]
+            return url
         self.data_dir.mkdir(parents=True, exist_ok=True)
         return f"sqlite:///{self.data_dir / 'freestash.db'}"
 

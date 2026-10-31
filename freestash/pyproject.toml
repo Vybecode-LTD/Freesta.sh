@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "freestash"
 version = "0.1.0"
-description = "Internal federated search for public domain and openly licensed assets, with use-case-aware license tiers."
+description = "Federated search for public domain and openly licensed assets, with use-case-aware license tiers."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary (internal)" }
@@ -17,6 +17,9 @@ dependencies = [
   "typer>=0.12",
   "rich>=13.7",
   "sqlalchemy>=2.0",
+  "bcrypt>=4.2",
+  "cryptography>=43",
+  "pyjwt>=2.8",
 ]
 
 [project.optional-dependencies]
@@ -24,7 +27,6 @@ mcp = ["mcp>=2.0"]
 api = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
-  "pyjwt[crypto]>=2.8",
   "psycopg[binary]>=3.2",
 ]
 dev = [
