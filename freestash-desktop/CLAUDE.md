@@ -1,11 +1,11 @@
 # CLAUDE.md — Freestash Desktop
 
-Native desktop client for **Freestash**, the internal public-domain / open-license asset finder
-(sister repo: `freestash`, Python engine + CLI + MCP + web app). C# / .NET 10 / **Avalonia 12.1.4**,
+The desktop app of **Freesta.sh** (monorepo root: `../CLAUDE.md`, read it first: the web/desktop parity rule
+lives there). Same account, same screens, same look as the website. C# / .NET 10 / **Avalonia 12.1.4**,
 MVVM with CommunityToolkit.Mvvm 8.4 (partial-property style).
 
-Verified 2026-10-30: builds with 0 warnings / 0 errors, 21 unit tests pass, every screen rendered
-headless with Skia against a live `freestash serve` and reviewed (see `docs/screenshots/`).
+Verified 2026-10-31: 0 warnings / 0 errors, 27 tests pass, every screen rendered headless (`docs/screenshots/`),
+and sign-up + key/pref sync proven end to end against a live accounts server. Not yet driven live on screen.
 
 **Start here:** `IMPLEMENTATION.md` is the ordered runbook. Work it top to bottom.
 
@@ -27,24 +27,29 @@ headless with Skia against a live `freestash serve` and reviewed (see `docs/scre
    - `x:DataType` can't name generic types → filter options derive from non-generic `OptionBase`.
    - No `Avalonia.Diagnostics` package (removed in v12).
    - Headless tests use xUnit **v3**; `dotnet test` on .NET 10 needs MTP (`global.json` opts in).
-4. **Every color is a DynamicResource set in `Services/ThemeManager.cs`.** Don't hardcode colors in XAML
-   (the only exceptions are the theme-preview swatches in Settings). Two themes × four accents, live-switchable.
+4. **Every color is a DynamicResource set in `Services/ThemeManager.cs`** from the generated
+   `Services/DesignTokens.g.cs` (`../shared/design-tokens.json`; never hand-edit the .g.cs). Glass/Frost × four accents.
+   Words never use `TextFaintBrush` (3:1); `TextBlock.faint` already maps to the readable secondary colour.
 5. **Engine threads ≠ UI thread.** `DownloadJob` raises PropertyChanged on worker threads; the UI binds to
    `DownloadItemViewModel`, which re-raises on the dispatcher. Keep that pattern for anything async.
 6. **Secrets** live only in `SecretStore` (DPAPI on Windows, AES-GCM + 0600 key file elsewhere), never in
-   `settings.json`, never in logs, and the team token is never passed to the local engine (tested).
+   `settings.json`, never in logs. The account session (`SessionStore`, `FREESTASH_SESSION`) is never passed to the local engine (tested).
+8. **Hosted by default.** New installs use `https://freesta.sh` and show `SignInView` until signed in; keys and
+   preferences then live in the account (`AccountClient`). The local Python engine is the advanced option.
 7. Python CLI commands use `python -m …` (the owner's machine has no pip/python scripts on PATH).
 
 ## Commands
 
 ```bash
 dotnet build Freestash.Desktop.sln
-dotnet test --project tests/Freestash.Client.Tests        # 21 tests, ~1s, no network
+dotnet test --project tests/Freestash.Client.Tests        # 27 tests, ~1s, no network
 dotnet run --project src/Freestash.Desktop                # the app (auto-starts `python -m freestash serve`)
 
 # visual check: render every screen to PNG against a running engine
 python -m freestash serve --port 8787                     # in the freestash repo
-dotnet run --project tools/Freestash.Desktop.Snapshots -- http://127.0.0.1:8787 docs/screenshots
+dotnet run --project tools/Freestash.Desktop.Snapshots -- http://127.0.0.1:8787 docs/screenshots [http://127.0.0.1:8790]
+# third arg = an accounts-mode server (../freestash/scripts/dev_accounts.py): adds sign-in, sign-up and sync checks
+# FREESTASH_DESKTOP_HOME=<folder> runs the real app with its own settings/session (keeps your own clean)
 
 # release build (Windows, self-contained single file)
 dotnet publish src/Freestash.Desktop -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
@@ -72,8 +77,9 @@ tools/Freestash.Desktop.Snapshots/  headless Skia renderer → PNGs
 
 ## Key decisions
 
-- **Local engine sidecar.** Settings holds the API keys; `EngineHost` launches the Python engine with them as
-  environment variables and restarts it when keys change. Team mode skips the sidecar and talks to the hosted server.
+- **Hosted engine + account by default** (decision `../docs/decisions/0001`). Local engine sidecar optional:
+  `EngineHost` launches the Python engine with the locally stored keys as environment variables.
+- **Key help comes from the engine's catalog**, embedded from `../shared/provider-keys.json` (`ProviderKeys.All`).
 - **Downloads happen in C#**, not via the API: the desktop app writes the file + sidecar locally, then records the
   ledger entry via `POST /api/ledger` (when "Record in ledger" is on).
 - **Sidecars match the Python CLI's format** (`freestash_sidecar: 1`), so `freestash audit` can read both.
@@ -83,12 +89,7 @@ tools/Freestash.Desktop.Snapshots/  headless Skia renderer → PNGs
 
 ## Last Completed Task
 
-**2026-10-30 — v0.1.0 built in claude.ai, verified, handed to Claude Code.**
-Shell (custom title bar, nav rail, engine status pill, Ctrl+K), streaming search with media chips, use-case and tier
-segmented controls, source health strip, adaptive card grid, detail panel (verdict matrix, attribution copy,
-per-file download/open, collections), download manager (paste/drop/clipboard-watch links, folder picker,
-pause/resume/retry, blocked → open in browser, drag-out with sidecar, SHA-256, ledger), collections (download all,
-copy credits), ledger with exports, license check, sources, settings (engine, encrypted keys, downloads, defaults,
-Ember Dark / Machined Light × Ember/Iris/Teal/Cobalt).
-
-**Next:** `IMPLEMENTATION.md` → D0.
+**2026-10-31: one account with the web, Aperture redesign (branch `feat/accounts-sync-aperture`).**
+Sign-in screen; hosted engine default; keys + prefs synced with the account; key help under every input;
+rail + lens + `ApertureRing` + spectrum + glass cards; Geist Mono; 27 tests. Live on-screen check still owed
+(the owner declined computer-use this session): see `../docs/HANDOFF.md`.

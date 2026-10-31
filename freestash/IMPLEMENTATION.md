@@ -33,23 +33,32 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
 
 **Done when:** no fixture contains `"_synthetic"` and all tests pass.
 
-## P2 — Team deployment (Supabase + Railway)
+## P2 — Deploy to Railway (one service + Railway Postgres; owner steps in the dashboard)
 
-1. Create a Supabase project. `supabase link` → `supabase db push` (applies `supabase/migrations/`).
-2. Enable email magic-link auth; add the Railway URL to Auth → URL configuration → redirect URLs.
-3. Create the team: sign in once via the UI, then in the SQL editor run
-   `select public.create_team('Studio');` *as that user* (or insert into `teams` + `team_members` directly).
-   Add teammates to `team_members` (roles: owner/admin/member).
-4. Railway: new service from this repo (Dockerfile). Env vars:
-   `FREESTASH_AUTH_MODE=supabase`, `SUPABASE_URL`, `FREESTASH_DATABASE_URL=postgresql+psycopg://…` (Supabase
-   **session pooler** string, port 5432), `FREESTASH_CONTACT_EMAIL`, provider keys,
-   `FREESTASH_CORS_ORIGINS=["https://<railway-domain>"]`.
-   Build args for the UI: `VITE_AUTH_MODE=supabase`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
-   Legacy JWT projects also need `SUPABASE_JWT_SECRET`; new projects verify via JWKS automatically.
-5. Smoke test: sign in → search → add to collection → "Record + open file" → Ledger shows it.
+Production, project "Freesta.sh" on https://railway.com/dashboard.
+1. **New project** → *Deploy from GitHub repo* → `Vybecode-LTD/Freesta.sh`. Service → *Settings* → *Source* →
+   **Root Directory** `/freestash` (the Dockerfile and `railway.json` live there). Healthcheck path is `/api/health`.
+2. In the project: **+ New** → *Database* → **PostgreSQL**.
+3. Service → *Variables* (generate secrets on your own machine; never paste them in chat):
 
-**Done when:** two teammates can see each other's collections and ledger entries, and an outsider can't.
+| Name | Value |
+|---|---|
+| `FREESTASH_AUTH_MODE` | `accounts` |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (a reference, not a copy) |
+| `FREESTASH_SECRET_KEY` | `python -c "import secrets;print(secrets.token_urlsafe(48))"` |
+| `FREESTASH_SECRETS_KEY` | `python -c "from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())"`, and **keep a copy**: losing it makes every saved key unreadable |
+| `FREESTASH_CONTACT_EMAIL` | the address providers should contact |
+| `FREESTASH_PUBLIC_URL` | `https://freesta.sh` |
+| `FREESTASH_CORS_ORIGINS` | `["https://freesta.sh"]` |
+| `RESEND_API_KEY` | optional: resend.com key for password-reset email (verify the freesta.sh domain there) |
+| `FREESTASH_EMAIL_FROM` | `Freesta.sh <hello@freesta.sh>` |
 
+4. Service → *Settings* → *Networking* → **Custom Domain** `freesta.sh` → add the record Railway shows at your DNS host.
+   An apex domain needs ALIAS/ANAME or Cloudflare CNAME flattening.
+5. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
+   you can create an account on the site, and the desktop app (default server `https://freesta.sh`) signs into it.
+
+The schema is created at startup (`Store` → `create_all`). Add Alembic before the first change to an existing table.
 ## P3 — CLI/MCP remote mode (team ledger from the terminal)
 
 Today the CLI/MCP write to a local SQLite ledger. Add `FREESTASH_API_URL` + `FREESTASH_API_TOKEN`:

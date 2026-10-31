@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Freesta.sh Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --board-bg:#0f0f10; --board-tx:#ecebe7; --board-mu:#a19e97; --board-line:#2a2a2c; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--board-bg); color:var(--board-tx); font:15px/1.5 Geist, system-ui, sans-serif; }
+img { display:block; }
+button { font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
+
+/* ------------------------------------------------------------------ board chrome */
+.board-head { max-width:1440px; margin:0 auto; padding:56px 16px 24px; }
+.board-head h1 { font:600 34px/1.1 Geist; letter-spacing:-.03em; }
+.board-head p { color:var(--board-mu); max-width:760px; margin-top:12px; }
+.dir { max-width:1440px; margin:0 auto 72px; padding:0 16px; }
+.dir-meta { display:grid; grid-template-columns:120px 1fr 1fr; gap:24px; padding:28px 0 20px; border-top:1px solid var(--board-line); }
+.dir-meta .letter { font:600 64px/1 Geist; letter-spacing:-.05em; }
+.dir-meta h2 { font:600 24px/1.2 Geist; letter-spacing:-.02em; }
+.dir-meta .thesis { color:var(--board-mu); margin-top:6px; }
+.dir-meta dl { display:grid; grid-template-columns:110px 1fr; gap:6px 12px; font-size:14px; }
+.dir-meta dt { color:var(--board-mu); font:500 11px/1.9 "JetBrains Mono", monospace; text-transform:uppercase; letter-spacing:.08em; }
+.stage { width:100%; aspect-ratio:1440/900; position:relative; overflow:hidden; border-radius:10px; outline:1px solid var(--board-line); }
+.stage.strip { aspect-ratio:1440/200; margin-top:14px; }
+.stage > .frame { position:absolute; left:0; top:0; width:1440px; height:900px; transform-origin:0 0; transform:scale(var(--k, 1)); }
+.stage.strip > .frame { height:200px; }
+.cap { color:var(--board-mu); font-size:13px; margin-top:8px; }
+
+/* ================================================================== A · PROVENANCE */
+.fa { --bg:#0c0c0d; --s1:#141415; --s2:#1b1b1d; --line:#262628; --line2:#38383b; --tx:#efede8; --mu:#a29f97;
+      --ac:#ff5a1f; --on-ac:#1a0800; --g:#7fd19b; --y:#e8c066; --r:#f07a68;
+      background:var(--bg); color:var(--tx); font:14px/1.45 Geist, sans-serif; }
+.fa .top { height:64px; display:flex; align-items:center; gap:36px; padding:0 40px; border-bottom:1px solid var(--line); }
+.fa .brand { display:flex; align-items:center; gap:10px; }
+.fa .word { font:400 27px/1 "Instrument Serif", serif; letter-spacing:-.01em; color:var(--tx); }
+.fa .word i { color:var(--ac); }
+.fa .nav { display:flex; gap:4px; }
+.fa .nav a { color:var(--mu); text-decoration:none; padding:7px 12px; font-size:13.5px; border-radius:6px; }
+.fa .nav a.on { color:var(--tx); background:var(--s2); }
+.fa .right { margin-left:auto; display:flex; align-items:center; gap:14px; }
+.fa .sync { font:500 11px "JetBrains Mono"; color:var(--mu); letter-spacing:.04em; display:flex; align-items:center; gap:8px; }
+.fa .sync b { width:7px; height:7px; border-radius:50%; background:var(--g); }
+.fa .avatar { width:30px; height:30px; border-radius:50%; background:var(--s2); border:1px solid var(--line2); display:grid; place-items:center; font:600 11px Geist; color:var(--tx); }
+.fa .body { padding:30px 40px 0; }
+.fa .kicker { font:500 10.5px "JetBrains Mono"; letter-spacing:.16em; color:var(--mu); }
+.fa .field { display:flex; align-items:center; gap:16px; height:68px; border-bottom:1px solid var(--line2); margin-top:6px; }
+.fa .field .q { font:400 40px/1 "Instrument Serif", serif; color:var(--tx); }
+.fa .field .caret { width:1.5px; height:34px; background:var(--ac); margin-left:-12px; }
+.fa .field kbd { margin-left:auto; font:500 11px "JetBrains Mono"; color:var(--mu); border:1px solid var(--line2); border-radius:4px; padding:3px 7px; }
+.fa .go { background:var(--ac); color:var(--on-ac); font-weight:600; padding:11px 22px; border-radius:6px; }
+.fa .filters { display:grid; gap:10px; margin-top:20px; }
+.fa .row { display:flex; align-items:center; gap:14px; }
+.fa .lab { width:64px; font:500 10.5px "JetBrains Mono"; letter-spacing:.14em; color:var(--mu); text-transform:uppercase; }
+.fa .chip { padding:5px 12px; border:1px solid var(--line2); border-radius:3px; color:var(--mu); font-size:13px; }
+.fa .chip.on { background:var(--tx); color:var(--bg); border-color:var(--tx); }
+.fa .seg { display:flex; border:1px solid var(--line2); border-radius:3px; }
+.fa .seg span { padding:5px 14px; color:var(--mu); font-size:13px; border-right:1px solid var(--line); position:relative; }
+.fa .seg span:last-child { border-right:0; }
+.fa .seg span.on { color:var(--tx); box-shadow:inset 0 -2px 0 var(--ac); }
+.fa .desc { color:var(--mu); font-size:13px; }
+.fa .status { display:flex; align-items:center; gap:18px; margin:22px 0 18px; padding-top:14px; border-top:1px solid var(--line); font:500 11px "JetBrains Mono"; letter-spacing:.05em; color:var(--mu); }
+.fa .status .count { color:var(--tx); }
+.fa .srcs { display:flex; gap:12px; }
+.fa .srcs span::before { content:"▪ "; color:var(--g); }
+.fa .srcs span.err::before { color:var(--r); }
+.fa .grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:30px 28px; }
+.fa .card .mat { background:var(--s1); padding:14px; position:relative; }
+.fa .card .mat img { width:100%; aspect-ratio:4/3; object-fit:cover; }
+.fa .card .mat i { position:absolute; width:9px; height:9px; border-color:var(--line2); border-style:solid; }
+.fa .card .mat i:nth-child(2) { left:5px; top:5px; border-width:1px 0 0 1px; }
+.fa .card .mat i:nth-child(3) { right:5px; top:5px; border-width:1px 1px 0 0; }
+.fa .card .mat i:nth-child(4) { left:5px; bottom:5px; border-width:0 0 1px 1px; }
+.fa .card .mat i:nth-child(5) { right:5px; bottom:5px; border-width:0 1px 1px 0; }
+.fa .acc { font:500 10.5px "JetBrains Mono"; letter-spacing:.08em; color:var(--mu); margin-top:12px; text-transform:uppercase; }
+.fa .title { font:400 21px/1.15 "Instrument Serif", serif; margin-top:4px; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fa .lic { font:500 11px "JetBrains Mono"; color:var(--mu); margin-top:6px; }
+/* signature: the clearance rail */
+.fa .rail { display:grid; grid-template-columns:repeat(5, 1fr) auto; gap:3px; align-items:end; margin-top:12px; }
+.fa .rail .s { display:grid; gap:5px; }
+.fa .rail .s i { height:4px; border-radius:1px; }
+.fa .rail .s b { font:500 9.5px "JetBrains Mono"; color:var(--mu); text-align:center; letter-spacing:.06em; }
+.fa .rail .s.on i { height:7px; }
+.fa .rail .s.on b { color:var(--tx); }
+.fa .rail .v { font:600 10.5px "JetBrains Mono"; letter-spacing:.1em; padding-left:10px; }
+.fa .G { background:var(--g); } .fa .Y { background:var(--y); } .fa .R { background:var(--r); }
+.fa .tG { color:var(--g); } .fa .tY { color:var(--y); } .fa .tR { color:var(--r); }
+
+/* ================================================================== B · APERTURE */
+.fb { --bg:#06090e; --p1:#0b1018; --p2:#101722; --line:rgba(150,172,204,.14); --edge:rgba(255,255,255,.07);
+      --tx:#e8eef6; --mu:#8d9bad; --ac:#ff8c42; --on-ac:#1d0c00; --g:#4be08a; --y:#f3d35b; --r:#ff6b6b;
+      background:var(--bg); color:var(--tx); font:14px/1.45 Geist, sans-serif; display:grid; grid-template-columns:236px 1fr; }
+.fb .rail { border-right:1px solid var(--line); padding:22px 16px; display:flex; flex-direction:column; background:#070b11; }
+.fb .word { font:700 21px/1 Geist; letter-spacing:-.04em; padding:0 10px 26px; color:var(--tx); }
+.fb .word span { color:var(--ac); }
+.fb .grp { font:500 10.5px "Geist Mono"; letter-spacing:.14em; color:var(--mu); padding:14px 10px 8px; }
+.fb .nav { display:grid; gap:2px; }
+.fb .nav a { display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:9px; color:var(--mu); text-decoration:none; font-size:14px; }
+.fb .nav a svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.6; }
+.fb .nav a.on { background:var(--p2); color:var(--tx); box-shadow:inset 0 1px 0 var(--edge); }
+.fb .acct { margin-top:auto; padding:14px; border-radius:12px; background:var(--p1); border:1px solid var(--line); box-shadow:inset 0 1px 0 var(--edge); }
+.fb .acct .who { font-weight:600; font-size:13.5px; }
+.fb .acct .sy { font:500 11px "Geist Mono"; color:var(--mu); margin-top:4px; display:flex; gap:8px; align-items:center; }
+.fb .acct .sy b { width:6px; height:6px; border-radius:50%; background:var(--g); box-shadow:0 0 8px var(--g); }
+.fb .main { padding:26px 34px 0; overflow:hidden; }
+.fb .lens { display:flex; align-items:center; gap:20px; padding:16px 16px 16px 18px; border-radius:18px; background:var(--p1); border:1px solid var(--line); box-shadow:inset 0 1px 0 var(--edge), 0 30px 60px -30px rgba(0,0,0,.8); }
+.fb .ap { width:66px; height:66px; flex:none; }
+.fb .lens .q { font:500 26px/1 Geist; letter-spacing:-.02em; color:var(--tx); }
+.fb .lens .q small { display:block; font:500 11.5px "Geist Mono"; letter-spacing:.04em; color:var(--mu); margin-top:8px; }
+.fb .go { margin-left:auto; background:var(--ac); color:var(--on-ac); font-weight:600; padding:13px 24px; border-radius:11px; }
+.fb .spec { display:grid; grid-template-columns:repeat(13, 1fr); gap:8px; margin-top:14px; }
+.fb .spec div { font:500 10px "Geist Mono"; color:var(--mu); letter-spacing:.03em; white-space:nowrap; overflow:hidden; }
+.fb .spec div i { display:block; height:3px; border-radius:2px; background:rgba(150,172,204,.16); margin-bottom:6px; position:relative; overflow:hidden; }
+.fb .spec div i::after { content:""; position:absolute; inset:0; width:var(--w); background:var(--c, var(--ac)); }
+.fb .filters { display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:20px; align-items:center; }
+.fb .grpf { display:flex; gap:6px; align-items:center; }
+.fb .grpf > span:first-child { font:500 10.5px "Geist Mono"; letter-spacing:.14em; color:var(--mu); margin-right:6px; }
+.fb .pill { padding:6px 13px; border-radius:999px; border:1px solid var(--line); color:var(--mu); font-size:13px; background:var(--p1); }
+.fb .pill.on { color:var(--tx); border-color:rgba(255,140,66,.55); background:rgba(255,140,66,.12); }
+.fb .hd { display:flex; align-items:baseline; gap:12px; margin:22px 0 14px; }
+.fb .hd h3 { font:600 17px Geist; letter-spacing:-.01em; }
+.fb .hd span { font:500 11.5px "Geist Mono"; color:var(--mu); }
+.fb .grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; }
+.fb .card { border-radius:15px; background:var(--p1); border:1px solid var(--line); overflow:hidden; box-shadow:inset 0 1px 0 var(--edge); }
+.fb .card img { width:100%; height:180px; object-fit:cover; }
+.fb .plate { padding:12px 14px 14px; }
+.fb .plate h4 { font:600 14.5px/1.3 Geist; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--tx); }
+.fb .plate .m { font:500 11px "Geist Mono"; color:var(--mu); margin-top:4px; }
+.fb .plate .ft { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+.fb .vd { display:flex; align-items:center; gap:7px; font:600 10.5px "Geist Mono"; letter-spacing:.1em; }
+.fb .vd b { width:7px; height:7px; border-radius:50%; }
+.fb .lc { font:500 10.5px "Geist Mono"; color:var(--mu); border:1px solid var(--line); border-radius:6px; padding:2px 7px; }
+.fb .G { background:var(--g); box-shadow:0 0 10px var(--g); } .fb .Y { background:var(--y); box-shadow:0 0 10px var(--y); } .fb .R { background:var(--r); box-shadow:0 0 10px var(--r); }
+.fb .tG { color:var(--g); } .fb .tY { color:var(--y); } .fb .tR { color:var(--r); }
+
+/* ================================================================== C · INDEX */
+.fc { --bg:#f0ede5; --tx:#121212; --mu:#5d5952; --line:#d3cdbf; --ac:#1c3cff; --on-ac:#ffffff;
+      --g:#0b6b36; --y:#875700; --r:#b3261e; background:var(--bg); color:var(--tx); font:14px/1.45 Geist, sans-serif;
+      }
+.fc .mast { display:flex; align-items:flex-end; gap:40px; padding:26px 40px 18px; border-bottom:2px solid var(--tx); }
+.fc .word { font:800 46px/.85 Geist; letter-spacing:-.06em; color:var(--tx); }
+.fc .word span { color:var(--ac); }
+.fc .nav { display:flex; gap:22px; padding-bottom:4px; }
+.fc .nav a { color:var(--mu); text-decoration:none; font-size:13px; }
+.fc .nav a sup { font:500 9px "Geist Mono"; margin-right:3px; }
+.fc .nav a.on { color:var(--tx); font-weight:600; box-shadow:0 2px 0 var(--ac); }
+.fc .right { margin-left:auto; display:flex; gap:14px; align-items:center; padding-bottom:2px; }
+.fc .right .s { font:500 11px "Geist Mono"; color:var(--mu); }
+.fc .avatar { width:30px; height:30px; border-radius:50%; background:var(--tx); color:var(--bg); display:grid; place-items:center; font:700 11px Geist; }
+.fc .qrow { display:grid; grid-template-columns:1fr auto; align-items:end; padding:22px 40px 16px; border-bottom:1px solid var(--line); }
+.fc .qrow .l { font:500 10.5px "Geist Mono"; letter-spacing:.14em; color:var(--mu); text-transform:uppercase; }
+.fc .qrow .q { font:700 78px/.95 Geist; letter-spacing:-.055em; margin-top:6px; color:var(--tx); }
+.fc .qrow .q i { display:inline-block; width:4px; height:62px; background:var(--ac); vertical-align:-6px; margin-left:4px; }
+.fc .tot { text-align:right; }
+.fc .tot b { font:700 64px/.9 Geist; letter-spacing:-.05em; display:block; color:var(--tx); }
+.fc .tot span { font:500 11px "Geist Mono"; color:var(--mu); }
+.fc .frow { display:flex; gap:42px; padding:14px 40px; border-bottom:1px solid var(--line); font-size:13.5px; }
+.fc .frow > div { display:flex; gap:14px; align-items:baseline; }
+.fc .frow .k { font:500 10.5px "Geist Mono"; letter-spacing:.14em; color:var(--mu); text-transform:uppercase; }
+.fc .frow span.o { color:var(--mu); }
+.fc .frow span.on { color:var(--tx); font-weight:700; box-shadow:0 2px 0 var(--ac); }
+.fc .list { padding:0 40px; }
+.fc .item { display:grid; grid-template-columns:64px 192px 1fr 230px 250px; align-items:stretch; border-bottom:1px solid var(--line); }
+.fc .item > * { padding:16px 0 16px 22px; border-left:1px solid var(--line); display:flex; flex-direction:column; justify-content:center; }
+.fc .item > :first-child { border-left:0; padding-left:0; justify-content:flex-start; padding-top:20px; }
+.fc .item .n { font:500 12px "Geist Mono"; color:var(--mu); }
+.fc .item .th img { width:168px; height:104px; object-fit:cover; }
+.fc .item h4 { font:650 25px/1.05 Geist; letter-spacing:-.03em; color:var(--tx); }
+.fc .item .m { font:500 11.5px "Geist Mono"; color:var(--mu); margin-top:8px; }
+.fc .item .lic { font:500 12px "Geist Mono"; color:var(--tx); }
+.fc .item .lic small { display:block; color:var(--mu); font-size:11px; margin-top:4px; }
+.fc .vh { text-align:right; align-items:flex-end; }
+.fc .vh b { font:800 34px/.9 Geist; letter-spacing:-.045em; display:block; }
+.fc .vh span { font:500 11px "Geist Mono"; color:var(--mu); }
+.fc .tG { color:var(--g); } .fc .tY { color:var(--y); } .fc .tR { color:var(--r); }
+
+/* ------------------------------------------------------------------ settings strips */
+.k-strip { display:grid; grid-template-columns:300px 1fr; gap:40px; padding:28px 40px; height:200px; }
+.k-strip .h { font-weight:600; font-size:15px; }
+.k-strip .sub { font-size:13px; margin-top:4px; }
+.k-row { display:grid; gap:9px; }
+.k-top { display:flex; align-items:baseline; gap:10px; }
+.k-in { display:flex; align-items:center; gap:10px; height:44px; padding:0 14px; }
+.k-in .dots { letter-spacing:.2em; flex:1; }
+.k-help { display:flex; align-items:center; gap:10px; font-size:13px; flex-wrap:wrap; }
+.k-help a { font-weight:600; text-decoration:none; }
+.fa.k-strip { font-family:Geist; }
+.fa .k-top .p { font:400 22px/1 "Instrument Serif"; }
+.fa .k-top .t { font:500 11px "JetBrains Mono"; color:var(--mu); }
+.fa .k-top .st { margin-left:auto; font:600 10.5px "JetBrains Mono"; letter-spacing:.1em; color:var(--g); }
+.fa .k-in { background:var(--s1); border-bottom:1px solid var(--line2); color:var(--tx); }
+.fa .k-help { color:var(--mu); }
+.fa .k-help a { color:var(--ac); }
+.fa .k-strip .sub, .fa.k-strip .sub { color:var(--mu); }
+.fb.k-strip { display:grid; grid-template-columns:300px 1fr; }
+.fb .k-top .p { font:600 15px Geist; }
+.fb .k-top .t { font:500 11px "Geist Mono"; color:var(--mu); }
+.fb .k-top .st { margin-left:auto; font:600 10.5px "Geist Mono"; letter-spacing:.1em; color:var(--g); }
+.fb .k-in { background:var(--p1); border:1px solid var(--line); border-radius:11px; color:var(--tx); box-shadow:inset 0 1px 0 var(--edge); }
+.fb .k-help { color:var(--mu); }
+.fb .k-help a { color:var(--ac); }
+.fb.k-strip .sub { color:var(--mu); }
+.fc.k-strip { background-image:none; }
+.fc .k-top .p { font:700 20px Geist; letter-spacing:-.03em; }
+.fc .k-top .t { font:500 11px "Geist Mono"; color:var(--mu); }
+.fc .k-top .st { margin-left:auto; font:700 12px Geist; color:var(--g); }
+.fc .k-in { border-bottom:2px solid var(--tx); color:var(--tx); padding:0; }
+.fc .k-help { color:var(--mu); }
+.fc .k-help a { color:var(--ac); }
+.fc.k-strip .sub { color:var(--mu); }
+.k-help .step { font:500 11px "JetBrains Mono"; border:1px solid currentColor; border-radius:50%; width:18px; height:18px; display:inline-grid; place-items:center; }
+</style>
+</head>
+<body>
+
+<header class="board-head">
+  <h1>Freesta.sh: three directions</h1>
+  <p>The same search screen rendered three ways, with real public-domain results. Each direction also styles one API-key row so you can see the "where to get this key" link under the input. Every direction ships in dark and light; these show each one's primary theme. Pick one by eye, or name the parts you want to mix.</p>
+</header>
+
+<!-- ============================================================ A -->
+<section class="dir">
+  <div class="dir-meta">
+    <div class="letter">A</div>
+    <div><h2>Provenance</h2><p class="thesis">A museum registrar's light table, run with an instrument's precision. Results are matted specimens; catalog data is set in mono; titles in a book serif.</p></div>
+    <dl>
+      <dt>Signature</dt><dd>The clearance rail: five segments under every result, one per use case (Reference, Demo, Client, Bundled, Merch), so you see "fine for a demo, not for a template" without opening it.</dd>
+      <dt>Fuses</dt><dd>Archival paper × instrument hairlines × one ember accent</dd>
+    </dl>
+  </div>
+  <div class="stage"><div class="frame fa" id="fa">
+    <header class="top">
+      <div class="brand"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="#ff5a1f"/><rect x="0" y="9.6" width="22" height="2.8" fill="#0c0c0d"/></svg><span class="word">freesta<i>.sh</i></span></div>
+      <nav class="nav"><a class="on" href="#">Search</a><a href="#">Collections</a><a href="#">Downloads</a><a href="#">Ledger</a><a href="#">License check</a><a href="#">Sources</a><a href="#">Settings</a></nav>
+      <div class="right"><span class="sync"><b></b>SYNCED · WEB + DESKTOP</span><span class="avatar">JV</span></div>
+    </header>
+    <div class="body">
+      <div class="kicker">SEARCH THE COMMONS</div>
+      <div class="field"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a29f97" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span class="q">lighthouse</span><span class="caret"></span><kbd>CTRL K</kbd><button class="go">Search</button></div>
+      <div class="filters">
+        <div class="row"><span class="lab">Media</span><span class="chip on">Images</span><span class="chip">Audio</span><span class="chip">Video</span><span class="chip">Textures</span><span class="chip">HDRIs</span><span class="chip">3D</span><span class="chip">Fonts</span><span class="chip">Icons</span></div>
+        <div class="row"><span class="lab">Use</span><span class="seg"><span>Reference</span><span class="on">Demo</span><span>Client</span><span>Bundled</span><span>Merch</span></span><span class="desc">Demo and preview sites, mockups. Files aren't handed to customers.</span></div>
+        <div class="row"><span class="lab">Show</span><span class="seg"><span>Green only</span><span class="on">+ Yellow</span><span>Everything</span></span></div>
+      </div>
+      <div class="status"><span class="count">80 RESULTS</span><span>12 / 13 SOURCES · 4.2 S</span><span class="srcs"><span>MET 6</span><span>ARTIC 11</span><span>CLEVELAND 9</span><span>SMK 12</span><span>NASA 12</span><span>LOC 6</span><span>EUROPEANA 12</span><span>OPENVERSE 12</span><span class="err">WIKIMEDIA 429</span></span></div>
+      <div class="grid" data-cards="a"></div>
+    </div>
+  </div></div>
+  <div class="stage strip"><div class="frame fa k-strip">
+    <div><div class="h">API keys</div><div class="sub">All free. Saved to your account and synced to the desktop app.</div></div>
+    <div class="k-row">
+      <div class="k-top"><span class="p">Smithsonian Open Access</span><span class="t">API.DATA.GOV KEY</span><span class="st">SET</span></div>
+      <div class="k-in"><span class="dots">••••••••••••••••••••••••••</span><span class="t" style="font:500 11px 'JetBrains Mono';color:var(--mu)">REVEAL</span></div>
+      <div class="k-help"><span class="step">1</span><a href="#">Get this key at api.data.gov/signup ↗</a><span>Enter your name and email; the key appears on screen and in your inbox. Free, 1,000 requests an hour.</span></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================================================ B -->
+<section class="dir">
+  <div class="dir-meta">
+    <div class="letter">B</div>
+    <div><h2>Aperture</h2><p class="thesis">Search as a lens. Twenty sources open like an iris as their answers arrive; cleared work glows from inside cold optical glass.</p></div>
+    <dl>
+      <dt>Signature</dt><dd>The source aperture: a ring of tick marks, one per source, that lights as each source reports, with a response-time bar per source beneath the search. The federated search becomes visible.</dd>
+      <dt>Fuses</dt><dd>Cold glass strata × warm sodium light × live signal</dd>
+    </dl>
+  </div>
+  <div class="stage"><div class="frame fb" id="fb">
+    <aside class="rail">
+      <div class="word">freesta<span>.sh</span></div>
+      <div class="grp">LIBRARY</div>
+      <nav class="nav">
+        <a class="on" href="#"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Search</a>
+        <a href="#"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Collections</a>
+        <a href="#"><svg viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Downloads</a>
+        <a href="#"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6"/></svg>Ledger</a>
+      </nav>
+      <div class="grp">TOOLS</div>
+      <nav class="nav">
+        <a href="#"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"/></svg>License check</a>
+        <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16"/></svg>Sources</a>
+        <a href="#"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Settings</a>
+      </nav>
+      <div class="acct"><div class="who">Jordan Vale</div><div class="sy"><b></b>synced 2s ago · 2 devices</div></div>
+    </aside>
+    <main class="main">
+      <div class="lens">
+        <svg class="ap" id="aperture" viewBox="0 0 66 66"></svg>
+        <div class="q">lighthouse<small>12 OF 13 SOURCES REPORTED · 80 RESULTS · 4.2 S</small></div>
+        <button class="go">Search</button>
+      </div>
+      <div class="spec" id="spec"></div>
+      <div class="filters">
+        <div class="grpf"><span>MEDIA</span><span class="pill on">Images</span><span class="pill">Audio</span><span class="pill">Video</span><span class="pill">Textures</span><span class="pill">HDRIs</span><span class="pill">3D</span><span class="pill">Fonts</span><span class="pill">Icons</span></div>
+        <div class="grpf"><span>USE</span><span class="pill">Reference</span><span class="pill on">Demo</span><span class="pill">Client</span><span class="pill">Bundled</span><span class="pill">Merch</span></div>
+        <div class="grpf"><span>SHOW</span><span class="pill">Green</span><span class="pill on">+ Yellow</span><span class="pill">All</span></div>
+      </div>
+      <div class="hd"><h3>Cleared for demo work</h3><span>14 hidden as red for this use</span></div>
+      <div class="grid" data-cards="b"></div>
+    </main>
+  </div></div>
+  <div class="stage strip"><div class="frame fb k-strip">
+    <div><div class="h" style="font-weight:600">API keys</div><div class="sub">All free. Saved to your account and synced to the desktop app.</div></div>
+    <div class="k-row">
+      <div class="k-top"><span class="p">Smithsonian Open Access</span><span class="t">api.data.gov key</span><span class="st">● SET</span></div>
+      <div class="k-in"><span class="dots">••••••••••••••••••••••••••</span><span class="t" style="font:500 11px 'Geist Mono';color:var(--mu)">reveal</span></div>
+      <div class="k-help"><a href="#">↗ Get this key at api.data.gov/signup</a><span>Enter your name and email; the key appears on screen and in your inbox. Free, 1,000 requests an hour.</span></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ============================================================ C -->
+<section class="dir">
+  <div class="dir-meta">
+    <div class="letter">C</div>
+    <div><h2>Index</h2><p class="thesis">An editorial index of the commons. Swiss grid, heavy type, numbered entries; the verdict is set like a headline.</p></div>
+    <dl>
+      <dt>Signature</dt><dd>The verdict headline: each result's clearance for the chosen use is a typeset word (CLEAR, CHECK, BLOCKED) you read before the title. A grid view sits one click away.</dd>
+      <dt>Fuses</dt><dd>Swiss editorial type × brutalist visible grid × one blue accent (ink dark mode included)</dd>
+    </dl>
+  </div>
+  <div class="stage"><div class="frame fc" id="fc">
+    <header class="mast">
+      <div class="word">freesta<span>.sh</span></div>
+      <nav class="nav"><a class="on" href="#"><sup>01</sup>Search</a><a href="#"><sup>02</sup>Collections</a><a href="#"><sup>03</sup>Downloads</a><a href="#"><sup>04</sup>Ledger</a><a href="#"><sup>05</sup>License check</a><a href="#"><sup>06</sup>Sources</a><a href="#"><sup>07</sup>Settings</a></nav>
+      <div class="right"><span class="s">SYNCED ⇄ DESKTOP</span><span class="avatar">JV</span></div>
+    </header>
+    <div class="qrow">
+      <div><div class="l">Searching 13 sources for</div><div class="q">lighthouse<i></i></div></div>
+      <div class="tot"><b>80</b><span>RESULTS · 4.2 S · 12 OF 13 SOURCES</span></div>
+    </div>
+    <div class="frow">
+      <div><span class="k">Media</span><span class="on">Images</span><span class="o">Audio</span><span class="o">Video</span><span class="o">Textures</span><span class="o">HDRIs</span><span class="o">3D</span><span class="o">Fonts</span><span class="o">Icons</span></div>
+      <div><span class="k">For</span><span class="o">Reference</span><span class="on">Demo</span><span class="o">Client</span><span class="o">Bundled</span><span class="o">Merch</span></div>
+      <div><span class="k">Show</span><span class="o">Clear</span><span class="on">+ Check</span><span class="o">All</span></div>
+    </div>
+    <div class="list" data-cards="c"></div>
+  </div></div>
+  <div class="stage strip"><div class="frame fc k-strip">
+    <div><div class="h">API keys</div><div class="sub">All free. Saved to your account and synced to the desktop app.</div></div>
+    <div class="k-row">
+      <div class="k-top"><span class="p">Smithsonian Open Access</span><span class="t">API.DATA.GOV KEY</span><span class="st">SET</span></div>
+      <div class="k-in"><span class="dots">••••••••••••••••••••••••••</span><span class="t" style="font:500 11px 'Geist Mono';color:var(--mu)">REVEAL</span></div>
+      <div class="k-help"><a href="#">Get this key at api.data.gov/signup →</a><span>Enter your name and email; the key appears on screen and in your inbox. Free, 1,000 requests an hour.</span></div>
+    </div>
+  </div></div>
+</section>
+
+<script>
+const ITEMS = [
+  { img:"assets/pd-05.jpg", t:"Lighthouse Village (Cape Elizabeth)", src:"Cleveland", y:"1929", lic:"CC0 1.0", v:"GGGGG" },
+  { img:"assets/pd-03.jpg", t:"Eddystone Lighthouse", src:"SMK", y:"1846", lic:"Public Domain Mark", v:"GGGGG" },
+  { img:"assets/pd-04.jpg", t:"New Lighthouse (from Sketchbook)", src:"The Met", y:"1834", lic:"CC0 1.0", v:"GGGGG" },
+  { img:"assets/pd-01.jpg", t:"Harwich: the seashore and lighthouse", src:"V&A", y:"c. 1815", lic:"V&A terms", v:"GYRRR" },
+  { img:"assets/pd-06.jpg", t:"Buffalo Lighthouse", src:"Cleveland", y:"1800s", lic:"CC0 1.0", v:"GGGGG" },
+  { img:"assets/pd-08.jpg", t:"St. Augustine Lighthouse, Florida", src:"Library of Congress", y:"c. 1920", lic:"No known restrictions", v:"GGGYY" },
+  { img:"assets/pd-02.jpg", t:"The fort and new lighthouse", src:"V&A", y:"1880s", lic:"V&A terms", v:"GYRRR" },
+  { img:"assets/pd-07.jpg", t:"Lighthouse, Biloxi, Mississippi", src:"Library of Congress", y:"c. 1920", lic:"No known restrictions", v:"GGGYY" },
+];
+const USES = ["R","D","C","B","M"], ACTIVE = 1;
+const WORD = { G:"CLEAR", Y:"CHECK", R:"BLOCKED" }, NOTE = { G:"for demo work", Y:"read the terms first", R:"not for this use" };
+const esc = (s) => s.replace(/&/g, "&amp;");
+
+document.querySelector('[data-cards="a"]').innerHTML = ITEMS.map((it, i) => {
+  const v = it.v[ACTIVE];
+  return `<article class="card"><div class="mat"><img src="${it.img}" alt=""><i></i><i></i><i></i><i></i></div>
+    <div class="acc">No. ${String(i + 1).padStart(3, "0")} · ${esc(it.src)} · ${it.y}</div>
+    <h3 class="title">${esc(it.t)}</h3><div class="lic">${esc(it.lic)}</div>
+    <div class="rail">${USES.map((u, k) => `<div class="s${k === ACTIVE ? " on" : ""}"><i class="${it.v[k]}"></i><b>${u}</b></div>`).join("")}<span class="v t${v}">${WORD[v]}</span></div></article>`;
+}).join("");
+
+document.querySelector('[data-cards="b"]').innerHTML = ITEMS.map((it) => {
+  const v = it.v[ACTIVE];
+  return `<article class="card"><img src="${it.img}" alt=""><div class="plate"><h4>${esc(it.t)}</h4>
+    <div class="m">${esc(it.src)} · ${it.y}</div><div class="ft"><span class="vd t${v}"><b class="${v}"></b>${WORD[v]}</span><span class="lc">${esc(it.lic)}</span></div></div></article>`;
+}).join("");
+
+document.querySelector('[data-cards="c"]').innerHTML = ITEMS.slice(0, 4).map((it, i) => {
+  const v = it.v[ACTIVE];
+  return `<div class="item"><span class="n">${String(i + 1).padStart(3, "0")}</span><span class="th"><img src="${it.img}" alt=""></span>
+    <div><h4>${esc(it.t)}</h4><div class="m">${esc(it.src).toUpperCase()} · ${it.y} · IMAGE</div></div>
+    <div class="lic">${esc(it.lic)}<small>Credit line ready to copy</small></div>
+    <div class="vh"><b class="t${v}">${WORD[v]}</b><span>${NOTE[v]}</span></div></div>`;
+}).join("");
+
+// B · the aperture: 13 ticks for the image sources; lit = reported, red = failed
+(function () {
+  const svg = document.getElementById("aperture"), n = 13, cx = 33, cy = 33;
+  let out = `<circle cx="33" cy="33" r="31" fill="none" stroke="rgba(150,172,204,.18)"/>`;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2, r1 = 22, r2 = 29;
+    const c = i === 8 ? "#ff6b6b" : i < 12 ? "#ff8c42" : "rgba(150,172,204,.3)";
+    out += `<line x1="${cx + Math.cos(a) * r1}" y1="${cy + Math.sin(a) * r1}" x2="${cx + Math.cos(a) * r2}" y2="${cy + Math.sin(a) * r2}" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`;
+  }
+  out += `<text x="33" y="37" text-anchor="middle" font-family="Geist" font-weight="700" font-size="14" fill="#e8eef6">12</text>`;
+  svg.innerHTML = out;
+  const src = [["met",.32],["artic",.41],["cleveland",.22],["smk",.55],["nasa",.38],["loc",.74],["europeana",.6],["openverse",.96],["wikimedia",1,"#ff6b6b"],["internet_archive",.66],["vam",.28],["polyhaven",.18],["iconify",.0]];
+  document.getElementById("spec").innerHTML = src.map(([s, w, c]) => `<div><i style="--w:${w * 100}%;${c ? `--c:${c}` : ""}"></i>${s}</div>`).join("");
+})();
+
+// fit each 1440-wide frame to its stage
+function fit() { document.querySelectorAll(".stage").forEach((s) => s.firstElementChild.style.setProperty("--k", s.clientWidth / 1440)); }
+addEventListener("resize", fit); fit();
+</script>
+</body>
+</html>

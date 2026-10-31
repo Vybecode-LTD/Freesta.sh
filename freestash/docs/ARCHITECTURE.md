@@ -44,8 +44,10 @@
 4. As each finishes: dedupe by landing URL, `evaluate()` each asset, drop above `max_tier`, emit `batch`
 5. UI interleaves batches round-robin by provider, greens first
 
-## Auth (team mode)
+## Auth (accounts mode, the hosted app)
 
-Supabase Auth (magic link) in the browser → access token → `Authorization: Bearer` to FastAPI →
-verified via JWKS (or HS256 secret for legacy projects) → user's team from `team_members` →
-every store query is team-scoped. The DB also enforces RLS for direct access (verified with real Postgres).
+Open sign-up on the API itself (no third-party auth): `POST /api/auth/register|login` → an HS256 JWT carrying the
+user id and `token_version` (bumped by password change and sign-out-everywhere, which kills old tokens). The website
+and the desktop app send it as `Authorization: Bearer`. Each account owns a personal team, so every store query stays
+team-scoped. Provider keys are Fernet-encrypted per account and merged into that user's engine settings for each
+search (`providers/keys.py::settings_with_keys`). Data lives in Railway Postgres; decision: `../../docs/decisions/0001`.
