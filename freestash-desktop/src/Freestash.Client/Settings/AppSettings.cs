@@ -1,20 +1,24 @@
 namespace Freestash.Client.Settings;
 
+/// <summary>Remote = a Freesta.sh server (freesta.sh by default, signed in). Local = a Python engine on this machine.</summary>
 public enum ConnectionMode { Local, Remote }
 
-public enum AppTheme { EmberDark, MachinedLight }
+/// <summary>Aperture's two looks (shared/design-tokens.json): Glass = dark, Frost = light.</summary>
+public enum AppTheme { Glass, Frost }
 
-public enum AccentColor { Ember, Iris, Teal, Cobalt }
+public enum AccentColor { Sodium, Iris, Teal, Cobalt }
 
 /// <summary>Non-secret settings, stored as JSON. API keys and tokens live in <see cref="SecretStore"/>.</summary>
 public sealed class AppSettings
 {
     // connection
-    public ConnectionMode Mode { get; set; } = ConnectionMode.Local;
+    public const string HostedUrl = "https://freesta.sh";
+
+    public ConnectionMode Mode { get; set; } = ConnectionMode.Remote;
     public string PythonCommand { get; set; } = OperatingSystem.IsWindows() ? "python" : "python3";
     public int LocalPort { get; set; } = 8787;
     public bool AutoStartEngine { get; set; } = true;
-    public string RemoteUrl { get; set; } = "";
+    public string RemoteUrl { get; set; } = HostedUrl;
     public string ContactEmail { get; set; } = "";
 
     // downloads
@@ -30,10 +34,11 @@ public sealed class AppSettings
     public UseCase DefaultUseCase { get; set; } = UseCase.Demo;
     public Tier DefaultMaxTier { get; set; } = Tier.Yellow;
     public int ResultsPerSource { get; set; } = 12;
+    public List<MediaType> DefaultMedia { get; set; } = [MediaType.Image];
 
     // appearance
-    public AppTheme Theme { get; set; } = AppTheme.EmberDark;
-    public AccentColor Accent { get; set; } = AccentColor.Ember;
+    public AppTheme Theme { get; set; } = AppTheme.Glass;
+    public AccentColor Accent { get; set; } = AccentColor.Sodium;
 
     public Uri ApiBaseUri => Mode == ConnectionMode.Remote && Uri.TryCreate(RemoteUrl, UriKind.Absolute, out var u)
         ? u

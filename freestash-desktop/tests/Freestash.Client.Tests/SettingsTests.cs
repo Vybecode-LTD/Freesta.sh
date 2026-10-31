@@ -39,11 +39,11 @@ public class SettingsTests : IDisposable
     {
         var store = new SettingsStore(_dir);
         var s = store.Load();
-        s.Theme = AppTheme.MachinedLight;
+        s.Theme = AppTheme.Frost;
         s.DownloadDirectory = Path.Combine(_dir, "dl");
         store.Save(s);
         var again = store.Load();
-        Assert.Equal(AppTheme.MachinedLight, again.Theme);
+        Assert.Equal(AppTheme.Frost, again.Theme);
         Assert.Equal(Path.Combine(_dir, "dl", "aurora-template"), again.DirectoryFor("aurora-template"));
         again.OrganizeByProject = false;
         Assert.Equal(Path.Combine(_dir, "dl"), again.DirectoryFor("aurora-template"));
@@ -54,14 +54,14 @@ public class SettingsTests : IDisposable
     {
         var secrets = new SecretStore(_dir);
         secrets.Set("SMITHSONIAN_API_KEY", "si-key");
-        secrets.Set(ProviderKeys.RemoteToken, "team-jwt");
+        new Freestash.Client.Account.SessionStore(secrets).Set(new("account-jwt", new("u1", "a@b.co", null, null)));
         var settings = new AppSettings { ContactEmail = "studio@example.com" };
         var host = new EngineHost(() => settings, secrets, () => throw new InvalidOperationException());
         var env = host.BuildEnvironment();
         Assert.Equal("si-key", env["SMITHSONIAN_API_KEY"]);
         Assert.Equal("studio@example.com", env["FREESTASH_CONTACT_EMAIL"]);
         Assert.Equal("none", env["FREESTASH_AUTH_MODE"]);
-        Assert.DoesNotContain(env.Values, v => v == "team-jwt"); // the team token never leaks into the local engine
+        Assert.DoesNotContain(env.Values, v => v.Contains("account-jwt")); // the account session never leaks into the local engine
     }
 
     [Fact]

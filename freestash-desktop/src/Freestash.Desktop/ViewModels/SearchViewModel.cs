@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Freestash.Client;
+using Freestash.Client.Settings;
 using Freestash.Desktop.Services;
 
 namespace Freestash.Desktop.ViewModels;
@@ -19,13 +20,19 @@ public sealed class Option<T>(T value, string label, string hint = "") : OptionB
     public T Value { get; } = value;
 }
 
-public sealed partial class SourceStatusViewModel(ProviderStatus status) : ObservableObject
+/// <summary>One column of the source spectrum under the lens: how long a source took, relative to the slowest.</summary>
+public sealed partial class SourceStatusViewModel(ProviderStatus? status, string provider) : ObservableObject
 {
-    public string Provider { get; } = status.Provider;
-    public bool Ok { get; } = status.Ok;
-    public string CountText { get; } = status.Ok ? status.Count.ToString() : "✕";
-    public string Tooltip { get; } = status.Ok ? $"{status.Count} shown · {status.Total?.ToString("N0") ?? "?"} total · {status.ElapsedMs} ms" : status.Error ?? "failed";
-    public bool IsPending { get; init; }
+    public const double BarMax = 76;
+    public string Provider { get; } = provider.Replace('_', ' ');
+    public bool Ok { get; } = status?.Ok ?? true;
+    public bool Failed => status is { Ok: false };
+    public bool IsPending => status is null;
+    public long ElapsedMs { get; } = status?.ElapsedMs ?? 0;
+    public string CountText { get; } = status is null ? "" : status.Ok ? status.Count.ToString() : "✕";
+    public string Tooltip { get; } = status is null ? $"{provider}: waiting" : status.Ok
+        ? $"{provider}: {status.Count} shown · {status.Total?.ToString("N0") ?? "?"} total · {status.ElapsedMs / 1000.0:0.0} s" : $"{provider}: {status.Error ?? "failed"}";
+    [ObservableProperty] public partial double BarWidth { get; set; } = BarMax * 0.4;
 }
 
 public sealed class AssetCardViewModel(ScoredAsset scored)
@@ -37,8 +44,9 @@ public sealed class AssetCardViewModel(ScoredAsset scored)
     public string SourceText => Asset.SourceName ?? Asset.Provider;
     public string MetaText => string.Join(" · ", new[] { Asset.Year?.ToString(), Asset.MediaType.ToString().ToLowerInvariant() }.Where(x => x is not null));
     public string LicenseText => Asset.License.Label;
+    public string CardMeta => string.Join(" · ", new[] { SourceText, Asset.Year?.ToString() ?? Asset.Date }.Where(x => !string.IsNullOrEmpty(x)));
     public Tier Tier => Scored.Verdict.Tier;
-    public string TierText => Tier.ToString().ToUpperInvariant();
+    public string TierText => VerdictWords.Of(Tier);
     public bool IsGreen => Tier == Tier.Green;
     public bool IsYellow => Tier == Tier.Yellow;
     public bool IsRed => Tier == Tier.Red;
@@ -83,20 +91,31 @@ public sealed partial class SearchViewModel : ViewModelBase
             new(UseCase.Bundled, "Bundled", "Ships inside a product: template download, factory library, app."),
             new(UseCase.Merch, "Merch", "Printed or pressed onto goods for sale."),
         ];
-        Tiers = [new(Tier.Green, "Green only"), new(Tier.Yellow, "+ Yellow"), new(Tier.Red, "Everything")];
+        Tiers = [new(Tier.Green, "Clear", "Only results that are clear for this use"), new(Tier.Yellow, "+ Check", "Also results to check before you use them"),
+                 new(Tier.Red, "All", "Everything, including blocked results")];
 
-        foreach (var u in UseCases) u.IsSelected = u.Value == s.DefaultUseCase;
-        foreach (var t in Tiers) t.IsSelected = t.Value == s.DefaultMaxTier;
+        ApplyDefaults(s);
+        services.PrefsChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => { if (!HasSearched) ApplyDefaults(_services.Settings); });
         foreach (var o in UseCases.Cast<ObservableObject>().Concat(Tiers).Concat(Media))
             o.PropertyChanged += (sender, e) =>
             {
                 if (e.PropertyName != "IsSelected") return;
                 OnPropertyChanged(nameof(UseHint));
                 OnPropertyChanged(nameof(SelectedUseCase));
+                OnPropertyChanged(nameof(ResultsHeading));
                 if (HasSearched && sender is Option<UseCase> { IsSelected: true } or Option<Tier> { IsSelected: true } or Option<MediaType>)
                     _ = SearchAsync();
             };
         Project = s.LastProject;
+    }
+
+    /// <summary>A new search starts from the account's defaults (synced with the website).</summary>
+    private void ApplyDefaults(AppSettings s)
+    {
+        foreach (var u in UseCases) u.IsSelected = u.Value == s.DefaultUseCase;
+        foreach (var t in Tiers) t.IsSelected = t.Value == s.DefaultMaxTier;
+        foreach (var m in Media) m.IsSelected = s.DefaultMedia.Contains(m.Value);
+        if (!Media.Any(m => m.IsSelected)) Media[0].IsSelected = true;
     }
 
     public event Action? QueuedDownload;
@@ -116,6 +135,16 @@ public sealed partial class SearchViewModel : ViewModelBase
     [ObservableProperty] public partial string? Error { get; set; }
     [ObservableProperty] public partial AssetDetailViewModel? Detail { get; set; }
     [ObservableProperty] public partial string Project { get; set; } = "";
+    [ObservableProperty] public partial int TotalSources { get; set; }
+    [ObservableProperty] public partial int ReportedSources { get; set; }
+    [ObservableProperty] public partial int FailedSources { get; set; }
+    [ObservableProperty] public partial double ElapsedSeconds { get; set; }
+
+    /// <summary>The line under the query, as on the web: progress while streaming, totals after.</summary>
+    public string LensMeta => !HasSearched ? "SEARCH 20 OPEN COLLECTIONS AT ONCE · CTRL K"
+        : $"{ReportedSources} OF {TotalSources} SOURCES REPORTED · {Results.Count} RESULTS" + (ElapsedSeconds > 0 ? $" · {ElapsedSeconds:0.0} S" : "");
+    public string ResultsHeading => (SelectedMaxTier switch { Tier.Green => "Clear", Tier.Yellow => "Clear or worth checking", _ => "Everything" })
+        + $" for {SelectedUseCase.ToString().ToLowerInvariant()} use";
 
     public UseCase SelectedUseCase => UseCases.FirstOrDefault(u => u.IsSelected)?.Value ?? UseCase.Demo;
     public Tier SelectedMaxTier => Tiers.FirstOrDefault(t => t.IsSelected)?.Value ?? Tier.Yellow;
@@ -129,6 +158,8 @@ public sealed partial class SearchViewModel : ViewModelBase
     partial void OnIsSearchingChanged(bool value) => OnPropertyChanged(nameof(ShowNoResults));
     partial void OnDetailChanged(AssetDetailViewModel? value) => OnPropertyChanged(nameof(HasDetail));
     partial void OnHiddenCountChanged(int value) => OnPropertyChanged(nameof(ResultSummary));
+    partial void OnReportedSourcesChanged(int value) => OnPropertyChanged(nameof(LensMeta));
+    partial void OnElapsedSecondsChanged(double value) => OnPropertyChanged(nameof(LensMeta));
 
     [RelayCommand]
     public async Task SearchAsync()
@@ -144,6 +175,16 @@ public sealed partial class SearchViewModel : ViewModelBase
         SourceStatuses.Clear();
         _byProvider.Clear();
         HiddenCount = 0;
+        ReportedSources = 0;
+        FailedSources = 0;
+        ElapsedSeconds = 0;
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        var wanted = media.Select(m => m.ToString().ToLowerInvariant()).ToHashSet();
+        List<string> asked;
+        try { asked = (await _services.Api.Current.ProvidersAsync(cts.Token)).Where(p => p.Enabled && p.MediaTypes.Any(wanted.Contains)).Select(p => p.Id).ToList(); }
+        catch (Exception) { asked = []; }
+        TotalSources = asked.Count;
+        foreach (var id in asked) SourceStatuses.Add(new SourceStatusViewModel(null, id));
         Error = null;
         HasSearched = true;
         IsSearching = true;
@@ -155,8 +196,16 @@ public sealed partial class SearchViewModel : ViewModelBase
             {
                 if (cts.IsCancellationRequested) break;
                 _byProvider[batch.Status.Provider] = batch.Results.Select(r => new AssetCardViewModel(r)).ToList();
-                SourceStatuses.Add(new SourceStatusViewModel(batch.Status));
+                var pending = SourceStatuses.FirstOrDefault(x => x.IsPending && x.Provider == batch.Status.Provider.Replace('_', ' '));
+                if (pending is not null) SourceStatuses.Remove(pending);
+                SourceStatuses.Insert(SourceStatuses.Count(x => !x.IsPending), new SourceStatusViewModel(batch.Status, batch.Status.Provider));
+                ReportedSources++;
+                if (!batch.Status.Ok) FailedSources++;
+                if (TotalSources < ReportedSources) TotalSources = ReportedSources;
+                var slowest = Math.Max(1, SourceStatuses.Max(x => x.ElapsedMs));
+                foreach (var x in SourceStatuses.Where(x => !x.IsPending)) x.BarWidth = SourceStatusViewModel.BarMax * Math.Max(0.06, x.ElapsedMs / (double)slowest);
                 HiddenCount += batch.Hidden;
+                ElapsedSeconds = started.Elapsed.TotalSeconds;
                 Rebuild();
             }
         }
@@ -169,7 +218,13 @@ public sealed partial class SearchViewModel : ViewModelBase
         }
         finally
         {
-            if (ReferenceEquals(cts, _cts)) IsSearching = false;
+            if (ReferenceEquals(cts, _cts))
+            {
+                IsSearching = false;
+                ElapsedSeconds = started.Elapsed.TotalSeconds;
+                foreach (var x in SourceStatuses.Where(x => x.IsPending).ToList()) SourceStatuses.Remove(x);
+                OnPropertyChanged(nameof(ResultsHeading));
+            }
         }
     }
 
@@ -198,6 +253,7 @@ public sealed partial class SearchViewModel : ViewModelBase
         _ = existing;
         OnPropertyChanged(nameof(ShowNoResults));
         OnPropertyChanged(nameof(ResultSummary));
+        OnPropertyChanged(nameof(LensMeta));
     }
 
     [RelayCommand]
@@ -231,4 +287,10 @@ public sealed partial class SearchViewModel : ViewModelBase
         _services.Settings.LastProject = project;
         _services.SettingsStore.Save(_services.Settings);
     }
+}
+
+/// <summary>The verdict words both apps use (web: TIER_WORD in lib/types.ts). GREEN/YELLOW/RED stay the engine's names.</summary>
+public static class VerdictWords
+{
+    public static string Of(Tier tier) => tier switch { Tier.Green => "CLEAR", Tier.Yellow => "CHECK", _ => "BLOCKED" };
 }

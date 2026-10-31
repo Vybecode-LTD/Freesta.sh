@@ -10,7 +10,7 @@ namespace Freestash.Desktop;
 public partial class App : Application
 {
     public const string UiFont = "avares://Freestash/Assets/Fonts#Geist";
-    public const string MonoFont = "avares://Freestash/Assets/Fonts#JetBrains Mono";
+    public const string MonoFont = "avares://Freestash/Assets/Fonts#Geist Mono";
 
     public static AppServices Services { get; private set; } = null!;
 

@@ -13,7 +13,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         // Leave room for native caption buttons: traffic lights on the left (macOS), min/max/close on the right (Windows).
-        TitleBarGrid.Margin = OperatingSystem.IsMacOS() ? new Thickness(84, 0, 18, 0) : new Thickness(18, 0, 150, 0);
+        TitleBarGrid.Margin = OperatingSystem.IsMacOS() ? new Thickness(30, 0, 18, 0) : new Thickness(30, 0, 150, 0);
+        if (OperatingSystem.IsMacOS()) Wordmark.Margin = new Thickness(84, 0, 0, 0);
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
