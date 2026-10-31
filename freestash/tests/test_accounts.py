@@ -134,6 +134,22 @@ def test_search_runs_with_the_callers_own_key(client):
     assert r["results"] == [] and route.call_count == calls  # Bob has no key, so Pexels isn't asked
 
 
+@respx.mock
+def test_openverse_register_saves_the_pair_to_the_account(client):
+    ada = signup(client)
+    route = respx.post("https://api.openverse.org/v1/auth_tokens/register/").mock(return_value=httpx.Response(
+        201, json={"name": "x", "client_id": "ov-id-1234", "client_secret": "ov-secret-9876"}))
+    r = client.post("/api/keys/openverse/register", headers=ada, json={})
+    assert r.status_code == 200 and r.json()["email"] == "ada@example.com"
+    sent = route.calls.last.request
+    assert b"ada@example.com" in sent.content and sent.headers["User-Agent"].startswith("Freestash/")
+    keys = {k["name"]: k for k in client.get("/api/me/keys", headers=ada).json()["keys"]}
+    assert keys["OPENVERSE_CLIENT_ID"]["hint"] == "1234" and keys["OPENVERSE_CLIENT_SECRET"]["hint"] == "9876"
+
+    route.mock(return_value=httpx.Response(400, json={"name": ["taken"]}))
+    assert client.post("/api/keys/openverse/register", headers=ada, json={}).status_code == 502
+
+
 def test_server_keys_are_not_handed_to_users_unless_shared():
     base = Settings(pexels_api_key="owner-key", _env_file=None)
     assert settings_with_keys(base, {}, share_server_keys=False).pexels_api_key is None

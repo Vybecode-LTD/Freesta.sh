@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import secrets
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
@@ -39,6 +41,41 @@ def _call(fn, *args):
 async def key_catalog() -> list[dict[str, Any]]:
     """Where to get every provider key, step by step. Public: the sign-in screen links to it too."""
     return [k.as_json() for k in KEY_CATALOG]
+
+
+class OpenverseRegisterIn(BaseModel):
+    email: str | None = None  # defaults to the account's email
+
+
+OPENVERSE_REGISTER = "https://api.openverse.org/v1/auth_tokens/register/"
+
+
+@router.post("/api/keys/openverse/register")
+async def openverse_register(body: OpenverseRegisterIn, user: User, request: Request,
+                             settings: Settings = Depends(get_settings)) -> dict[str, Any]:
+    """Openverse has no sign-up page, only this API. Register on the user's behalf and keep the result.
+
+    Openverse emails a verification link to the address; until it's clicked the credentials work at
+    anonymous limits. In accounts mode the pair is saved to the account; the response carries it either way
+    (the desktop's local engine stores it on the machine).
+    """
+    email = (body.email or user.email or "").strip()
+    if "@" not in email:
+        raise HTTPException(400, "Enter the email address Openverse should send its verification link to.")
+    payload = {"name": f"freesta.sh-{secrets.token_hex(4)}",
+               "description": "Freesta.sh: search for public domain and openly licensed media.", "email": email}
+    async with httpx.AsyncClient(timeout=20, headers={"User-Agent": settings.full_user_agent}) as client:
+        r = await client.post(OPENVERSE_REGISTER, json=payload)
+    if r.status_code >= 400:
+        raise HTTPException(502, f"Openverse refused the registration ({r.status_code}): {r.text[:200]}")
+    data = r.json()
+    values = {"OPENVERSE_CLIENT_ID": data.get("client_id"), "OPENVERSE_CLIENT_SECRET": data.get("client_secret")}
+    if not all(values.values()):
+        raise HTTPException(502, "Openverse answered without credentials. Try again in a minute.")
+    if not user.local and settings.auth_mode == "accounts":
+        _call(accounts(request).set_keys, user.id, values)
+    return {"values": values, "email": email,
+            "next": f"Click the verification link Openverse sent to {email}; until then searches use anonymous limits."}
 
 
 @router.get("/api/me/settings")

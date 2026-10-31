@@ -8,12 +8,14 @@
     "url": "https://api.data.gov/signup/",
     "url_label": "api.data.gov/signup",
     "steps": [
-      "Enter your first name, last name and email, then press Signup.",
-      "Copy the key shown on the next page (it's also emailed to you) and paste it here."
+      "Enter your first name, last name and email, then submit the form.",
+      "api.data.gov emails you the key. Copy it from that email and paste it here."
     ],
     "limits": "1,000 requests an hour",
     "unlocks": "About 5 million CC0 images from the Smithsonian's museums.",
-    "optional": false
+    "optional": false,
+    "notice": null,
+    "action": null
   },
   {
     "name": "UNSPLASH_ACCESS_KEY",
@@ -24,12 +26,15 @@
     "url": "https://unsplash.com/oauth/applications",
     "url_label": "unsplash.com/oauth/applications",
     "steps": [
-      "Sign in or join Unsplash, then choose New Application and accept the API guidelines.",
-      "Name the app (e.g. \"Freesta.sh\"), create it, and copy the Access Key from the Keys section."
+      "Join or log in to Unsplash; the link opens Your apps.",
+      "Click New Application, accept the API guidelines and fill in the app's details.",
+      "On the app's page, copy the Access Key (not the Secret key)."
     ],
-    "limits": "50 requests an hour until Unsplash approves the app for production",
+    "limits": "50 requests an hour in demo mode; more once Unsplash approves the app for production",
     "unlocks": "Unsplash photos. Fine for demos and client mockups; Freesta.sh marks them red for bundled use.",
-    "optional": false
+    "optional": false,
+    "notice": null,
+    "action": null
   },
   {
     "name": "PEXELS_API_KEY",
@@ -37,15 +42,17 @@
     "provider": "pexels",
     "provider_name": "Pexels",
     "label": "API key",
-    "url": "https://www.pexels.com/api/new/",
-    "url_label": "pexels.com/api/new",
+    "url": "https://www.pexels.com/api/key/",
+    "url_label": "pexels.com/api/key",
     "steps": [
-      "Sign in or join Pexels.",
-      "Fill in the short form about your project, accept the terms, and copy the API key it shows."
+      "If you already have a key, log in and copy it from this page.",
+      "When sign-ups reopen: log in at pexels.com/api, click Get Started, and the key appears straight away."
     ],
     "limits": "200 requests an hour, 20,000 a month",
     "unlocks": "Pexels photos and video for demo and client work.",
-    "optional": false
+    "optional": false,
+    "notice": "Pexels has paused new API keys (checked 31 Oct 2026). Existing keys still work.",
+    "action": null
   },
   {
     "name": "PIXABAY_API_KEY",
@@ -56,62 +63,71 @@
     "url": "https://pixabay.com/api/docs/",
     "url_label": "pixabay.com/api/docs",
     "steps": [
-      "Sign in or join Pixabay.",
-      "Reload the docs page: your key appears under Parameters, next to \"key (required)\". Copy it."
+      "Log in or sign up with the links beside the key row on that page.",
+      "Back on the docs page, under Search Images → Parameters, copy the value in the \"key (required)\" row."
     ],
     "limits": "100 requests a minute",
     "unlocks": "Pixabay photos, illustrations and video. Pixabay forbids hotlinking, so download files instead.",
-    "optional": false
+    "optional": false,
+    "notice": null,
+    "action": null
   },
   {
     "name": "FREESOUND_API_KEY",
     "setting": "freesound_api_key",
     "provider": "freesound",
     "provider_name": "Freesound",
-    "label": "API key (client secret)",
+    "label": "API key",
     "url": "https://freesound.org/apiv2/apply/",
     "url_label": "freesound.org/apiv2/apply",
     "steps": [
-      "Sign in or join Freesound.",
-      "Fill in a name and description for the credential, accept the terms, and submit.",
-      "Copy the value in the \"Client secret/Api key\" column (not the client id)."
+      "Log in, or click Join now to create a Freesound account.",
+      "On the apply page, request a new API credential with a name and a short description.",
+      "Copy the \"Client secret/Api key\" value from the table, not the Client id."
     ],
     "limits": "60 requests a minute, 2,000 a day",
     "unlocks": "Sound effects and field recordings; filter to CC0 for factory libraries.",
-    "optional": false
+    "optional": false,
+    "notice": null,
+    "action": null
   },
   {
     "name": "EUROPEANA_API_KEY",
     "setting": "europeana_api_key",
     "provider": "europeana",
     "provider_name": "Europeana",
-    "label": "API key",
-    "url": "https://pro.europeana.eu/pages/get-api",
-    "url_label": "pro.europeana.eu/pages/get-api",
+    "label": "Personal API key",
+    "url": "https://www.europeana.eu/en/create-and-use-a-europeana-account",
+    "url_label": "europeana.eu → your account",
     "steps": [
-      "Fill in the request form with your name and email and submit it.",
-      "Copy the key from the email Europeana sends you."
+      "Create or sign in to a Europeana account.",
+      "In the menu under your nickname (top right), choose Manage API keys.",
+      "Accept the API key terms, click Request a Personal API key, and copy the key it shows."
     ],
     "limits": null,
     "unlocks": "Raises the limits of the shared demo key that Europeana searches use without one.",
-    "optional": true
+    "optional": true,
+    "notice": null,
+    "action": null
   },
   {
     "name": "WIKIMEDIA_ACCESS_TOKEN",
     "setting": "wikimedia_access_token",
     "provider": "wikimedia",
     "provider_name": "Wikimedia Commons",
-    "label": "OAuth 2.0 owner-only access token",
+    "label": "Owner-only access token",
     "url": "https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose/oauth2",
-    "url_label": "meta.wikimedia.org → propose an OAuth 2.0 consumer",
+    "url_label": "meta.wikimedia.org → propose OAuth 2.0 consumer",
     "steps": [
-      "Sign in to Wikimedia, then give the consumer a name and description.",
-      "Tick \"This consumer is for use only by <your username>\" and grant basic rights, then propose it.",
-      "Copy the Access token shown after you submit; it's shown only once."
+      "Log in to Wikimedia, then give the consumer a name and description.",
+      "Tick \"This consumer is for use only by <your username>\" and submit.",
+      "Copy the access token shown straight away; it isn't shown again."
     ],
-    "limits": null,
+    "limits": "200 requests a minute for new accounts (anonymous: 10)",
     "unlocks": "Lifts the heavy rate limits on anonymous Commons searches.",
-    "optional": true
+    "optional": true,
+    "notice": null,
+    "action": null
   },
   {
     "name": "OPENVERSE_CLIENT_ID",
@@ -119,15 +135,17 @@
     "provider": "openverse",
     "provider_name": "Openverse",
     "label": "Client ID",
-    "url": "https://api.openverse.org/v1/#tag/auth/operation/register",
-    "url_label": "api.openverse.org → auth/register",
+    "url": "https://api.openverse.org/v1/#tag/auth",
+    "url_label": "api.openverse.org (no sign-up page)",
     "steps": [
-      "Register an application (name, description, email) with a POST to /v1/auth_tokens/register/.",
-      "Click the verification link Openverse emails you, then copy client_id from the response."
+      "Openverse has no sign-up page. Press Register and Freesta.sh asks Openverse for credentials in your name.",
+      "Click the verification link Openverse emails you; until then the keys work at anonymous limits."
     ],
     "limits": null,
     "unlocks": "Raises the anonymous cap of 20 results a page and 240 per query.",
-    "optional": true
+    "optional": true,
+    "notice": null,
+    "action": "openverse_register"
   },
   {
     "name": "OPENVERSE_CLIENT_SECRET",
@@ -135,13 +153,15 @@
     "provider": "openverse",
     "provider_name": "Openverse",
     "label": "Client secret",
-    "url": "https://api.openverse.org/v1/#tag/auth/operation/register",
-    "url_label": "api.openverse.org → auth/register",
+    "url": "https://api.openverse.org/v1/#tag/auth",
+    "url_label": "api.openverse.org (no sign-up page)",
     "steps": [
-      "Copy client_secret from the same registration response as the Client ID."
+      "Filled in together with the Client ID when you press Register."
     ],
     "limits": null,
     "unlocks": "Pairs with the Client ID.",
-    "optional": true
+    "optional": true,
+    "notice": null,
+    "action": null
   }
 ]
