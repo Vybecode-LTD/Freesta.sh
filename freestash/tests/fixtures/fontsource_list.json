@@ -1,0 +1,158 @@
+[
+ {
+  "id": "abhaya-libre",
+  "family": "Abhaya Libre",
+  "subsets": [
+   "latin",
+   "latin-ext",
+   "sinhala"
+  ],
+  "weights": [
+   400,
+   500,
+   600,
+   700,
+   800
+  ],
+  "styles": [
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": false,
+  "lastModified": "2025-09-16",
+  "category": "serif",
+  "license": "OFL-1.1",
+  "type": "google"
+ },
+ {
+  "id": "abyssinica-sil",
+  "family": "Abyssinica SIL",
+  "subsets": [
+   "ethiopic",
+   "latin",
+   "latin-ext"
+  ],
+  "weights": [
+   400
+  ],
+  "styles": [
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": false,
+  "lastModified": "2025-09-10",
+  "category": "serif",
+  "license": "OFL-1.1",
+  "type": "google"
+ },
+ {
+  "id": "adamina",
+  "family": "Adamina",
+  "subsets": [
+   "latin"
+  ],
+  "weights": [
+   400
+  ],
+  "styles": [
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": false,
+  "lastModified": "2025-09-16",
+  "category": "serif",
+  "license": "OFL-1.1",
+  "type": "google"
+ },
+ {
+  "id": "alegreya",
+  "family": "Alegreya",
+  "subsets": [
+   "cyrillic",
+   "cyrillic-ext",
+   "greek",
+   "greek-ext",
+   "latin",
+   "latin-ext",
+   "vietnamese"
+  ],
+  "weights": [
+   400,
+   500,
+   600,
+   700,
+   800,
+   900
+  ],
+  "styles": [
+   "italic",
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": true,
+  "lastModified": "2026-06-30",
+  "category": "serif",
+  "license": "OFL-1.1",
+  "type": "google"
+ },
+ {
+  "id": "alegreya-sc",
+  "family": "Alegreya SC",
+  "subsets": [
+   "cyrillic",
+   "cyrillic-ext",
+   "greek",
+   "greek-ext",
+   "latin",
+   "latin-ext",
+   "vietnamese"
+  ],
+  "weights": [
+   400,
+   500,
+   700,
+   800,
+   900
+  ],
+  "styles": [
+   "italic",
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": false,
+  "lastModified": "2026-06-30",
+  "category": "serif",
+  "license": "OFL-1.1",
+  "type": "google"
+ },
+ {
+  "id": "aleo",
+  "family": "Aleo",
+  "subsets": [
+   "latin",
+   "latin-ext",
+   "vietnamese"
+  ],
+  "weights": [
+   100,
+   200,
+   300,
+   400,
+   500,
+   600,
+   700,
+   800,
+   900
+  ],
+  "styles": [
+   "italic",
+   "normal"
+  ],
+  "defSubset": "latin",
+  "variable": true,
+  "lastModified": "2025-09-16",
+  "category": "serif",
+  "license": "OFL-1.1",
+  "type": "google"
+ }
+]

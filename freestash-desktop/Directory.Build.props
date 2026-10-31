@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <Version>0.1.0</Version>
+    <Company>VybeCod.ing</Company>
+    <Product>Freestash Desktop</Product>
+    <Copyright>© 2026 VybeCod.ing / Vibrant Mindz</Copyright>
+  </PropertyGroup>
+</Project>

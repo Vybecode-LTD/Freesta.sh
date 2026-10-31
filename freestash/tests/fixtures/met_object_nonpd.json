@@ -1,0 +1,97 @@
+{
+ "objectID": 438386,
+ "isHighlight": false,
+ "accessionNumber": "1998.412.3",
+ "accessionYear": "1998",
+ "isPublicDomain": false,
+ "primaryImage": "",
+ "primaryImageSmall": "",
+ "additionalImages": [],
+ "constituents": [
+  {
+   "constituentID": 162415,
+   "role": "Artist",
+   "name": "Paul Signac",
+   "constituentULAN_URL": "http://vocab.getty.edu/page/ulan/500008410",
+   "constituentWikidata_URL": "https://www.wikidata.org/wiki/Q151573",
+   "gender": ""
+  }
+ ],
+ "department": "European Paintings",
+ "objectName": "Painting",
+ "title": "Lighthouse at Groix",
+ "culture": "",
+ "period": "",
+ "dynasty": "",
+ "reign": "",
+ "portfolio": "",
+ "artistRole": "Artist",
+ "artistPrefix": "",
+ "artistDisplayName": "Paul Signac",
+ "artistDisplayBio": "French, Paris 1863–1935 Paris",
+ "artistSuffix": "",
+ "artistAlphaSort": "Signac, Paul",
+ "artistNationality": "French",
+ "artistBeginDate": "1863",
+ "artistEndDate": "1935",
+ "artistGender": "",
+ "artistWikidata_URL": "https://www.wikidata.org/wiki/Q151573",
+ "artistULAN_URL": "http://vocab.getty.edu/page/ulan/500008410",
+ "objectDate": "1925",
+ "objectBeginDate": 1925,
+ "objectEndDate": 1925,
+ "medium": "Oil on canvas",
+ "dimensions": "29 1/8 x 36 3/8 in. (74 x 92.4 cm)",
+ "measurements": [
+  {
+   "elementName": "Framed",
+   "elementDescription": null,
+   "elementMeasurements": {
+    "Depth": 7.62,
+    "Height": 101.9177,
+    "Width": 120.6502
+   }
+  },
+  {
+   "elementName": "Overall",
+   "elementDescription": null,
+   "elementMeasurements": {
+    "Height": 74,
+    "Width": 92.4
+   }
+  }
+ ],
+ "creditLine": "Gift of Mr. and Mrs. Douglas Dillon, 1998",
+ "geographyType": "",
+ "city": "",
+ "state": "",
+ "county": "",
+ "country": "",
+ "region": "",
+ "subregion": "",
+ "locale": "",
+ "locus": "",
+ "excavation": "",
+ "river": "",
+ "classification": "Paintings",
+ "rightsAndReproduction": "",
+ "linkResource": "",
+ "metadataDate": "2026-10-06T04:59:37.62Z",
+ "repository": "Metropolitan Museum of Art, New York, NY",
+ "objectURL": "https://www.metmuseum.org/art/collection/search/438386",
+ "tags": [
+  {
+   "term": "Boats",
+   "AAT_URL": "http://vocab.getty.edu/page/aat/300178749",
+   "Wikidata_URL": "https://www.wikidata.org/wiki/Q35872"
+  },
+  {
+   "term": "Lighthouses",
+   "AAT_URL": "http://vocab.getty.edu/page/aat/300007741",
+   "Wikidata_URL": "https://www.wikidata.org/wiki/Q39715"
+  }
+ ],
+ "objectWikidata_URL": "https://www.wikidata.org/wiki/Q19913586",
+ "isTimelineWork": false,
+ "GalleryNumber": ""
+}

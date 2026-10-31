@@ -1,0 +1,442 @@
+{
+ "results": [
+  {
+   "access_restricted": true,
+   "aka": [
+    "https://www.loc.gov/pictures/item/2005691065/",
+    "http://www.loc.gov/item/2005691065/",
+    "http://www.loc.gov/pictures/item/2005691065/",
+    "https://www.loc.gov/pictures/collection/cph/item/2005691065/",
+    "http://www.loc.gov/pictures/collection/cph/item/2005691065/",
+    "http://www.loc.gov/resource/ppmsca.09074/",
+    "http://lccn.loc.gov/2005691065",
+    "https://hdl.loc.gov/loc.pnp/ppmsca.09074"
+   ],
+   "campaigns": [],
+   "date": "1920-01-01",
+   "dates": [
+    "1920"
+   ],
+   "description": [
+    "1 photographic print. | Photograph showing lighthouse and pier."
+   ],
+   "digitized": true,
+   "extract_timestamp": "2021-08-25T09:27:09.745Z",
+   "group": [
+    "cph",
+    "catalog-split-02",
+    "catalog",
+    "miscellaneous-items-high-demand",
+    "main-catalog-split-02",
+    "main-catalog"
+   ],
+   "hassegments": false,
+   "id": "http://www.loc.gov/item/2005691065/",
+   "image_url": [
+    "https://tile.loc.gov/storage-services/service/pnp/ppmsca/09000/09074_150px.jpg#h=121&w=150"
+   ],
+   "index": 1,
+   "item": {
+    "call_number": "SSF - Lighthouses--Mississippi [item] [P&P]",
+    "control_number": "2005691065",
+    "created": "2016-04-21T10:59:55Z",
+    "created_published": "[ca. 1920]",
+    "created_published_date": "[ca. 1920]",
+    "date": "[ca. 1920]",
+    "digital_id": [
+     "ppmsca 09074 //hdl.loc.gov/loc.pnp/ppmsca.09074"
+    ],
+    "format": [
+     "still image"
+    ],
+    "formats": [
+     {
+      "link": "https://www.loc.gov/pictures/related/?fi=format&q=Photographic%20prints--1910-1930.&co=cph",
+      "title": "Photographic prints--1910-1930."
+     }
+    ],
+    "genre": [
+     "Photographic prints--1910-1930"
+    ],
+    "id": "2005691065",
+    "language": [
+     "eng"
+    ],
+    "link": "https://www.loc.gov/pictures/item/2005691065/",
+    "location": [
+     "Mississippi--Biloxi"
+    ],
+    "marc": "https://www.loc.gov/pictures/item/2005691065/marc/",
+    "medium": [
+     "1 photographic print."
+    ],
+    "medium_brief": "1 photographic print.",
+    "mediums": [
+     "1 photographic print."
+    ],
+    "modified": "2016-04-21T10:59:55Z",
+    "notes": [
+     "Wittemann Collection.",
+     "Title from item."
+    ],
+    "other_control_numbers": [
+     "14065445"
+    ],
+    "place": [
+     {
+      "latitude": "",
+      "link": "https://www.loc.gov/pictures/related/?fi=place&q=Mississippi--Biloxi&co=cph",
+      "longitude": "",
+      "title": "Mississippi--Biloxi"
+     }
+    ],
+    "repository": "Library of Congress Prints and Photographs Division Washington, D.C. 20540 USA",
+    "reproduction_number": "LC-DIG-ppmsca-09074 (digital file from original photographic print)",
+    "resource_links": [
+     "//hdl.loc.gov/loc.pnp/ppmsca.09074"
+    ],
+    "rights_advisory": "Rights status not evaluated. For general information see \"Copyright and Other Restrictions ...,\"  https://www.loc.gov/rr/print/195_copr.html",
+    "rights_information": "Rights status not evaluated. For general information see \"Copyright and Other Restrictions ...,\"  https://www.loc.gov/rr/print/195_copr.html",
+    "service_low": "https://tile.loc.gov/storage-services/service/pnp/ppmsca/09000/09074_150px.jpg",
+    "service_medium": "https://tile.loc.gov/storage-services/service/pnp/ppmsca/09000/09074r.jpg",
+    "sort_date": "1920",
+    "source_created": "2005-08-05T00:00:00Z",
+    "source_modified": "2005-08-05T12:15:54Z",
+    "subject_headings": [
+     "Lighthouses--Mississippi--Biloxi--1910-1930.",
+     "Mississippi--Biloxi"
+    ],
+    "subjects": [
+     "Lighthouses--Mississippi--Biloxi--1910-1930"
+    ],
+    "summary": "Photograph showing lighthouse and pier.",
+    "thumb_gallery": "https://tile.loc.gov/storage-services/service/pnp/ppmsca/09000/09074_150px.jpg",
+    "title": "Lighthouse, Biloxi, Mississippi"
+   },
+   "language": [
+    "english"
+   ],
+   "location": [
+    "mississippi",
+    "biloxi"
+   ],
+   "mime_type": [
+    "image/gif",
+    "image/jpg",
+    "image/tif"
+   ],
+   "number": [
+    "2005691065",
+    "http://www.loc.gov/item/14065445",
+    "2005-08-05t12:15:54"
+   ],
+   "number_former_id": [
+    "http://www.loc.gov/item/14065445"
+   ],
+   "number_lccn": [
+    "2005691065"
+   ],
+   "number_source_modified": [
+    "2005-08-05t12:15:54"
+   ],
+   "online_format": [
+    "image"
+   ],
+   "original_format": [
+    "photo, print, drawing"
+   ],
+   "partof": [
+    "catalog",
+    "prints and photographs division",
+    "prints & photographs online catalog (library of congress)",
+    "miscellaneous items in high demand"
+   ],
+   "related": {
+    "neighbors": "https://www.loc.gov/pictures/related/?&co=cph&pk=2005691065&st=gallery&sb=call_number#focus"
+   },
+   "reproductions": "<p>If an image is displaying, you can download it yourself. (Some images \ndisplay only as thumbnails outside the Library of Congress because of rights \nconsiderations, but you have access to larger size images on site.)\n</p>\n\n<p>  \nAlternatively, you can purchase copies of various types through Library \nof Congress Duplication Services</a>.\n</p>\n\n<p> \n<ol>\n<p>\n<li><strong>If a digital image is displaying:</strong> The qualities of the digital image \npartially depend on whether it was made from the original or an \nintermediate such as a copy negative or transparency. If the Reproduction \nNumber field above includes a reproduction number that starts with \nLC-DIG..., then there is a digital image that was made directly \nfrom the original and is of sufficient resolution for most publication\n purposes.\n</li> \n</p>\n\n<li><strong>If there is information listed in the Reproduction Number field above:</strong> \nYou can use the reproduction number to purchase a copy from Duplication \nServices.  It will be made from the source listed in the parentheses after\n the number.  \n<p> \nIf only black-and-white (&quot;b&w&quot;) sources are listed and you \n desire a copy showing color or tint (assuming the original has any), \n you can generally purchase a quality copy of the original in color by \n citing the Call Number listed above and including the catalog record \n (&quot;About This Item&quot;) with your request.\n </p>\n</li>\n\n<li><strong>If there is no information listed in the Reproduction Number field \nabove:</strong> You can generally purchase a quality copy through \nDuplication Services. Cite the Call Number listed above and include the catalog record (&quot;About This Item&quot;) with \n your request.\n</li>\n</ol>\n</p>\n\n<p> \nPrice lists, contact information, and order forms are available on the\n <a href=\"//www.loc.gov/duplicationservices/\">Duplication Services Web site</a>.  \n</p>\n\n\n\n",
+   "resources": [
+    {
+     "caption": "digital file from original photographic print",
+     "files": 1,
+     "image": "https://tile.loc.gov/storage-services/service/pnp/ppmsca/09000/09074_150px.jpg",
+     "url": "https://www.loc.gov/resource/ppmsca.09074/"
+    }
+   ],
+   "shelf_id": "SSF - Lighthouses--Mississippi [item] [P&P]",
+   "site": [
+    "pictures",
+    "catalog"
+   ],
+   "subject": [
+    "lighthouses",
+    "biloxi",
+    "photographic prints",
+    "mississippi"
+   ],
+   "timestamp": "2022-05-02T02:20:15.840Z",
+   "title": "Lighthouse, Biloxi, Mississippi",
+   "unrestricted": true,
+   "url": "https://www.loc.gov/item/2005691065/"
+  },
+  {
+   "access_restricted": false,
+   "aka": [
+    "https://www.loc.gov/pictures/item/2019681337/",
+    "http://www.loc.gov/item/2019681337/",
+    "http://www.loc.gov/pictures/item/2019681337/",
+    "https://www.loc.gov/pictures/collection/thc/item/2019681337/",
+    "http://www.loc.gov/pictures/collection/thc/item/2019681337/",
+    "https://hdl.loc.gov/loc.pnp/thc.5a36925",
+    "https://hdl.loc.gov/loc.pnp/thc.5a36925",
+    "http://www.loc.gov/resource/thc.5a36925/",
+    "http://lccn.loc.gov/2019681337"
+   ],
+   "campaigns": [],
+   "contributor": [
+    "horydczak, theodor"
+   ],
+   "date": "1920-01-01",
+   "dates": [
+    "1920"
+   ],
+   "description": [
+    "1 negative : safety ; 5 x 7 in."
+   ],
+   "digitized": true,
+   "extract_timestamp": "2021-09-01T21:24:21.224Z",
+   "group": [
+    "thc",
+    "catalog-split-08",
+    "catalog",
+    "horydczak",
+    "main-catalog-split-08",
+    "main-catalog"
+   ],
+   "hassegments": false,
+   "id": "http://www.loc.gov/item/2019681337/",
+   "image_url": [
+    "https://tile.loc.gov/storage-services/service/pnp/thc/5a36000/5a36900/5a36925_150px.jpg#h=150&w=112",
+    "https://tile.loc.gov/storage-services/service/pnp/thc/5a36000/5a36900/5a36925t.gif#h=150&w=112",
+    "https://tile.loc.gov/storage-services/service/pnp/thc/5a36000/5a36900/5a36925r.jpg#h=420&w=314"
+   ],
+   "index": 2,
+   "item": {
+    "call_number": "LC-H812- L09-001 [P&P]",
+    "contributors": [
+     "Horydczak, Theodor, approximately 1890-1971, photographer."
+    ],
+    "control_number": "2019681337",
+    "created": "2019-10-29T07:11:23Z",
+    "created_published": "ca. 1920-ca. 1950.",
+    "created_published_date": "ca. 1920-ca. 1950.",
+    "creators": [
+     {
+      "link": "https://www.loc.gov/pictures/related/?fi=name&q=Horydczak%2C%20Theodor%2C%20approximately%201890-1971&co=thc",
+      "role": "photographer",
+      "title": "Horydczak, Theodor, approximately 1890-1971"
+     }
+    ],
+    "date": "ca. 1920-ca. 1950.",
+    "digital_id": [
+     "thc 5a36925 https://hdl.loc.gov/loc.pnp/thc.5a36925"
+    ],
+    "display_offsite": true,
+    "format": [
+     "still image"
+    ],
+    "formats": [
+     {
+      "link": "https://www.loc.gov/pictures/related/?fi=format&q=Acetate%20negatives.&co=thc",
+      "title": "Acetate negatives."
+     }
+    ],
+    "genre": [
+     "Acetate negatives"
+    ],
+    "id": "2019681337",
+    "language": [
+     "eng"
+    ],
+    "link": "https://www.loc.gov/pictures/item/2019681337/",
+    "marc": "https://www.loc.gov/pictures/item/2019681337/marc/",
+    "medium": [
+     "1 negative : safety ; 5 x 7 in."
+    ],
+    "medium_brief": "1 negative :",
+    "mediums": [
+     "1 negative : safety ; 5 x 7 in."
+    ],
+    "modified": "2019-10-29T07:11:23Z",
+    "notes": [
+     "Title and date from photographer's notebooks or subject index cards.",
+     "Credit line: Theodor Horydczak Collection, Library of Congress, Prints and Photographs Division.",
+     "General information about the Theodor Horydczak Collection is available at:  https://hdl.loc.gov/loc.pnp/pp.horyd",
+     "Forms part of: Horydczak photograph collection (Library of Congress)",
+     "Temp. note: Batch three."
+    ],
+    "number_former_id": [
+     "https://www.loc.gov/item/2019681337",
+     "https://www.loc.gov/item/thc1995010188/PP"
+    ],
+    "other_control_numbers": [
+     "21261183",
+     "thc1995010188/PP"
+    ],
+    "part_of": "Horydczak photograph collection (Library of Congress)",
+    "place": [
+     {
+      "latitude": "",
+      "link": "https://www.loc.gov/pictures/related/?fi=place&q=Florida--Saint%20Augustine&co=thc",
+      "longitude": "",
+      "title": "Florida--Saint Augustine"
+     }
+    ],
+    "repository": "Library of Congress Prints and Photographs Division Washington, D.C. 20540 USA",
+    "reproduction_number": "LC-H812-T-L09-001 (interpositive)",
+    "resource_links": [
+     "https://hdl.loc.gov/loc.pnp/thc.5a36925"
+    ],
+    "rights_advisory": "Publication may be restricted. For information see: \"Theodor Horydczak Collection\" https://hdl.loc.gov/loc.pnp/res.100.hory",
+    "rights_information": "Publication may be restricted. For information see: \"Theodor Horydczak Collection\" https://hdl.loc.gov/loc.pnp/res.100.hory",
+    "service_low": "https://tile.loc.gov/storage-services/service/pnp/thc/5a36000/5a36900/5a36925_150px.jpg",
+    "service_medium": "https://tile.loc.gov/storage-services/service/pnp/thc/5a36000/5a36900/5a36925r.jpg",
+    "sort_date": "1920",
+    "source_collection": [
+     "Horydczak photograph collection (Library of Congress)"
+    ],
+    "source_created": "1993-03-29T00:00:00Z",
+    "source_modified": "2019-10-22T13:04:58Z",
+    "subject_headings": [
+     "Lighthouses.",
+     "United States--Florida--Saint Augustine.",
+     "Florida--Saint Augustine"
+    ],
+    "subjects": [
+     "Lighthouses",
+     "United States--Florida--Saint Augustine"
+    ],
+    "thumb_gallery": "https://tile.loc.gov/storage-services/service/pnp/thc/5a36000/5a36900/5a36925_150px.jpg",
+    "title": "Lighthouses. St. Augustine, Florida, lighthouse"
+   },
+   "language": [
+    "english"
+   ],
+   "location": [
+    "florida",
+    "saint augustine",
+    "united states"
+   ],
+   "location_city": [
+    "saint augustine"
+   ],
+   "location_country": [
+    "united states"
+   ],
+   "location_state": [
+    "florida"
+   ],
+   "mime_type": [
+    "image/gif",
+    "image/jpg",
+    "image/tif"
+   ],
+   "number": [
+    "http://www.loc.gov/item/thc1995010188/pp",
+    "2019681337",
+    "http://www.loc.gov/item/2019681337",
+    "2019-10-22t13:04:58",
+    "http://www.loc.gov/item/21261183"
+   ],
+   "number_former_id": [
+    "http://www.loc.gov/item/21261183",
+    "http://www.loc.gov/item/thc1995010188/pp",
+    "http://www.loc.gov/item/2019681337"
+   ],
+   "number_lccn": [
+    "2019681337"
+   ],
+   "number_source_modified": [
+    "2019-10-22t13:04:58"
+   ],
+   "online_format": [
+    "image"
+   ],
+   "original_format": [
+    "photo, print, drawing"
+   ],
+   "partof": [
+    "prints & photographs online catalog (library of congress)",
+    "horydczak collection",
+    "catalog",
+    "prints and photographs division",
+    "american memory"
+   ],
+   "related": {
+    "neighbors": "https://www.loc.gov/pictures/related/?&co=thc&pk=2019681337&st=gallery&sb=call_number#focus"
+   },
+   "reproductions": "<p>If an image is displaying, you can download it yourself. (Some images \ndisplay only as thumbnails outside the Library of Congress because of rights \nconsiderations, but you have access to larger size images on site.)\n</p>\n\n<p>  \nAlternatively, you can purchase copies of various types through Library \nof Congress Duplication Services</a>.\n</p>\n\n<p> \n<ol>\n<p>\n<li><strong>If a digital image is displaying:</strong> The qualities of the digital image \npartially depend on whether it was made from the original or an \nintermediate such as a copy negative or transparency. If the Reproduction \nNumber field above includes a reproduction number that starts with \nLC-DIG..., then there is a digital image that was made directly \nfrom the original and is of sufficient resolution for most publication\n purposes.\n</li> \n</p>\n\n<li><strong>If there is information listed in the Reproduction Number field above:</strong> \nYou can use the reproduction number to purchase a copy from Duplication \nServices.  It will be made from the source listed in the parentheses after\n the number.  \n<p> \nIf only black-and-white (&quot;b&w&quot;) sources are listed and you \n desire a copy showing color or tint (assuming the original has any), \n you can generally purchase a quality copy of the original in color by \n citing the Call Number listed above and including the catalog record \n (&quot;About This Item&quot;) with your request.\n </p>\n</li>\n\n<li><strong>If there is no information listed in the Reproduction Number field \nabove:</strong> You can generally purchase a quality copy through \nDuplication Services. Cite the Call Number listed above and include the catalog record (&quot;About This Item&quot;) with \n your request.\n</li>\n</ol>\n</p>\n\n<p> \nPrice lists, contact information, and order forms are available on the\n <a href=\"//www.loc.gov/duplicationservices/\">Duplication Services Web site</a>.  \n</p>\n\n\n\n",
+   "resources": [
+    {
+     "caption": "intermediary roll film",
+     "files": 1,
+     "image": "https://tile.loc.gov/storage-services/service/pnp/thc/5a36000/5a36900/5a36925_150px.jpg",
+     "url": "https://www.loc.gov/resource/thc.5a36925/"
+    }
+   ],
+   "shelf_id": "LC-H812- L09-001 [P&P]",
+   "site": [
+    "pictures",
+    "catalog"
+   ],
+   "subject": [
+    "saint augustine",
+    "united states",
+    "lighthouses",
+    "florida",
+    "acetate negatives"
+   ],
+   "timestamp": "2022-04-27T13:16:15.467Z",
+   "title": "Lighthouses. St. Augustine, Florida, lighthouse",
+   "unrestricted": true,
+   "url": "https://www.loc.gov/item/2019681337/"
+  }
+ ],
+ "pagination": {
+  "current": 1,
+  "first": null,
+  "from": 1,
+  "last": "https://www.loc.gov/photos/?c=2&fo=json&q=lighthouse&sp=4",
+  "next": "https://www.loc.gov/photos/?c=2&fo=json&q=lighthouse&sp=2",
+  "of": 1437,
+  "page_list": [
+   {
+    "number": 1,
+    "url": null
+   },
+   {
+    "number": 2,
+    "url": "https://www.loc.gov/photos/?c=2&fo=json&q=lighthouse&sp=2"
+   },
+   {
+    "number": 3,
+    "url": "https://www.loc.gov/photos/?c=2&fo=json&q=lighthouse&sp=3"
+   },
+   {
+    "number": "...",
+    "url": "https://www.loc.gov/photos/?c=2&fo=json&q=lighthouse&sp=4"
+   }
+  ],
+  "perpage": 2,
+  "perpage_options": [
+   25,
+   50,
+   100,
+   150
+  ],
+  "previous": null,
+  "results": "1 - 2",
+  "to": 2,
+  "total": 719
+ }
+}

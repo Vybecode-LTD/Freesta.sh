@@ -1,0 +1,426 @@
+{
+ "icons": [
+  "mdi:arrow",
+  "uil:arrow",
+  "weui:arrow-filled",
+  "weui:arrow-outlined",
+  "reicon:arrow",
+  "reicon:arrow-filled",
+  "glyphs:arrow",
+  "glyphs:arrow-bold",
+  "glyphs:arrow-duo",
+  "glyphs:arrow-outline",
+  "glyphs:arrow-round",
+  "glyphs:arrow-solid",
+  "glyphs-poly:arrow",
+  "glyphs-poly:arrow-round",
+  "glyphs-poly:arrow-solid",
+  "teenyicons:arrow-outline",
+  "teenyicons:arrow-solid",
+  "clarity:arrow-line",
+  "memory:arrow",
+  "maki:arrow",
+  "gis:arrow",
+  "at-icons:arrow-x",
+  "gis:arrow-o",
+  "fontisto:arrow-h",
+  "fontisto:arrow-v",
+  "subway:round-arrow-1",
+  "subway:round-arrow-2",
+  "subway:round-arrow-3",
+  "subway:round-arrow-4",
+  "subway:round-arrow-5",
+  "subway:round-arrow-6",
+  "mdi:arrow-up"
+ ],
+ "total": 32,
+ "limit": 32,
+ "start": 0,
+ "collections": {
+  "mdi": {
+   "name": "Material Design Icons",
+   "total": 7447,
+   "author": {
+    "name": "Pictogrammers",
+    "url": "https://github.com/Templarian/MaterialDesign"
+   },
+   "license": {
+    "title": "Apache 2.0",
+    "spdx": "Apache-2.0",
+    "url": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE"
+   },
+   "samples": [
+    "account-check",
+    "bell-alert-outline",
+    "calendar-edit",
+    "skip-previous",
+    "home-variant",
+    "lock-open-outline"
+   ],
+   "height": 24,
+   "category": "Material",
+   "tags": [
+    "Precise Shapes",
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "uil": {
+   "name": "Unicons",
+   "total": 1215,
+   "version": "4.2.0",
+   "author": {
+    "name": "Iconscout",
+    "url": "https://github.com/Iconscout/unicons"
+   },
+   "license": {
+    "title": "Apache 2.0",
+    "spdx": "Apache-2.0",
+    "url": "https://github.com/Iconscout/unicons/blob/master/LICENSE"
+   },
+   "samples": [
+    "arrow-circle-right",
+    "chat-bubble-user",
+    "edit-alt",
+    "grids",
+    "ellipsis-v",
+    "bars"
+   ],
+   "height": 24,
+   "category": "UI 24px",
+   "tags": [
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "weui": {
+   "name": "WeUI Icon",
+   "total": 162,
+   "author": {
+    "name": "WeUI",
+    "url": "https://github.com/weui/weui-icon"
+   },
+   "license": {
+    "title": "MIT",
+    "spdx": "MIT"
+   },
+   "samples": [
+    "search-outlined",
+    "clip-filled",
+    "done-filled",
+    "more-filled",
+    "arrow-filled",
+    "play-outlined"
+   ],
+   "height": 24,
+   "category": "UI 24px",
+   "tags": [
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "reicon": {
+   "name": "Reicon",
+   "total": 6590,
+   "version": "1.4.1",
+   "author": {
+    "name": "REICON",
+    "url": "https://github.com/dqev/reicon"
+   },
+   "license": {
+    "title": "MIT",
+    "spdx": "MIT",
+    "url": "https://github.com/dqev/reicon/blob/main/LICENSE"
+   },
+   "samples": [
+    "ruler4",
+    "cart-add2-filled",
+    "search-normal2",
+    "command-filled",
+    "sort3",
+    "user2-filled"
+   ],
+   "height": 24,
+   "category": "UI 24px",
+   "tags": [
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "glyphs": {
+   "name": "Glyphs",
+   "total": 3452,
+   "author": {
+    "name": "Goran Spasojevic",
+    "url": "https://github.com/gorango/glyphs"
+   },
+   "license": {
+    "title": "MIT",
+    "spdx": "MIT",
+    "url": "https://github.com/gorango/glyphs/blob/main/license"
+   },
+   "samples": [
+    "mouse-2-bold",
+    "object-select",
+    "comment-1-duo",
+    "asterisk-outline",
+    "search-1-duo",
+    "bandage"
+   ],
+   "category": "UI Other / Mixed Grid",
+   "tags": [
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "glyphs-poly": {
+   "name": "Glyphs Poly",
+   "total": 863,
+   "author": {
+    "name": "Goran Spasojevic",
+    "url": "https://github.com/gorango/glyphs"
+   },
+   "license": {
+    "title": "MIT",
+    "spdx": "MIT",
+    "url": "https://github.com/gorango/glyphs/blob/main/license"
+   },
+   "samples": [
+    "mouse-2",
+    "object-select",
+    "comment-1",
+    "asterisk",
+    "search-1",
+    "bandage"
+   ],
+   "category": "UI Other / Mixed Grid",
+   "tags": [
+    "Has Padding",
+    "Uses Stroke"
+   ],
+   "palette": true
+  },
+  "teenyicons": {
+   "name": "Teenyicons",
+   "total": 1200,
+   "version": "0.4.1",
+   "author": {
+    "name": "smhmd",
+    "url": "https://github.com/teenyicons/teenyicons"
+   },
+   "license": {
+    "title": "MIT",
+    "spdx": "MIT",
+    "url": "https://github.com/teenyicons/teenyicons/blob/master/LICENSE"
+   },
+   "samples": [
+    "face-id-solid",
+    "user-outline",
+    "page-break-outline",
+    "hexagon-outline",
+    "send-left-outline",
+    "frame-solid"
+   ],
+   "height": 15,
+   "category": "UI Other / Mixed Grid",
+   "tags": [
+    "Precise Shapes"
+   ],
+   "palette": false
+  },
+  "clarity": {
+   "name": "Clarity",
+   "total": 1103,
+   "author": {
+    "name": "VMware",
+    "url": "https://github.com/vmware/clarity"
+   },
+   "license": {
+    "title": "MIT",
+    "spdx": "MIT",
+    "url": "https://github.com/vmware/clarity-assets/blob/master/LICENSE"
+   },
+   "samples": [
+    "help-outline-badged",
+    "heart-broken-solid",
+    "shield-outline-alerted",
+    "bookmark-solid",
+    "check-line",
+    "tablet-solid"
+   ],
+   "height": 36,
+   "displayHeight": 18,
+   "category": "UI Other / Mixed Grid",
+   "tags": [
+    "Precise Shapes",
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "memory": {
+   "name": "Memory Icons",
+   "total": 651,
+   "author": {
+    "name": "Pictogrammers",
+    "url": "https://github.com/Pictogrammers/Memory"
+   },
+   "license": {
+    "title": "Apache 2.0",
+    "spdx": "Apache-2.0",
+    "url": "https://github.com/Pictogrammers/Memory/blob/main/LICENSE"
+   },
+   "samples": [
+    "chart-bar",
+    "application",
+    "message",
+    "card-text",
+    "monitor",
+    "poll"
+   ],
+   "height": 22,
+   "category": "UI Other / Mixed Grid",
+   "tags": [
+    "Precise Shapes",
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "maki": {
+   "name": "Maki",
+   "total": 215,
+   "version": "8.2.0",
+   "author": {
+    "name": "Mapbox",
+    "url": "https://github.com/mapbox/maki"
+   },
+   "license": {
+    "title": "CC0",
+    "spdx": "CC0-1.0",
+    "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+   },
+   "samples": [
+    "entrance-alt1",
+    "clothing-store",
+    "grocery",
+    "roadblock",
+    "monument",
+    "shelter"
+   ],
+   "height": 15,
+   "category": "Flags / Maps",
+   "tags": [
+    "Precise Shapes",
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "gis": {
+   "name": "Font-GIS",
+   "total": 367,
+   "version": "1.0.6",
+   "author": {
+    "name": "Jean-Marc Viglino",
+    "url": "https://github.com/viglino/font-gis"
+   },
+   "license": {
+    "title": "CC BY 4.0",
+    "spdx": "CC-BY-4.0",
+    "url": "https://github.com/Viglino/font-gis/blob/main/LICENSE-CC-BY.md"
+   },
+   "samples": [
+    "layer-o",
+    "poi-o",
+    "bbox",
+    "flag-start",
+    "location-arrow-o",
+    "polygon"
+   ],
+   "category": "Flags / Maps",
+   "palette": false
+  },
+  "at-icons": {
+   "name": "@icons",
+   "total": 642,
+   "author": {
+    "name": "Valentin Fossati",
+    "url": "https://github.com/Voxybuns/at-icons"
+   },
+   "license": {
+    "title": "MIT",
+    "spdx": "MIT",
+    "url": "https://github.com/Voxybuns/at-icons/blob/main/LICENSE"
+   },
+   "samples": [
+    "shield",
+    "checkerboard",
+    "ladder",
+    "sprout",
+    "no-entry",
+    "moon"
+   ],
+   "height": 16,
+   "category": "UI 16px / 32px",
+   "tags": [
+    "Precise Shapes",
+    "Has Padding"
+   ],
+   "palette": false
+  },
+  "fontisto": {
+   "name": "Fontisto",
+   "total": 615,
+   "version": "3.0.4",
+   "author": {
+    "name": "Kenan Gündoğan",
+    "url": "https://github.com/kenangundogan/fontisto"
+   },
+   "license": {
+    "title": "MIT",
+    "spdx": "MIT",
+    "url": "https://github.com/kenangundogan/fontisto/blob/master/LICENSE"
+   },
+   "samples": [
+    "prescription",
+    "heartbeat-alt",
+    "rain",
+    "navigate",
+    "filter",
+    "home"
+   ],
+   "height": 24,
+   "category": "Archive / Unmaintained",
+   "tags": [
+    "Precise Shapes"
+   ],
+   "palette": false
+  },
+  "subway": {
+   "name": "Subway Icon Set",
+   "total": 306,
+   "author": {
+    "name": "Mariusz Ostrowski",
+    "url": "https://github.com/mariuszostrowski/subway"
+   },
+   "license": {
+    "title": "CC BY 4.0",
+    "spdx": "CC-BY-4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+   },
+   "samples": [
+    "call-2",
+    "power-batton",
+    "admin",
+    "backward",
+    "subtraction-1",
+    "file"
+   ],
+   "height": 16,
+   "category": "Archive / Unmaintained",
+   "palette": false
+  }
+ },
+ "request": {
+  "query": "arrow",
+  "limit": "32"
+ }
+}

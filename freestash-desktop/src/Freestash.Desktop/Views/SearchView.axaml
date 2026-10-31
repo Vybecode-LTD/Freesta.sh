@@ -1,0 +1,151 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Freestash.Desktop.ViewModels"
+             xmlns:v="using:Freestash.Desktop.Views"
+             xmlns:c="using:Freestash.Desktop.Controls"
+             x:Class="Freestash.Desktop.Views.SearchView"
+             x:DataType="vm:SearchViewModel">
+  <Grid ColumnDefinitions="*,Auto">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="30,26,22,0">
+
+      <!-- search bar -->
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBox x:Name="SearchBox" Classes="hero" Text="{Binding Query}"
+                 PlaceholderText="Search ~20 open sources: “brutalist concrete”, “rain on a tin roof”, “art deco poster”…">
+          <TextBox.InnerLeftContent>
+            <c:Icon Data="{StaticResource IconSearch}" Size="19" Margin="18,0,12,0" Classes="faint" />
+          </TextBox.InnerLeftContent>
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding SearchCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
+        <Button Grid.Column="1" Classes="accent" Margin="12,0,0,0" Padding="26,0" Height="54" CornerRadius="14"
+                Command="{Binding SearchCommand}" FontSize="14.5">
+          <StackPanel Orientation="Horizontal" Spacing="9">
+            <c:Icon Data="{StaticResource IconSparkle}" Size="16" />
+            <TextBlock Text="Search" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </Grid>
+
+      <!-- filters -->
+      <StackPanel Grid.Row="1" Margin="2,20,0,0" Spacing="12">
+        <StackPanel Orientation="Horizontal" Spacing="14">
+          <TextBlock Text="MEDIA" Classes="caption" Width="52" VerticalAlignment="Center" />
+          <ItemsControl ItemsSource="{Binding Media}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:OptionBase">
+                <ToggleButton Classes="chip" Content="{Binding Label}" IsChecked="{Binding IsSelected}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="14">
+          <TextBlock Text="USE" Classes="caption" Width="52" VerticalAlignment="Center" />
+          <Border Classes="inset" CornerRadius="999" Padding="3">
+            <ItemsControl x:Name="UseCaseItems" ItemsSource="{Binding UseCases}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:OptionBase">
+                  <RadioButton Theme="{StaticResource SegmentTheme}" GroupName="search-use" Content="{Binding Label}" IsChecked="{Binding IsSelected}" ToolTip.Tip="{Binding Hint}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Border>
+          <TextBlock Text="{Binding UseHint}" Classes="muted small" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="14">
+          <TextBlock Text="SHOW" Classes="caption" Width="52" VerticalAlignment="Center" />
+          <Border Classes="inset" CornerRadius="999" Padding="3">
+            <ItemsControl x:Name="TierItems" ItemsSource="{Binding Tiers}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:OptionBase">
+                  <RadioButton Theme="{StaticResource SegmentTheme}" GroupName="search-tier" Content="{Binding Label}" IsChecked="{Binding IsSelected}" ToolTip.Tip="{Binding Hint}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Border>
+        </StackPanel>
+      </StackPanel>
+
+      <!-- source health + summary -->
+      <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,18,0,12">
+        <ItemsControl ItemsSource="{Binding SourceStatuses}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="6" LineSpacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:SourceStatusViewModel">
+              <Border Classes="pill" ToolTip.Tip="{Binding Tooltip}" Background="{DynamicResource SurfaceBrush}">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                  <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{DynamicResource GreenBrush}" IsVisible="{Binding Ok}" />
+                  <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{DynamicResource RedBrush}" IsVisible="{Binding !Ok}" />
+                  <TextBlock Text="{Binding Provider}" Foreground="{DynamicResource TextSecondaryBrush}" />
+                  <TextBlock Text="{Binding CountText}" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <ProgressBar IsIndeterminate="True" Width="70" IsVisible="{Binding IsSearching}" />
+          <TextBlock Text="{Binding ResultSummary}" Classes="mono faint" />
+        </StackPanel>
+      </Grid>
+
+      <!-- results / states -->
+      <Panel Grid.Row="3">
+        <ScrollViewer x:Name="ResultsScroll" Padding="0,4,8,24">
+          <ItemsControl ItemsSource="{Binding Results}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><c:AdaptiveGrid MinItemWidth="228" ItemHeight="300" Spacing="16" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:AssetCardViewModel">
+                <Button Classes="asset" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                        Command="{Binding $parent[UserControl].((vm:SearchViewModel)DataContext).OpenCommand}" CommandParameter="{Binding}">
+                  <v:AssetCardView />
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <!-- first-run hero -->
+        <StackPanel IsVisible="{Binding ShowEmptyHero}" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="620" Spacing="14" Margin="0,0,0,60">
+          <Border Width="64" Height="64" CornerRadius="20" Classes="raised" HorizontalAlignment="Center">
+            <c:Icon Data="{StaticResource IconSparkle}" Size="28" Classes="accent" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <TextBlock Text="Every result is scored for what you'll do with it" Classes="display" TextAlignment="Center" TextWrapping="Wrap" />
+          <TextBlock Classes="muted" TextAlignment="Center" TextWrapping="Wrap" LineHeight="21"
+                     Text="The same photo can be green on a demo site and red inside a template download. Pick the use, then search across museums, NASA, Openverse, Poly Haven, fonts, icons and more." />
+          <ItemsControl ItemsSource="{Binding Suggestions}" HorizontalAlignment="Center" Margin="0,8,0,0">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="8" LineSpacing="8" HorizontalAlignment="Center" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="x:String">
+                <Button Classes="small" Content="{Binding}" CornerRadius="999"
+                        Command="{Binding $parent[UserControl].((vm:SearchViewModel)DataContext).SuggestCommand}" CommandParameter="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel IsVisible="{Binding ShowNoResults}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8" Margin="0,0,0,80">
+          <TextBlock Text="Nothing cleared the filter" Classes="h2" HorizontalAlignment="Center" />
+          <TextBlock Text="Try “+ Yellow”, another use case, more media types, or broader words." Classes="muted" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <Border IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" VerticalAlignment="Top"
+                Background="{DynamicResource RedSoftBrush}" CornerRadius="12" Padding="14,10">
+          <TextBlock Text="{Binding Error}" Foreground="{DynamicResource RedBrush}" TextWrapping="Wrap" />
+        </Border>
+      </Panel>
+    </Grid>
+
+    <!-- detail panel -->
+    <Border Grid.Column="1" Width="472" IsVisible="{Binding HasDetail}" Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1,0,0,0">
+      <v:AssetDetailView DataContext="{Binding Detail}" />
+    </Border>
+  </Grid>
+</UserControl>

@@ -1,0 +1,360 @@
+{
+ "offset": 0,
+ "rows": 2,
+ "found": 4,
+ "items": [
+  {
+   "id": "1170023508_object",
+   "created": "2020-03-21T12:54:07Z",
+   "modified": "2025-07-11T17:36:21Z",
+   "responsible_department": "Den Kongelige Maleri- og Skulptursamling",
+   "acquisition_date": "1866-01-01T00:00:00Z",
+   "acquisition_date_precision": "1866-12-31",
+   "content_subject": [
+    "England"
+   ],
+   "dimensions": [
+    {
+     "notes": "1140 x 1570 mm",
+     "part": "Netto",
+     "type": "højde",
+     "unit": "centimeter",
+     "value": "114"
+    },
+    {
+     "notes": "1140 x 1570 mm",
+     "part": "Netto",
+     "type": "bredde",
+     "unit": "centimeter",
+     "value": "157"
+    },
+    {
+     "part": "Brutto",
+     "type": "højde",
+     "unit": "centimeter",
+     "value": "135"
+    },
+    {
+     "part": "Brutto",
+     "type": "bredde",
+     "unit": "centimeter",
+     "value": "178.3"
+    },
+    {
+     "part": "Brutto",
+     "type": "dybde",
+     "unit": "centimeter",
+     "value": "8"
+    }
+   ],
+   "documentation": [
+    {
+     "title": "C.W. Eckersberg og hans elever: udstilling i anledning af 200 året for kunstnerens fødsel: 2. januar - 10. april 1983",
+     "author": "Ubekendt",
+     "notes": "kat. 210.",
+     "shelfmark": "50055",
+     "year_of_publication": "cop. 1983"
+    },
+    {
+     "title": "Kunstens Historie i Danmark",
+     "author": "Ubekendt",
+     "notes": "red. Karl Madsen, heri: Emil Hannover, \"Evropæerne\", p. 316.",
+     "shelfmark": "C 2221",
+     "year_of_publication": "1901-1907"
+    },
+    {
+     "title": "Jeg er hav - Holger Drachmann med pen og pensel",
+     "author": "Mette Harbo Lehmann",
+     "notes": "fig. 21, afb. p. 140",
+     "year_of_publication": "2019"
+    }
+   ],
+   "inscriptions": [
+    {
+     "content": "Anton Melbye pinx Kjøbenhavn 1846",
+     "type": "Signatur"
+    }
+   ],
+   "materials": [
+    "Lærred"
+   ],
+   "object_names": [
+    {
+     "name": "Maleri"
+    }
+   ],
+   "production": [
+    {
+     "creator": "Melbye, Anton",
+     "creator_forename": "Anton",
+     "creator_surname": "Melbye",
+     "creator_date_of_birth": "1818-02-13T00:00:00.000Z",
+     "creator_date_of_death": "1875-01-10T00:00:00.000Z",
+     "creator_nationality": "Dansk",
+     "creator_gender": "MALE",
+     "creator_lref": "332_person"
+    }
+   ],
+   "production_date": [
+    {
+     "start": "1846-01-01T00:00:00.000Z",
+     "end": "1846-12-31T00:00:00.000Z",
+     "period": "1846"
+    }
+   ],
+   "techniques": [
+    "Olie på lærred"
+   ],
+   "titles": [
+    {
+     "title": "Eddystone fyrtårn",
+     "type": "museumstitel",
+     "language": "dansk"
+    }
+   ],
+   "number_of_parts": 1,
+   "object_history_note": [
+    "Erhvervet af løjtnant Mathiesen før udstillingen på Charlottenborg i 1846 (jf. udst.kat. nr. 152); solgt af oberst H.W. Mathiesen til Den Kongelige Malerisamling i 1866."
+   ],
+   "object_number": "KMS851",
+   "object_url": "https://api.smk.dk/api/v1/art?object_number=KMS851",
+   "frontend_url": "https://open.smk.dk/artwork/image/KMS851",
+   "iiif_manifest": "https://api.smk.dk/api/v1/iiif/manifest?id=KMS851",
+   "enrichment_url": "https://enrichment.api.smk.dk/api/enrichment/KMS851",
+   "similar_images_url": "https://similar.api.smk.dk/similar/?object_number=KMS851",
+   "production_dates_notes": [
+    "Værkdatering: 1846"
+   ],
+   "public_domain": true,
+   "rights": "https://creativecommons.org/publicdomain/mark/1.0/",
+   "on_display": false,
+   "alternative_images": [
+    {
+     "mime_type": "image/tiff",
+     "iiif_id": "https://iip.smk.dk/iiif/jp2/mp48sd74r_kms851.tif.jp2",
+     "iiif_info": "https://iip.smk.dk/iiif/jp2/mp48sd74r_kms851.tif.jp2/info.json",
+     "width": 4488,
+     "height": 3486,
+     "size": 16194507.586206896,
+     "thumbnail": "https://iip-thumb.smk.dk/iiif/jp2/mp48sd74r_kms851.tif.jp2/full/!1024,/0/default.jpg",
+     "native": "https://iip.smk.dk/iiif/jp2/mp48sd74r_kms851.tif.jp2/full/full/0/native.jpg",
+     "orientation": "landscape"
+    }
+   ],
+   "image_mime_type": "image/tiff",
+   "image_iiif_id": "https://iip.smk.dk/iiif/jp2/vq27zr71t_kms851.tif.reconstructed.tif.jp2",
+   "image_iiif_info": "https://iip.smk.dk/iiif/jp2/vq27zr71t_kms851.tif.reconstructed.tif.jp2/info.json",
+   "image_width": 4488,
+   "image_height": 3481,
+   "image_size": 7031350,
+   "image_thumbnail": "https://iip-thumb.smk.dk/iiif/jp2/vq27zr71t_kms851.tif.reconstructed.tif.jp2/full/!1024,/0/default.jpg",
+   "image_native": "https://api.smk.dk/api/v1/download/W3siaW1nX3VybCI6Imh0dHBzOi8vaWlwLnNtay5kay9paWlmL2pwMi92cTI3enI3MXRfa21zODUxLnRpZi5yZWNvbnN0cnVjdGVkLnRpZi5qcDIvZnVsbC9mdWxsLzAvbmF0aXZlLmpwZyIsInB1YmxpY19kb21haW4iOnRydWUsIm9iamVjdF9udW1iZXIiOiJLTVM4NTEiLCJudW0iOiIifV0=/KMS851.jpg",
+   "image_cropped": true,
+   "image_orientation": "landscape",
+   "image_hq": true,
+   "has_3d_file": false,
+   "has_image": true,
+   "colors": [
+    "#555555",
+    "#666666",
+    "#333333",
+    "#777777",
+    "#bbbbbb"
+   ],
+   "suggested_bg_color": [
+    "#777777"
+   ],
+   "entropy": 9.562851,
+   "contrast": 2.0919404,
+   "saturation": 1.0072522,
+   "colortemp": 3.0665963,
+   "brightness": 5.8748136,
+   "artist": [
+    "Anton Melbye"
+   ]
+  },
+  {
+   "id": "1170034446_object",
+   "created": "2020-03-21T15:13:26Z",
+   "modified": "2025-08-07T14:12:00Z",
+   "responsible_department": "Den Kongelige Kobberstiksamling",
+   "collection": [
+    "Gammel bestand"
+   ],
+   "acquisition_date": "1787-01-01T00:00:00Z",
+   "acquisition_date_precision": "Før 1887",
+   "dimensions": [
+    {
+     "notes": "211 x 268 mm",
+     "part": "plademaal",
+     "type": "højde",
+     "unit": "millimeter",
+     "value": "211"
+    },
+    {
+     "notes": "211 x 268 mm",
+     "part": "plademaal",
+     "type": "bredde",
+     "unit": "millimeter",
+     "value": "268"
+    }
+   ],
+   "documentation": [
+    {
+     "title": "The New Hollstein Dutch and Flemish etchings, engravings and woodcuts 1450-1700, Maarten van Heemskerck, part I-II",
+     "author": "Ilja M. Veldman",
+     "notes": "514 I",
+     "shelfmark": "55173",
+     "year_of_publication": "1993-1994"
+    },
+    {
+     "title": "The New Hollstein Dutch and Flemish etchings, engravings and woodcuts 1450-1700, Philips Galle, part I-IV",
+     "author": "Manfred Sellink",
+     "notes": "479 I",
+     "shelfmark": "C 39355",
+     "year_of_publication": "2001"
+    }
+   ],
+   "inscriptions": [
+    {
+     "content": "Titel f.o. midtfor: \"PHAROS\"; og latinsk tekst i 2 x 2 linier i margin f.n.: \"CVRSIBUS [...] SVBIRENT\". Alt i pladen.",
+     "type": "Påskrift"
+    },
+    {
+     "content": "Påskrift midtfor: \"P Galle / NH 514 / TIB 101.2\"; og f.n.t.v.: \"D44\". Alt med blyant.",
+     "type": "Påskrift"
+    }
+   ],
+   "object_names": [
+    {
+     "name": "Kobberstik"
+    },
+    {
+     "name": "Grafik"
+    }
+   ],
+   "part_of": [
+    "KKSgb10002"
+   ],
+   "production": [
+    {
+     "creator": "Galle, Philips",
+     "creator_forename": "Philips",
+     "creator_surname": "Galle",
+     "creator_date_of_birth": "1537-01-01T00:00:00.000Z",
+     "creator_date_of_death": "1612-01-01T00:00:00.000Z",
+     "creator_nationality": "Flamsk, Hollandsk",
+     "creator_gender": "MALE",
+     "creator_lref": "22971_person"
+    },
+    {
+     "creator": "Heemskerck, Maarten van",
+     "creator_forename": "Maarten van",
+     "creator_surname": "Heemskerck",
+     "creator_date_of_birth": "1498-01-01T00:00:00.000Z",
+     "creator_date_of_death": "1574-01-01T00:00:00.000Z",
+     "creator_nationality": "Nederlandsk",
+     "creator_gender": "MALE",
+     "creator_qualifier": "Inventor",
+     "creator_role": "Efter",
+     "creator_lref": "30177_person"
+    },
+    {
+     "creator": "Galle, Philips",
+     "creator_forename": "Philips",
+     "creator_surname": "Galle",
+     "creator_date_of_birth": "1537-01-01T00:00:00.000Z",
+     "creator_date_of_death": "1612-01-01T00:00:00.000Z",
+     "creator_nationality": "Flamsk, Hollandsk",
+     "creator_gender": "MALE",
+     "creator_role": "Udgiver",
+     "creator_lref": "22971_person"
+    }
+   ],
+   "production_date": [
+    {
+     "start": "1572-01-01T00:00:00.000Z",
+     "end": "1572-12-31T00:00:00.000Z",
+     "period": "1572"
+    }
+   ],
+   "techniques": [
+    "Kobberstik"
+   ],
+   "titles": [
+    {
+     "title": "Fyrtårnet i Alexandria",
+     "type": "beskrivelse",
+     "language": "dansk"
+    },
+    {
+     "title": "Verdens otte vidundere",
+     "type": "serietitel",
+     "language": "dansk"
+    }
+   ],
+   "object_number": "KKSgb10002/2",
+   "object_url": "https://api.smk.dk/api/v1/art?object_number=KKSgb10002/2",
+   "frontend_url": "https://open.smk.dk/artwork/image/KKSgb10002/2",
+   "iiif_manifest": "https://api.smk.dk/api/v1/iiif/manifest?id=KKSgb10002/2",
+   "enrichment_url": "https://enrichment.api.smk.dk/api/enrichment/KKSgb10002/2",
+   "similar_images_url": "https://similar.api.smk.dk/similar/?object_number=KKSgb10002/2",
+   "print_state": [
+    "I"
+   ],
+   "production_dates_notes": [
+    "Værkdatering: (1572)"
+   ],
+   "work_status": [
+    "Del af serie"
+   ],
+   "public_domain": true,
+   "rights": "https://creativecommons.org/publicdomain/mark/1.0/",
+   "on_display": false,
+   "image_mime_type": "image/tiff",
+   "image_iiif_id": "https://iip.smk.dk/iiif/jp2/2801pm00x_kksgb10002_2.tif.jp2",
+   "image_iiif_info": "https://iip.smk.dk/iiif/jp2/2801pm00x_kksgb10002_2.tif.jp2/info.json",
+   "image_width": 6137,
+   "image_height": 4997,
+   "image_size": 31733671,
+   "image_thumbnail": "https://iip-thumb.smk.dk/iiif/jp2/2801pm00x_kksgb10002_2.tif.jp2/full/!1024,/0/default.jpg",
+   "image_native": "https://api.smk.dk/api/v1/download/W3siaW1nX3VybCI6Imh0dHBzOi8vaWlwLnNtay5kay9paWlmL2pwMi8yODAxcG0wMHhfa2tzZ2IxMDAwMl8yLnRpZi5qcDIvZnVsbC9mdWxsLzAvbmF0aXZlLmpwZyIsInB1YmxpY19kb21haW4iOnRydWUsIm9iamVjdF9udW1iZXIiOiJLS1NnYjEwMDAyLzIiLCJudW0iOiIifV0=/KKSgb10002/2.jpg",
+   "image_cropped": true,
+   "image_orientation": "landscape",
+   "image_hq": true,
+   "has_3d_file": false,
+   "has_image": true,
+   "colors": [
+    "#bbbbbb",
+    "#666666"
+   ],
+   "suggested_bg_color": [
+    "#666666"
+   ],
+   "entropy": 9.784391,
+   "contrast": 3.4955027,
+   "saturation": 1.3798151,
+   "colortemp": 3.4489012,
+   "brightness": 7.4308667,
+   "has_text": true,
+   "artist": [
+    "Philips Galle"
+   ]
+  }
+ ],
+ "corrections": [
+  {
+   "lighthouse": [
+    "hithouse",
+    "linthout",
+    "lighuset"
+   ]
+  }
+ ],
+ "suggestion": "lighuset",
+ "autocomplete": [
+  "The lighthouse at Alexandria",
+  "Standing soldier, seen from the front; in his right hand, a lance with a pennant on the tip; in his left hand, a club; on his head, a turban with two feathers; in the landscape, a \"lighthouse\" and a couple of obelisk-like buildings",
+  "Eddystone Lighthouse"
+ ]
+}

@@ -1,0 +1,167 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Freestash.Desktop.ViewModels"
+             xmlns:c="using:Freestash.Desktop.Controls"
+             xmlns:conv="using:Freestash.Desktop.Converters"
+             x:Class="Freestash.Desktop.Views.DownloadsView"
+             x:DataType="vm:DownloadsViewModel">
+  <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="30,26,30,0">
+    <!-- header -->
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel Spacing="4">
+        <TextBlock Text="Downloads" Classes="h1" />
+        <TextBlock Text="{Binding Summary}" Classes="muted" />
+      </StackPanel>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+        <Button Command="{Binding OpenDestinationCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="7"><c:Icon Data="{StaticResource IconFolder}" Size="15" /><TextBlock Text="Open folder" /></StackPanel>
+        </Button>
+        <Button Command="{Binding ClearFinishedCommand}" Classes="ghost">
+          <StackPanel Orientation="Horizontal" Spacing="7"><c:Icon Data="{StaticResource IconCheck}" Size="15" /><TextBlock Text="Clear finished" /></StackPanel>
+        </Button>
+      </StackPanel>
+    </Grid>
+
+    <!-- paste-links manager -->
+    <Border Grid.Row="1" Classes="card" Margin="0,20,0,0" Padding="18">
+      <Grid ColumnDefinitions="*,280" RowDefinitions="Auto,*">
+        <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="10" Margin="0,0,0,12">
+          <Border Width="30" Height="30" CornerRadius="9" Background="{DynamicResource AccentSoftBrush}">
+            <c:Icon Data="{StaticResource IconLink}" Size="15" Classes="accent" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="Paste links" Classes="h3" />
+            <TextBlock Text="Anything with URLs in it: one per line, a chat message, markdown, HTML. Or drop text and links here." Classes="faint small" />
+          </StackPanel>
+        </StackPanel>
+
+        <TextBox x:Name="PasteBox" Grid.Row="1" Classes="mono" Text="{Binding PasteText}" AcceptsReturn="True" TextWrapping="NoWrap"
+                 Height="118" VerticalContentAlignment="Top" Padding="14,12" DragDrop.AllowDrop="True"
+                 PlaceholderText="https://ambientcg.com/get?file=Wood096_2K-JPG.zip&#x0a;https://images-assets.nasa.gov/image/PIA14417/PIA14417~orig.jpg&#x0a;…" />
+
+        <StackPanel Grid.Row="1" Grid.Column="1" Margin="16,0,0,0" Spacing="10">
+          <TextBlock Text="SAVE TO" Classes="caption" />
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox Text="{Binding Destination}" Classes="mono" FontSize="11.5" />
+            <Button Grid.Column="1" Classes="icon" Margin="6,0,0,0" Command="{Binding BrowseCommand}" ToolTip.Tip="Choose folder">
+              <c:Icon Data="{StaticResource IconFolder}" Size="15" />
+            </Button>
+          </Grid>
+          <Grid ColumnDefinitions="*,Auto">
+            <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="12,9"
+                    Command="{Binding AddPastedCommand}" IsEnabled="{Binding CanAdd}">
+              <StackPanel Orientation="Horizontal" Spacing="7"><c:Icon Data="{StaticResource IconDownload}" Size="15" /><TextBlock Text="{Binding AddLabel}" /></StackPanel>
+            </Button>
+            <Button Grid.Column="1" Classes="icon" Margin="6,0,0,0" Command="{Binding PasteFromClipboardCommand}" ToolTip.Tip="Paste from clipboard">
+              <c:Icon Data="{StaticResource IconClipboard}" Size="15" />
+            </Button>
+          </Grid>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <ToggleSwitch IsChecked="{Binding WatchClipboard}" />
+            <TextBlock Text="Watch clipboard for links" Classes="muted small" VerticalAlignment="Center" />
+          </StackPanel>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- clipboard suggestion -->
+    <Border Grid.Row="2" IsVisible="{Binding HasClipboardLink}" Margin="0,12,0,0" CornerRadius="12" Padding="14,10"
+            Background="{DynamicResource AccentSoftBrush}" BorderBrush="{DynamicResource AccentLineBrush}" BorderThickness="1">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+        <c:Icon Data="{StaticResource IconClipboard}" Size="15" Classes="accent" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+          <Run Text="Link on your clipboard: " Foreground="{DynamicResource TextSecondaryBrush}" />
+          <Run Text="{Binding ClipboardLink}" FontFamily="{StaticResource MonoFont}" FontSize="12" />
+        </TextBlock>
+        <Button Grid.Column="2" Classes="accent small" Command="{Binding AddClipboardLinkCommand}" Content="Download" />
+        <Button Grid.Column="3" Classes="ghost small" Margin="6,0,0,0" Command="{Binding DismissClipboardLinkCommand}" Content="Dismiss" />
+      </Grid>
+    </Border>
+
+    <!-- queue -->
+    <Panel Grid.Row="3" Margin="0,18,0,0">
+      <ScrollViewer Padding="0,0,6,24">
+        <ItemsControl ItemsSource="{Binding Items}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:DownloadItemViewModel">
+              <Border Classes="raised" Padding="10,10,12,10" CornerRadius="14">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                  <!-- drag handle (completed files can be dragged out with their sidecar) -->
+                  <Border x:Name="DragHandle" Classes="grip" Width="20" Background="Transparent" Cursor="DragMove" IsVisible="{Binding IsDone}"
+                          ToolTip.Tip="Drag into Explorer, Finder, a DAW, Figma… (sidecar comes along)" PointerPressed="OnDragHandlePressed">
+                    <c:Icon Data="{StaticResource IconGrip}" Size="16" Classes="faint" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <Border Grid.Column="1" Width="40" Height="40" CornerRadius="11" Margin="6,0,14,0" Classes="inset">
+                    <c:Icon Data="{Binding KindIcon, Converter={x:Static conv:IconKeyConverter.Instance}}" Size="18" Classes="muted"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+
+                  <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="5">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="13.5" TextTrimming="CharacterEllipsis" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="10,0,0,0">
+                        <Border Classes="pill" IsVisible="{Binding HasSidecar}" Padding="7,1" ToolTip.Tip="A .license.json sidecar was written next to the file">
+                          <TextBlock Text="SIDECAR" FontSize="9.5" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <Border Classes="pill" IsVisible="{Binding Recorded}" Padding="7,1" ToolTip.Tip="Recorded in the license ledger">
+                          <TextBlock Text="LEDGER" FontSize="9.5" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                      </StackPanel>
+                    </Grid>
+                    <ProgressBar Value="{Binding Progress}" Maximum="100" IsIndeterminate="{Binding IsIndeterminate}" IsVisible="{Binding ShowProgress}" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                      <Border Classes="tier" Classes.green="{Binding StatusGreen}" Classes.yellow="{Binding StatusYellow}" Classes.red="{Binding StatusRed}"
+                              Background="{DynamicResource InsetBrush}" Padding="7,1,8,1">
+                        <TextBlock Text="{Binding StatusText}" />
+                      </Border>
+                      <TextBlock Text="{Binding ProgressText}" Classes="mono faint" VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding SourceLabel}" Classes="faint small" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </StackPanel>
+
+                  <!-- context actions -->
+                  <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <Button Classes="small" IsVisible="{Binding IsBlocked}" Command="{Binding $parent[UserControl].((vm:DownloadsViewModel)DataContext).OpenInBrowserCommand}" CommandParameter="{Binding}">
+                      <StackPanel Orientation="Horizontal" Spacing="6"><c:Icon Data="{StaticResource IconExternal}" Size="13" /><TextBlock Text="Open in browser" /></StackPanel>
+                    </Button>
+                    <Button Classes="ghost icon" IsVisible="{Binding CanPause}" ToolTip.Tip="Pause" Command="{Binding $parent[UserControl].((vm:DownloadsViewModel)DataContext).PauseCommand}" CommandParameter="{Binding}">
+                      <c:Icon Data="{StaticResource IconPause}" Size="15" />
+                    </Button>
+                    <Button Classes="ghost icon" IsVisible="{Binding CanResume}" ToolTip.Tip="Resume" Command="{Binding $parent[UserControl].((vm:DownloadsViewModel)DataContext).ResumeCommand}" CommandParameter="{Binding}">
+                      <c:Icon Data="{StaticResource IconPlay}" Size="15" />
+                    </Button>
+                    <Button Classes="ghost icon" IsVisible="{Binding CanRetry}" ToolTip.Tip="Retry" Command="{Binding $parent[UserControl].((vm:DownloadsViewModel)DataContext).RetryCommand}" CommandParameter="{Binding}">
+                      <c:Icon Data="{StaticResource IconRetry}" Size="15" />
+                    </Button>
+                    <Button Classes="ghost icon" IsVisible="{Binding IsDone}" ToolTip.Tip="Open file" Command="{Binding $parent[UserControl].((vm:DownloadsViewModel)DataContext).OpenFileCommand}" CommandParameter="{Binding}">
+                      <c:Icon Data="{StaticResource IconExternal}" Size="15" />
+                    </Button>
+                    <Button Classes="ghost icon" ToolTip.Tip="Show in folder" Command="{Binding $parent[UserControl].((vm:DownloadsViewModel)DataContext).OpenFolderCommand}" CommandParameter="{Binding}">
+                      <c:Icon Data="{StaticResource IconFolder}" Size="15" />
+                    </Button>
+                    <Button Classes="ghost icon" ToolTip.Tip="Copy link" Command="{Binding $parent[UserControl].((vm:DownloadsViewModel)DataContext).CopyLinkCommand}" CommandParameter="{Binding}">
+                      <c:Icon Data="{StaticResource IconLink}" Size="15" />
+                    </Button>
+                  </StackPanel>
+                  <Button Grid.Column="4" Classes="ghost icon" Margin="2,0,0,0" ToolTip.Tip="Cancel and remove" VerticalAlignment="Center"
+                          Command="{Binding $parent[UserControl].((vm:DownloadsViewModel)DataContext).RemoveCommand}" CommandParameter="{Binding}">
+                    <c:Icon Data="{StaticResource IconClose}" Size="15" />
+                  </Button>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+
+      <StackPanel IsVisible="{Binding IsEmpty}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" Margin="0,0,0,70">
+        <Border Width="56" Height="56" CornerRadius="18" Classes="raised" HorizontalAlignment="Center">
+          <c:Icon Data="{StaticResource IconDownload}" Size="24" Classes="faint" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <TextBlock Text="Your queue is empty" Classes="h2" HorizontalAlignment="Center" />
+        <TextBlock Text="Download from any search result, or paste links above." Classes="muted" HorizontalAlignment="Center" />
+      </StackPanel>
+    </Panel>
+  </Grid>
+</UserControl>

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "freestash": {
+      "command": "python",
+      "args": ["-m", "freestash", "mcp"],
+      "env": { "FREESTASH_CONTACT_EMAIL": "you@yourstudio.com" }
+    }
+  }
+}

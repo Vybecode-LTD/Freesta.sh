@@ -1,0 +1,19 @@
+{
+ "_synthetic": "Hand-built from documented response shape; re-record with a real key (IMPLEMENTATION.md P1).",
+ "total": 1,
+ "totalHits": 1,
+ "hits": [
+  {
+   "id": 195893,
+   "pageURL": "https://pixabay.com/photos/lighthouse-coast-195893/",
+   "tags": "lighthouse, coast, sea",
+   "previewURL": "https://cdn.pixabay.com/photo/2013/10/02/23/03/lighthouse-195893_150.jpg",
+   "webformatURL": "https://pixabay.com/get/lighthouse_640.jpg",
+   "largeImageURL": "https://pixabay.com/get/lighthouse_1280.jpg",
+   "imageWidth": 4000,
+   "imageHeight": 2250,
+   "user": "Example",
+   "user_id": 12345
+  }
+ ]
+}

@@ -1,0 +1,394 @@
+{
+ "apikey": "api2demo",
+ "success": true,
+ "requestNumber": 999,
+ "itemsCount": 2,
+ "totalResults": 2524,
+ "items": [
+  {
+   "completeness": 6,
+   "country": [
+    "Sweden"
+   ],
+   "dataProvider": [
+    "Wikimedia Commons Community"
+   ],
+   "dcCreator": [
+    "Irishjames",
+    "Irishjames",
+    "Irishjames"
+   ],
+   "dcCreatorLangAware": {
+    "sv": [
+     "Irishjames"
+    ],
+    "def": [
+     "Irishjames"
+    ],
+    "en": [
+     "Irishjames"
+    ]
+   },
+   "dcDescription": [
+    "Flottsund lighthouse, Uppsala",
+    "Flottsund lighthouse, Uppsala"
+   ],
+   "dcDescriptionLangAware": {
+    "def": [
+     "Flottsund lighthouse, Uppsala"
+    ],
+    "en": [
+     "Flottsund lighthouse, Uppsala"
+    ]
+   },
+   "dcTitleLangAware": {
+    "def": [
+     "Flottsund lighthouse"
+    ],
+    "en": [
+     "Flottsund lighthouse"
+    ]
+   },
+   "edmConcept": [
+    "http://data.europeana.eu/concept/48"
+   ],
+   "edmConceptLabel": [
+    {
+     "def": "Fotografie"
+    },
+    {
+     "def": "Фотография"
+    },
+    {
+     "def": "Valokuva"
+    },
+    {
+     "def": "Fotografia"
+    },
+    {
+     "def": "Снимка"
+    },
+    {
+     "def": "Fotografija"
+    },
+    {
+     "def": "Fotografija"
+    },
+    {
+     "def": "Fotoattēls"
+    },
+    {
+     "def": "Photographie"
+    },
+    {
+     "def": "Fénykép"
+    },
+    {
+     "def": "Fotografia"
+    },
+    {
+     "def": "Fotografija"
+    },
+    {
+     "def": "Grianghraf"
+    },
+    {
+     "def": "Fotografia"
+    },
+    {
+     "def": "Fotografi"
+    },
+    {
+     "def": "Fotografija"
+    },
+    {
+     "def": "Φωτογραφία"
+    },
+    {
+     "def": "Photograph"
+    },
+    {
+     "def": "Fotografia"
+    },
+    {
+     "def": "Fotografía"
+    },
+    {
+     "def": "Foto"
+    },
+    {
+     "def": "Fotografie"
+    },
+    {
+     "def": "Argazki"
+    },
+    {
+     "def": "Fotografia"
+    },
+    {
+     "def": "Fotografi"
+    },
+    {
+     "def": "Fotografie"
+    },
+    {
+     "def": "Foto"
+    }
+   ],
+   "edmConceptPrefLabelLangAware": {
+    "de": [
+     "Fotografie"
+    ],
+    "ru": [
+     "Фотография"
+    ],
+    "fi": [
+     "Valokuva"
+    ],
+    "pt": [
+     "Fotografia"
+    ],
+    "bg": [
+     "Снимка"
+    ],
+    "lt": [
+     "Fotografija"
+    ],
+    "hr": [
+     "Fotografija"
+    ],
+    "lv": [
+     "Fotoattēls"
+    ],
+    "fr": [
+     "Photographie"
+    ],
+    "hu": [
+     "Fénykép"
+    ],
+    "sk": [
+     "Fotografia"
+    ],
+    "sl": [
+     "Fotografija"
+    ],
+    "ga": [
+     "Grianghraf"
+    ],
+    "ca": [
+     "Fotografia"
+    ],
+    "sv": [
+     "Fotografi"
+    ],
+    "mt": [
+     "Fotografija"
+    ],
+    "el": [
+     "Φωτογραφία"
+    ],
+    "en": [
+     "Photograph"
+    ],
+    "it": [
+     "Fotografia"
+    ],
+    "es": [
+     "Fotografía"
+    ],
+    "et": [
+     "Foto"
+    ],
+    "cs": [
+     "Fotografie"
+    ],
+    "eu": [
+     "Argazki"
+    ],
+    "pl": [
+     "Fotografia"
+    ],
+    "da": [
+     "Fotografi"
+    ],
+    "ro": [
+     "Fotografie"
+    ],
+    "nl": [
+     "Foto"
+    ]
+   },
+   "edmDatasetName": [
+    "2058701_Ag_SW_WikimediaSverige_wlm-se_2011"
+   ],
+   "edmIsShownAt": [
+    "https://commons.wikimedia.org/wiki/File:Flottsund_lighthouse.jpg"
+   ],
+   "edmIsShownBy": [
+    "https://upload.wikimedia.org/wikipedia/commons/b/b5/Flottsund_lighthouse.jpg"
+   ],
+   "edmPreview": [
+    "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fb%2Fb5%2FFlottsund_lighthouse.jpg&type=IMAGE"
+   ],
+   "edmTimespanLabel": [
+    {
+     "def": "Second millenium AD"
+    },
+    {
+     "def": "Second millenium AD, years 1001-2000"
+    },
+    {
+     "def": "Time"
+    },
+    {
+     "def": "Chronological period"
+    },
+    {
+     "def": "2e millénaire après J.-C."
+    },
+    {
+     "def": "2011"
+    },
+    {
+     "def": "2011-09-15"
+    }
+   ],
+   "edmTimespanLabelLangAware": {
+    "en": [
+     "Second millenium AD",
+     "Second millenium AD, years 1001-2000",
+     "Time",
+     "Chronological period"
+    ],
+    "zxx": [
+     "2011",
+     "2011-09-15"
+    ],
+    "fr": [
+     "2e millénaire après J.-C."
+    ]
+   },
+   "europeanaCollectionName": [
+    "2058701_Ag_SW_WikimediaSverige_wlm-se_2011"
+   ],
+   "europeanaCompleteness": 6,
+   "guid": "https://www.europeana.eu/item/2058701/File_Flottsund_lighthouse_jpg?utm_source=api&utm_medium=api&utm_campaign=api2demo",
+   "id": "/2058701/File_Flottsund_lighthouse_jpg",
+   "index": 0,
+   "language": [
+    "sv"
+   ],
+   "link": "https://api.europeana.eu/record/2058701/File_Flottsund_lighthouse_jpg.json?wskey=api2demo",
+   "previewNoDistribute": false,
+   "provider": [
+    "Wikimedia Commons Community"
+   ],
+   "rights": [
+    "http://creativecommons.org/licenses/by-sa/3.0/"
+   ],
+   "score": 39.09185,
+   "timestamp": 1788047637162,
+   "timestamp_created": "2014-11-27T13:23:00.517Z",
+   "timestamp_created_epoch": 1417094580517,
+   "timestamp_update": "2014-11-27T13:23:00.517Z",
+   "timestamp_update_epoch": 1417094580517,
+   "title": [
+    "Flottsund lighthouse",
+    "Flottsund lighthouse"
+   ],
+   "type": "IMAGE",
+   "ugc": [
+    true
+   ],
+   "year": [
+    "2011"
+   ]
+  },
+  {
+   "completeness": 10,
+   "country": [
+    "Estonia"
+   ],
+   "dataProvider": [
+    "Estonian National Heritage Board"
+   ],
+   "dcDescription": [
+    "Kõpu lighthouse is the symbol of Hiiumaa. It is also the oldest lighthouse remaining in the Baltics. The tower constructions began in 1505 and were finished by 1531. Built from boulders and limestone, the square side-supported pyramide shape reaches a height of 24,6 metres, each side 8,7 metres wide. A bonfire was lit on the flat limestone platform at the top. In 1807, the administration was transferred from private to military, and a staircase was built into one of the support pillars to replace the exterior ladder. Two extra floors and a lantern space were added to the top, adding up to a tower height of 36 metres. In 1845, the top floors were secured with twelve iron anchors, producing the architectural form the tower has today. The tower is covered with a cupola. During World War II, the lantern space and optics were destroyed. In 1989-90, the tower was enclosed in reinforced concrete due to danger of falling debris. The lighthouse continues to be classified as an active aid to navigation, although it has lost its role as the primary lighthouse after a radar lighthouse took over in 1997."
+   ],
+   "dcDescriptionLangAware": {
+    "en": [
+     "Kõpu lighthouse is the symbol of Hiiumaa. It is also the oldest lighthouse remaining in the Baltics. The tower constructions began in 1505 and were finished by 1531. Built from boulders and limestone, the square side-supported pyramide shape reaches a height of 24,6 metres, each side 8,7 metres wide. A bonfire was lit on the flat limestone platform at the top. In 1807, the administration was transferred from private to military, and a staircase was built into one of the support pillars to replace the exterior ladder. Two extra floors and a lantern space were added to the top, adding up to a tower height of 36 metres. In 1845, the top floors were secured with twelve iron anchors, producing the architectural form the tower has today. The tower is covered with a cupola. During World War II, the lantern space and optics were destroyed. In 1989-90, the tower was enclosed in reinforced concrete due to danger of falling debris. The lighthouse continues to be classified as an active aid to navigation, although it has lost its role as the primary lighthouse after a radar lighthouse took over in 1997."
+    ]
+   },
+   "dcTitleLangAware": {
+    "en": [
+     "Welsh Lighthouse"
+    ],
+    "et": [
+     "Kõpu tuletorn"
+    ]
+   },
+   "edmDatasetName": [
+    "2020735_Ag_EU_CARARE_ehb_EST_GFT"
+   ],
+   "edmIsShownAt": [
+    "http://register.muinas.ee/?menuID=monument&action=view&id=23453"
+   ],
+   "edmIsShownBy": [
+    "http://register.muinas.ee/content/monument/regular/8782.jpg"
+   ],
+   "edmPlaceLabel": [
+    {
+     "def": "Hiiu maakond Hiiu vald Mägipe küla Kõpu tuletorn, Estonia, Eesti Vabariik"
+    }
+   ],
+   "edmPlaceLabelLangAware": {
+    "def": [
+     "Hiiu maakond Hiiu vald Mägipe küla Kõpu tuletorn, Estonia, Eesti Vabariik"
+    ]
+   },
+   "edmPlaceLatitude": [
+    "58.915913"
+   ],
+   "edmPlaceLongitude": [
+    "22.199673"
+   ],
+   "edmPreview": [
+    "https://api.europeana.eu/thumbnail/v2/url.json?uri=http%3A%2F%2Fregister.muinas.ee%2Fcontent%2Fmonument%2Fregular%2F8782.jpg&type=IMAGE"
+   ],
+   "europeanaCollectionName": [
+    "2020735_Ag_EU_CARARE_ehb_EST_GFT"
+   ],
+   "europeanaCompleteness": 10,
+   "guid": "https://www.europeana.eu/item/2020735/DR_23453?utm_source=api&utm_medium=api&utm_campaign=api2demo",
+   "id": "/2020735/DR_23453",
+   "index": 0,
+   "language": [
+    "et"
+   ],
+   "link": "https://api.europeana.eu/record/2020735/DR_23453.json?wskey=api2demo",
+   "previewNoDistribute": false,
+   "provider": [
+    "CARARE"
+   ],
+   "rights": [
+    "http://creativecommons.org/publicdomain/zero/1.0/"
+   ],
+   "score": 35.84751,
+   "timestamp": 1788050045180,
+   "timestamp_created": "2014-10-02T14:53:55.824Z",
+   "timestamp_created_epoch": 1412261635824,
+   "timestamp_update": "2015-05-06T08:34:55.738Z",
+   "timestamp_update_epoch": 1430901295738,
+   "title": [
+    "Kõpu tuletorn",
+    "Kõpu lighthouse",
+    "Welsh Lighthouse"
+   ],
+   "type": "IMAGE",
+   "ugc": [
+    false
+   ]
+  }
+ ]
+}

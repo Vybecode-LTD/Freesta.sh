@@ -1,0 +1,69 @@
+{
+ "_synthetic": "Hand-built from documented response shape; re-record with a real key (IMPLEMENTATION.md P1).",
+ "status": 200,
+ "responseCode": 1,
+ "response": {
+  "rowCount": 1,
+  "rows": [
+   {
+    "id": "edanmdm-saam_1929.6.123",
+    "title": "Coastal Light",
+    "unitCode": "SAAM",
+    "content": {
+     "descriptiveNonRepeating": {
+      "record_ID": "saam_1929.6.123",
+      "unit_code": "SAAM",
+      "data_source": "Smithsonian American Art Museum",
+      "record_link": "https://collections.si.edu/search/detail/edanmdm:saam_1929.6.123",
+      "title": {
+       "label": "Title",
+       "content": "Coastal Light"
+      },
+      "online_media": {
+       "mediaCount": 1,
+       "media": [
+        {
+         "type": "Images",
+         "thumbnail": "https://ids.si.edu/ids/deliveryService?id=SAAM-1929.6.123_1&max=200",
+         "content": "https://ids.si.edu/ids/deliveryService?id=SAAM-1929.6.123_1",
+         "usage": {
+          "access": "CC0"
+         },
+         "resources": [
+          {
+           "label": "High-resolution JPEG",
+           "url": "https://ids.si.edu/ids/download?id=SAAM-1929.6.123_1.jpg"
+          },
+          {
+           "label": "High-resolution TIFF",
+           "url": "https://ids.si.edu/ids/download?id=SAAM-1929.6.123_1.tif"
+          }
+         ]
+        }
+       ]
+      }
+     },
+     "freetext": {
+      "name": [
+       {
+        "label": "Artist",
+        "content": "Example Painter, born 1860, died 1920"
+       }
+      ],
+      "date": [
+       {
+        "label": "Date",
+        "content": "1911"
+       }
+      ]
+     },
+     "indexedStructured": {
+      "date": [
+       "1910s"
+      ]
+     }
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,44 @@
+{
+ "responseHeader": {
+  "status": 0,
+  "QTime": 656,
+  "params": {
+   "query": "(text:lighthouse OR text:lighthouse OR text__reviews:lighthouse) AND mediatype:movies AND licenseurl:*publicdomain*",
+   "qin": "lighthouse AND mediatype:(movies) AND licenseurl:*publicdomain*",
+   "fields": "identifier,title,creator,licenseurl,mediatype,date",
+   "wt": "json",
+   "rows": 3,
+   "start": 0
+  }
+ },
+ "response": {
+  "numFound": 152,
+  "start": 0,
+  "docs": [
+   {
+    "creator": "Manny Gould, Ben Harrison",
+    "date": "1932-08-15T00:00:00Z",
+    "identifier": "lighthouse-keeping-1932",
+    "licenseurl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "mediatype": "movies",
+    "title": "Lighthouse Keeping (1932)"
+   },
+   {
+    "creator": "Justin Lewis",
+    "date": "2022-01-07T00:00:00Z",
+    "identifier": "closing-logos-el-deafo-dvs",
+    "licenseurl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "mediatype": "movies",
+    "title": "Closing Logos El Deafo ( DVS)"
+   },
+   {
+    "creator": "Lifetime",
+    "date": "2025-11-22T00:00:00Z",
+    "identifier": "screen-recording-11-25-2025-06-57-29-1",
+    "licenseurl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "mediatype": "movies",
+    "title": "TONI BRAXTON'S HE WASN'T MAN ENOUGH - Lighthouse Pictures/Intonation Entertainment/Lifetime (2025)"
+   }
+  ]
+ }
+}

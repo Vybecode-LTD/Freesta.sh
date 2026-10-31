@@ -1,0 +1,338 @@
+[
+ {
+  "id": "met",
+  "name": "The Metropolitan Museum of Art",
+  "homepage": "https://www.metmuseum.org/art/collection",
+  "media_types": [
+   "image"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "v1 /search was retired 2026-10-01; this adapter uses /v1.1/search (offset/limit).",
+   "v1.1 ignores isPublicDomain as a filter, so public-domain status is checked per object.",
+   "Search returns IDs only; each object is a follow-up request (limit ~80 req/s)."
+  ]
+ },
+ {
+  "id": "artic",
+  "name": "Art Institute of Chicago",
+  "homepage": "https://www.artic.edu/collection",
+  "media_types": [
+   "image"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "Send an AIC-User-Agent header; bare requests can get 403.",
+   "IIIF: 843px wide is the cached, recommended size."
+  ]
+ },
+ {
+  "id": "cleveland",
+  "name": "Cleveland Museum of Art",
+  "homepage": "https://www.clevelandart.org/open-access",
+  "media_types": [
+   "image"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": []
+ },
+ {
+  "id": "smithsonian",
+  "name": "Smithsonian Open Access",
+  "homepage": "https://www.si.edu/openaccess",
+  "media_types": [
+   "image"
+  ],
+  "enabled": false,
+  "key_setting": "smithsonian_api_key",
+  "key_optional": false,
+  "key_signup_url": "https://api.data.gov/signup/",
+  "verified_live": false,
+  "notes": [
+   "Free api.data.gov key. Without one, Openverse still covers ~25 Smithsonian units."
+  ]
+ },
+ {
+  "id": "smk",
+  "name": "SMK \u2013 National Gallery of Denmark",
+  "homepage": "https://open.smk.dk",
+  "media_types": [
+   "image"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": []
+ },
+ {
+  "id": "nasa",
+  "name": "NASA Image and Video Library",
+  "homepage": "https://images.nasa.gov",
+  "media_types": [
+   "audio",
+   "image",
+   "video"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "Includes ambisonic and broadcast audio (e.g. Artemis II launch audio, 2026)."
+  ]
+ },
+ {
+  "id": "loc",
+  "name": "Library of Congress",
+  "homepage": "https://www.loc.gov/free-to-use/",
+  "media_types": [
+   "audio",
+   "image",
+   "video"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "Search results lack rights info; the adapter reads each item's rights_advisory (N+1 requests).",
+   "Rate limits are strict (burst ~20 requests); results are cached."
+  ]
+ },
+ {
+  "id": "europeana",
+  "name": "Europeana",
+  "homepage": "https://www.europeana.eu",
+  "media_types": [
+   "audio",
+   "image",
+   "model",
+   "video"
+  ],
+  "enabled": true,
+  "key_setting": "europeana_api_key",
+  "key_optional": true,
+  "key_signup_url": "https://pro.europeana.eu/pages/get-api",
+  "verified_live": true,
+  "notes": [
+   "Runs on the shared 'api2demo' key without your own key (fine for testing, low limits).",
+   "Aggregates 3,000+ European institutions; source_name holds the original institution."
+  ]
+ },
+ {
+  "id": "wikimedia",
+  "name": "Wikimedia Commons",
+  "homepage": "https://commons.wikimedia.org",
+  "media_types": [
+   "audio",
+   "image",
+   "video"
+  ],
+  "enabled": true,
+  "key_setting": "wikimedia_access_token",
+  "key_optional": true,
+  "key_signup_url": "https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose/oauth2",
+  "verified_live": false,
+  "notes": [
+   "Anonymous requests are heavily rate limited since 2026; add an OAuth 2.0 token."
+  ]
+ },
+ {
+  "id": "openverse",
+  "name": "Openverse",
+  "homepage": "https://openverse.org",
+  "media_types": [
+   "audio",
+   "image"
+  ],
+  "enabled": true,
+  "key_setting": "openverse_client_id",
+  "key_optional": true,
+  "key_signup_url": "https://api.openverse.org/v1/#tag/auth/operation/register",
+  "verified_live": true,
+  "notes": [
+   "Aggregator: trust is set per original source (museum vs. Flickr uploader)."
+  ]
+ },
+ {
+  "id": "internet_archive",
+  "name": "Internet Archive",
+  "homepage": "https://archive.org",
+  "media_types": [
+   "audio",
+   "image",
+   "video"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "Licenses are uploader-asserted. Live probe found a 2025 TV clip marked 'Public Domain'; the date heuristic flags cases like that."
+  ]
+ },
+ {
+  "id": "polyhaven",
+  "name": "Poly Haven",
+  "homepage": "https://polyhaven.com",
+  "media_types": [
+   "hdri",
+   "model",
+   "texture"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "Everything is CC0. No search endpoint: the catalog is cached for 24h and ranked locally.",
+   "Poly Haven asks commercial API users to support them (patreon.com/polyhaven)."
+  ]
+ },
+ {
+  "id": "ambientcg",
+  "name": "ambientCG",
+  "homepage": "https://ambientcg.com",
+  "media_types": [
+   "hdri",
+   "model",
+   "texture"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "Everything is CC0."
+  ]
+ },
+ {
+  "id": "fontsource",
+  "name": "Fontsource",
+  "homepage": "https://fontsource.org",
+  "media_types": [
+   "font"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "Open-source fonts (mostly Google Fonts, OFL-1.1). Catalog cached 24h, ranked locally."
+  ]
+ },
+ {
+  "id": "iconify",
+  "name": "Iconify",
+  "homepage": "https://icon-sets.iconify.design",
+  "media_types": [
+   "icon"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "275k+ icons across ~255 sets. License is per set: mostly MIT/Apache/CC-BY; a few GPL and NC sets get flagged."
+  ]
+ },
+ {
+  "id": "vam",
+  "name": "Victoria and Albert Museum",
+  "homepage": "https://collections.vam.ac.uk",
+  "media_types": [
+   "image"
+  ],
+  "enabled": true,
+  "key_setting": null,
+  "key_optional": false,
+  "key_signup_url": null,
+  "verified_live": true,
+  "notes": [
+   "Images are non-commercial: excellent for reference and mood boards, red for anything shipped."
+  ]
+ },
+ {
+  "id": "freesound",
+  "name": "Freesound",
+  "homepage": "https://freesound.org",
+  "media_types": [
+   "audio"
+  ],
+  "enabled": false,
+  "key_setting": "freesound_api_key",
+  "key_optional": false,
+  "key_signup_url": "https://freesound.org/apiv2/apply/",
+  "verified_live": false,
+  "notes": [
+   "Without a key, Openverse still searches Freesound (CC0/CC-BY filterable)."
+  ]
+ },
+ {
+  "id": "unsplash",
+  "name": "Unsplash",
+  "homepage": "https://unsplash.com",
+  "media_types": [
+   "image"
+  ],
+  "enabled": false,
+  "key_setting": "unsplash_access_key",
+  "key_optional": false,
+  "key_signup_url": "https://unsplash.com/developers",
+  "verified_live": false,
+  "notes": [
+   "Demo apps get 50 requests/hour until approved for production."
+  ]
+ },
+ {
+  "id": "pexels",
+  "name": "Pexels",
+  "homepage": "https://www.pexels.com",
+  "media_types": [
+   "image",
+   "video"
+  ],
+  "enabled": false,
+  "key_setting": "pexels_api_key",
+  "key_optional": false,
+  "key_signup_url": "https://www.pexels.com/api/",
+  "verified_live": false,
+  "notes": []
+ },
+ {
+  "id": "pixabay",
+  "name": "Pixabay",
+  "homepage": "https://pixabay.com",
+  "media_types": [
+   "image",
+   "video"
+  ],
+  "enabled": false,
+  "key_setting": "pixabay_api_key",
+  "key_optional": false,
+  "key_signup_url": "https://pixabay.com/api/docs/",
+  "verified_live": false,
+  "notes": []
+ }
+]

@@ -1,0 +1,212 @@
+{
+ "aarfontein_dawn_2": {
+  "type": 0,
+  "name": "Aarfontein Dawn 2",
+  "categories": [
+   "outdoor",
+   "nature",
+   "natural light",
+   "low contrast",
+   "medium contrast",
+   "partly cloudy",
+   "sunrise-sunset"
+  ],
+  "category": "Desert & Arid/Karoo & Scrubland/Rocky Outcrops",
+  "attributes": {
+   "time_of_day": "sunrise",
+   "weather": "partly_cloudy",
+   "light_type": "natural",
+   "contrast": "low",
+   "environment": "outdoor",
+   "sky_view": "open"
+  },
+  "tags": [
+   "grass",
+   "hilltop",
+   "arid landscape",
+   "blue hour",
+   "mountain",
+   "view",
+   "horizon glow"
+  ],
+  "description": "Free, unclipped 24K HDRI of a rocky grassland at dawn: soft pre-sunrise glow, pale blue sky with pink clouds, cool ambient light and gentle warm horizon tint.",
+  "authors": {
+   "Dario Barresi": "All"
+  },
+  "info": "A bit of a hike in the dark up to this point at five in the morning, quite chilly. Seeing both the moon and the sunrise in the same sky was beautiful",
+  "date_taken": 1765169760,
+  "coords": [
+   -32.377278,
+   21.299259
+  ],
+  "evs_cap": 12,
+  "whitebalance": 5303,
+  "category_id": "17f5bde9-351f-5d8d-892e-b92f33187f86",
+  "max_resolution": [
+   24576,
+   12288
+  ],
+  "files_hash": "fd2742fa2eb5c6c7b1ba9062b35a836c5b3b636b",
+  "date_published": 1789430400,
+  "img_version": "9f3e0257",
+  "download_count": 1909,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/aarfontein_dawn_2.png?width=256&height=256&format=webp&v=9f3e0257"
+ },
+ "aarfontein_dirt_road": {
+  "type": 0,
+  "name": "Aarfontein Dirt Road",
+  "categories": [
+   "outdoor",
+   "nature",
+   "natural light",
+   "high contrast",
+   "clear",
+   "morning-afternoon"
+  ],
+  "tags": [
+   "sun",
+   "arid",
+   "gravel",
+   "dirt road",
+   "scrubland",
+   "tracks",
+   "erosion",
+   "backplates"
+  ],
+  "description": "Unclipped, free 24K HDRI: sun low over a scrubby dirt road beneath a clear blue sky, warm golden-hour light casting long shadows with crisp contrast.",
+  "authors": {
+   "Jarod Guest": "backplates",
+   "Dario Barresi": "all"
+  },
+  "date_taken": 1765222560,
+  "coords": [
+   -32.383544,
+   21.301872
+  ],
+  "backplates": true,
+  "evs_cap": 22,
+  "whitebalance": 5313,
+  "max_resolution": [
+   24576,
+   12288
+  ],
+  "files_hash": "58b4efdc5f719d41a2c5fbcd12ee7dbfcfd119b2",
+  "date_published": 1782777600,
+  "sponsors": [
+   "12750079"
+  ],
+  "category_id": "eb08f6a2-2508-54cd-a652-4ab80a8a2ec2",
+  "category": "Desert & Arid/Karoo & Scrubland/Dirt Roads & Tracks",
+  "attributes": {
+   "time_of_day": "afternoon",
+   "weather": "clear",
+   "light_type": "natural",
+   "contrast": "high",
+   "backplates": true,
+   "environment": "outdoor",
+   "sky_view": "open"
+  },
+  "img_version": "d1d5631e",
+  "download_count": 6419,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/aarfontein_dirt_road.png?width=256&height=256&format=webp&v=d1d5631e"
+ },
+ "aarfontein_dusk": {
+  "type": 0,
+  "name": "Aarfontein Dusk",
+  "categories": [
+   "outdoor",
+   "nature",
+   "natural light",
+   "low contrast",
+   "skies",
+   "overcast",
+   "sunrise-sunset"
+  ],
+  "category": "Desert & Arid/Karoo & Scrubland/Rocky Outcrops",
+  "tags": [
+   "rocky",
+   "arid",
+   "hilltop",
+   "scrubland"
+  ],
+  "description": "Unclipped, free 24K HDRI of rocky scrub plains at dusk under broad overcast clouds. Soft, cool ambient light with subtle horizon glow and soft shadows.",
+  "authors": {
+   "Dario Barresi": "All"
+  },
+  "date_taken": 1765134360,
+  "coords": [
+   -32.377278,
+   21.299259
+  ],
+  "evs_cap": 12,
+  "whitebalance": 5303,
+  "category_id": "17f5bde9-351f-5d8d-892e-b92f33187f86",
+  "max_resolution": [
+   24576,
+   12288
+  ],
+  "files_hash": "e475b58aa0feec3b5561f6fbd419955609f010dd",
+  "date_published": 1785369600,
+  "attributes": {
+   "time_of_day": "dusk",
+   "weather": "overcast",
+   "light_type": "natural",
+   "contrast": "low",
+   "environment": "outdoor",
+   "sky_view": "open"
+  },
+  "img_version": "13146306",
+  "download_count": 5916,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/aarfontein_dusk.png?width=256&height=256&format=webp&v=13146306"
+ },
+ "aarfontein_pan": {
+  "type": 0,
+  "name": "Aarfontein Pan",
+  "categories": [
+   "outdoor",
+   "nature",
+   "natural light",
+   "medium contrast",
+   "clear",
+   "sunrise-sunset"
+  ],
+  "category": "Desert & Arid/Dry Riverbeds/Cracked Lakebeds",
+  "tags": [
+   "arid",
+   "dry lakebed",
+   "cracked mud",
+   "bare ground",
+   "salt pan"
+  ],
+  "description": "Unclipped, free 24K HDRI of a dry cracked pan at low sun. Clear blue sky, warm horizon glow, soft long shadows, crisp reflections, wide open landscape.",
+  "authors": {
+   "Dario Barresi": "All"
+  },
+  "date_taken": 1765222380,
+  "coords": [
+   -32.38258163430419,
+   21.300367576222335
+  ],
+  "evs_cap": 12,
+  "whitebalance": 5313,
+  "category_id": "2ddb8c56-708b-5578-ab16-4690b44c63ee",
+  "max_resolution": [
+   24576,
+   12288
+  ],
+  "files_hash": "b8468c5961056000848fec58d3b56b018a7013d0",
+  "attributes": {
+   "time_of_day": "sunset",
+   "weather": "clear",
+   "light_type": "natural",
+   "contrast": "high",
+   "environment": "outdoor",
+   "sky_view": "open"
+  },
+  "date_published": 1788825600,
+  "info": "We visited this pan during one of our nights staying at the remote [glass house](https://polyhaven.com/a/glasshouse_interior). There was a puddle of water there that we used to take a long exposure [group photo](https://u.polyhaven.org/Jrr/PHB03044.jpg) utilizing its reflection under a dazzlingly starry sky.",
+  "img_version": "9a0aa2ae",
+  "download_count": 3453,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/aarfontein_pan.png?width=256&height=256&format=webp&v=9a0aa2ae"
+ }
+}

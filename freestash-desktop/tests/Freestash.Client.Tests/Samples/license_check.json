@@ -1,0 +1,66 @@
+{
+ "recognized_as": {
+  "id": "UNSPLASH",
+  "label": "Unsplash License",
+  "url": "https://unsplash.com/license",
+  "raw": "https://unsplash.com/license"
+ },
+ "verdicts": {
+  "reference": {
+   "use_case": "reference",
+   "tier": "green",
+   "reasons": [
+    "Unsplash License."
+   ],
+   "obligations": [],
+   "attribution": "Photo by unknown creator on Unsplash"
+  },
+  "demo": {
+   "use_case": "demo",
+   "tier": "green",
+   "reasons": [
+    "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+   ],
+   "obligations": [
+    "Can't compile Unsplash photos into a similar or competing service.",
+    "Can't sell unaltered copies; recognizable people, brands, and property aren't released."
+   ],
+   "attribution": "Photo by unknown creator on Unsplash"
+  },
+  "client": {
+   "use_case": "client",
+   "tier": "yellow",
+   "reasons": [
+    "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+   ],
+   "obligations": [
+    "Can't compile Unsplash photos into a similar or competing service.",
+    "Can't sell unaltered copies; recognizable people, brands, and property aren't released."
+   ],
+   "attribution": "Photo by unknown creator on Unsplash"
+  },
+  "bundled": {
+   "use_case": "bundled",
+   "tier": "red",
+   "reasons": [
+    "Unsplash License doesn't allow redistributing the file itself (template downloads, sample packs, and app bundles all count). Ship a placeholder or link instead.",
+    "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+   ],
+   "obligations": [],
+   "attribution": "Photo by unknown creator on Unsplash"
+  },
+  "merch": {
+   "use_case": "merch",
+   "tier": "yellow",
+   "reasons": [
+    "Unsplash License only allows merch if the image is substantially modified, not a straight print.",
+    "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+   ],
+   "obligations": [
+    "Can't compile Unsplash photos into a similar or competing service.",
+    "Can't sell unaltered copies; recognizable people, brands, and property aren't released."
+   ],
+   "attribution": "Photo by unknown creator on Unsplash"
+  }
+ }
+}

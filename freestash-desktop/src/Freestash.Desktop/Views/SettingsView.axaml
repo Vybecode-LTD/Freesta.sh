@@ -1,0 +1,312 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Freestash.Desktop.ViewModels"
+             xmlns:c="using:Freestash.Desktop.Controls"
+             x:Class="Freestash.Desktop.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+  <UserControl.Resources>
+    <ControlTheme x:Key="ThemeCardTheme" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="PART_Card" Padding="10" CornerRadius="14" BorderThickness="1.5"
+                  Background="{DynamicResource RaisedBrush}" BorderBrush="{DynamicResource BorderSubtleBrush}">
+            <ContentPresenter Content="{TemplateBinding Content}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:pointerover /template/ Border#PART_Card"><Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" /></Style>
+      <Style Selector="^:checked /template/ Border#PART_Card">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="BoxShadow" Value="{DynamicResource RaisedShadow}" />
+      </Style>
+    </ControlTheme>
+    <ControlTheme x:Key="SwatchTheme" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="PART_Swatch" Padding="10,7,12,7" CornerRadius="999" BorderThickness="1.5"
+                  Background="{DynamicResource RaisedBrush}" BorderBrush="{DynamicResource BorderSubtleBrush}">
+            <ContentPresenter Content="{TemplateBinding Content}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:checked"><Setter Property="Foreground" Value="{DynamicResource TextBrush}" /></Style>
+      <Style Selector="^:checked /template/ Border#PART_Swatch"><Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" /></Style>
+    </ControlTheme>
+  </UserControl.Resources>
+  <DockPanel>
+    <!-- sticky save bar -->
+    <Border DockPanel.Dock="Bottom" Padding="30,14" Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,1,0,0">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <c:Icon Data="{StaticResource IconShield}" Size="15" Classes="faint" />
+          <TextBlock Text="Keys are encrypted at rest (DPAPI on Windows) and only passed to the local engine." Classes="faint small" VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+          <Button Classes="ghost" Content="Revert" Command="{Binding RevertCommand}" />
+          <Button Classes="accent" Command="{Binding SaveCommand}" IsEnabled="{Binding !IsBusy}" Padding="18,8">
+            <StackPanel Orientation="Horizontal" Spacing="7"><c:Icon Data="{StaticResource IconSave}" Size="15" /><TextBlock Text="Save changes" /></StackPanel>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <ScrollViewer Padding="30,26,30,30">
+      <StackPanel Spacing="18" MaxWidth="980" HorizontalAlignment="Left">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Settings" Classes="h1" />
+          <TextBlock Text="Engine, API keys, downloads, and how Freestash looks." Classes="muted" />
+        </StackPanel>
+
+        <!-- ===================================================== engine -->
+        <Border Classes="card" Padding="22">
+          <Grid ColumnDefinitions="230,*">
+            <StackPanel Spacing="6" Margin="0,0,24,0">
+              <StackPanel Orientation="Horizontal" Spacing="8"><c:Icon Data="{StaticResource IconBolt}" Size="16" Classes="accent" /><TextBlock Text="Engine" Classes="h3" /></StackPanel>
+              <TextBlock Classes="faint small" TextWrapping="Wrap" LineHeight="18"
+                         Text="Local runs the Freestash engine on this machine with your keys. Team connects to your hosted Freestash server and its shared ledger." />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="14">
+              <Border Classes="inset" CornerRadius="999" Padding="3" HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                  <RadioButton Theme="{StaticResource SegmentTheme}" GroupName="mode" IsChecked="{Binding IsLocal}" Content="Local engine" />
+                  <RadioButton Theme="{StaticResource SegmentTheme}" GroupName="mode" IsChecked="{Binding IsRemote}" Content="Team server" />
+                </StackPanel>
+              </Border>
+
+              <Grid ColumnDefinitions="*,140" IsVisible="{Binding IsLocal}">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="PYTHON COMMAND" Classes="caption" />
+                  <TextBox Text="{Binding PythonCommand}" Classes="mono" PlaceholderText="python" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="6" Margin="12,0,0,0">
+                  <TextBlock Text="PORT" Classes="caption" />
+                  <NumericUpDown Value="{Binding LocalPort}" Minimum="1024" Maximum="65535" FormatString="0" ShowButtonSpinner="False" />
+                </StackPanel>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding IsLocal}">
+                <ToggleSwitch IsChecked="{Binding AutoStartEngine}" />
+                <TextBlock Text="Start the engine automatically (runs  python -m freestash serve)" Classes="muted small" VerticalAlignment="Center" />
+              </StackPanel>
+
+              <StackPanel Spacing="12" IsVisible="{Binding IsRemote}">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="SERVER URL" Classes="caption" />
+                  <TextBox Text="{Binding RemoteUrl}" Classes="mono" PlaceholderText="https://freestash.yourstudio.app" />
+                </StackPanel>
+                <StackPanel Spacing="6">
+                  <TextBlock Text="ACCESS TOKEN" Classes="caption" />
+                  <TextBox Text="{Binding RemoteToken}" Classes="mono" PasswordChar="•" PlaceholderText="Supabase access token (team sign-in arrives in a later version)" />
+                </StackPanel>
+              </StackPanel>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="CONTACT EMAIL" Classes="caption" />
+                <TextBox Text="{Binding ContactEmail}" PlaceholderText="you@studio.com · sent in the User-Agent; Wikimedia and others throttle anonymous clients" />
+              </StackPanel>
+
+              <Border Classes="inset" Padding="12,10">
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                  <TextBlock Text="{Binding EngineStatus}" Classes="mono" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                  <Button Grid.Column="1" Classes="small" Margin="8,0,0,0" Content="Test" Command="{Binding TestConnectionCommand}" />
+                  <Button Grid.Column="2" Classes="small" Margin="6,0,0,0" Command="{Binding RestartEngineCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><c:Icon Data="{StaticResource IconRetry}" Size="13" /><TextBlock Text="Restart engine" /></StackPanel>
+                  </Button>
+                </Grid>
+              </Border>
+              <StackPanel Spacing="8">
+                <ToggleButton x:Name="LogToggle" Classes="ghost-toggle" HorizontalAlignment="Left">
+                  <StackPanel Orientation="Horizontal" Spacing="7">
+                    <c:Icon Data="{StaticResource IconChevronDown}" Size="14" />
+                    <TextBlock Text="Engine log" FontSize="12.5" />
+                  </StackPanel>
+                </ToggleButton>
+                <Border Classes="inset" Padding="12" MaxHeight="220" IsVisible="{Binding #LogToggle.IsChecked}">
+                  <ScrollViewer>
+                    <SelectableTextBlock Text="{Binding EngineLog}" FontFamily="{StaticResource MonoFont}" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" />
+                  </ScrollViewer>
+                </Border>
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- ===================================================== keys -->
+        <Border Classes="card" Padding="22">
+          <Grid ColumnDefinitions="230,*">
+            <StackPanel Spacing="6" Margin="0,0,24,0">
+              <StackPanel Orientation="Horizontal" Spacing="8"><c:Icon Data="{StaticResource IconKey}" Size="16" Classes="accent" /><TextBlock Text="API keys" Classes="h3" /></StackPanel>
+              <TextBlock Classes="faint small" TextWrapping="Wrap" LineHeight="18"
+                         Text="All free. Sources without keys stay off; everything else works without any." />
+              <TextBlock Text="{Binding KeysSummary}" Classes="mono faint" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0" />
+            </StackPanel>
+            <ItemsControl Grid.Column="1" ItemsSource="{Binding Keys}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="10" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:ProviderKeyViewModel">
+                  <Border Classes="raised" Padding="14,12" CornerRadius="12">
+                    <StackPanel Spacing="9">
+                      <Grid ColumnDefinitions="*,Auto,Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <TextBlock Text="{Binding Provider}" FontWeight="SemiBold" />
+                          <TextBlock Text="{Binding Label}" Classes="faint small" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Classes="tier" Classes.green="{Binding HasValue}" Margin="0,0,10,0" Background="{DynamicResource InsetBrush}" Padding="7,1,8,1">
+                          <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource TextFaintBrush}" />
+                        </Border>
+                        <Button Grid.Column="2" Classes="link small" Command="{Binding $parent[UserControl].((vm:SettingsViewModel)DataContext).OpenUrlCommand}"
+                                CommandParameter="{Binding SignupUrl}">
+                          <StackPanel Orientation="Horizontal" Spacing="5"><TextBlock Text="Get a key" FontSize="12" /><c:Icon Data="{StaticResource IconExternal}" Size="12" /></StackPanel>
+                        </Button>
+                      </Grid>
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding Value}" Classes="mono" PasswordChar="{Binding Mask}" PlaceholderText="{Binding EnvVar}" />
+                        <Button Grid.Column="1" Classes="icon" Margin="6,0,0,0" Command="{Binding ToggleRevealCommand}" ToolTip.Tip="Show / hide">
+                          <Panel>
+                            <c:Icon Data="{StaticResource IconEye}" Size="15" IsVisible="{Binding !IsRevealed}" />
+                            <c:Icon Data="{StaticResource IconEyeOff}" Size="15" IsVisible="{Binding IsRevealed}" />
+                          </Panel>
+                        </Button>
+                      </Grid>
+                      <TextBlock Text="{Binding Hint}" Classes="faint small" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </Grid>
+        </Border>
+
+        <!-- ===================================================== downloads -->
+        <Border Classes="card" Padding="22">
+          <Grid ColumnDefinitions="230,*">
+            <StackPanel Spacing="6" Margin="0,0,24,0">
+              <StackPanel Orientation="Horizontal" Spacing="8"><c:Icon Data="{StaticResource IconDownload}" Size="16" Classes="accent" /><TextBlock Text="Downloads" Classes="h3" /></StackPanel>
+              <TextBlock Classes="faint small" TextWrapping="Wrap" LineHeight="18" Text="Where files go and what travels with them." />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="14">
+              <StackPanel Spacing="6">
+                <TextBlock Text="DEFAULT FOLDER" Classes="caption" />
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBox Text="{Binding DownloadDirectory}" Classes="mono" />
+                  <Button Grid.Column="1" Classes="icon" Margin="6,0,0,0" Command="{Binding BrowseDownloadsCommand}"><c:Icon Data="{StaticResource IconFolder}" Size="15" /></Button>
+                </Grid>
+              </StackPanel>
+              <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                  <ToggleSwitch IsChecked="{Binding OrganizeByProject}" /><TextBlock Text="Sub-folder per project" Classes="small" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" Margin="0,0,0,10">
+                  <ToggleSwitch IsChecked="{Binding WriteSidecars}" /><TextBlock Text="Write .license.json sidecars" Classes="small" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10">
+                  <ToggleSwitch IsChecked="{Binding RecordInLedger}" /><TextBlock Text="Record in the license ledger" Classes="small" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                  <ToggleSwitch IsChecked="{Binding WatchClipboard}" /><TextBlock Text="Watch clipboard for links" Classes="small" VerticalAlignment="Center" />
+                </StackPanel>
+              </Grid>
+              <StackPanel Spacing="6">
+                <TextBlock Text="PARALLEL DOWNLOADS" Classes="caption" />
+                <NumericUpDown Value="{Binding MaxConcurrent}" Minimum="1" Maximum="8" FormatString="0" Width="140" HorizontalAlignment="Left" />
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- ===================================================== search defaults -->
+        <Border Classes="card" Padding="22">
+          <Grid ColumnDefinitions="230,*">
+            <StackPanel Spacing="6" Margin="0,0,24,0">
+              <StackPanel Orientation="Horizontal" Spacing="8"><c:Icon Data="{StaticResource IconSearch}" Size="16" Classes="accent" /><TextBlock Text="Search defaults" Classes="h3" /></StackPanel>
+              <TextBlock Classes="faint small" TextWrapping="Wrap" LineHeight="18" Text="What a fresh search starts with." />
+            </StackPanel>
+            <Grid Grid.Column="1" ColumnDefinitions="*,*,*">
+              <StackPanel Spacing="6" Margin="0,0,12,0">
+                <TextBlock Text="USE CASE" Classes="caption" />
+                <ComboBox ItemsSource="{Binding UseCases}" SelectedItem="{Binding DefaultUseCase}" HorizontalAlignment="Stretch" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="6" Margin="0,0,12,0">
+                <TextBlock Text="SHOW UP TO" Classes="caption" />
+                <ComboBox ItemsSource="{Binding TierChoices}" SelectedItem="{Binding DefaultMaxTier}" HorizontalAlignment="Stretch" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="6">
+                <TextBlock Text="RESULTS PER SOURCE" Classes="caption" />
+                <NumericUpDown Value="{Binding ResultsPerSource}" Minimum="1" Maximum="50" FormatString="0" />
+              </StackPanel>
+            </Grid>
+          </Grid>
+        </Border>
+
+        <!-- ===================================================== appearance -->
+        <Border Classes="card" Padding="22">
+          <Grid ColumnDefinitions="230,*">
+            <StackPanel Spacing="6" Margin="0,0,24,0">
+              <StackPanel Orientation="Horizontal" Spacing="8"><c:Icon Data="{StaticResource IconSun}" Size="16" Classes="accent" /><TextBlock Text="Appearance" Classes="h3" /></StackPanel>
+              <TextBlock Classes="faint small" TextWrapping="Wrap" LineHeight="18" Text="Previews instantly. Save to keep it." />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="16">
+              <ItemsControl ItemsSource="{Binding Themes}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="12" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:ThemeOption">
+                    <RadioButton GroupName="theme" IsChecked="{Binding IsSelected}" Theme="{StaticResource ThemeCardTheme}">
+                      <StackPanel Spacing="10" Width="250">
+                        <!-- mini preview -->
+                        <Border Height="92" CornerRadius="10" Background="{Binding Canvas}" ClipToBounds="True">
+                          <Grid ColumnDefinitions="54,*" Margin="10">
+                            <StackPanel Spacing="5">
+                              <Border Height="7" CornerRadius="3" Background="{Binding Surface}" />
+                              <Border Height="7" CornerRadius="3" Background="{Binding Surface}" Opacity="0.7" />
+                              <Border Height="7" CornerRadius="3" Background="{Binding Surface}" Opacity="0.7" />
+                            </StackPanel>
+                            <Border Grid.Column="1" Margin="10,0,0,0" CornerRadius="7" Background="{Binding Surface}">
+                              <StackPanel Margin="9" Spacing="6">
+                                <Border Height="6" Width="70" HorizontalAlignment="Left" CornerRadius="3" Background="{Binding Text}" Opacity="0.85" />
+                                <Border Height="5" Width="110" HorizontalAlignment="Left" CornerRadius="3" Background="{Binding Text}" Opacity="0.35" />
+                                <Border Height="14" Width="52" HorizontalAlignment="Left" CornerRadius="5" Background="{DynamicResource AccentBrush}" Margin="0,6,0,0" />
+                              </StackPanel>
+                            </Border>
+                          </Grid>
+                        </Border>
+                        <StackPanel Spacing="2">
+                          <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
+                          <TextBlock Text="{Binding Description}" Classes="faint small" TextWrapping="Wrap" />
+                        </StackPanel>
+                      </StackPanel>
+                    </RadioButton>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <StackPanel Spacing="8">
+                <TextBlock Text="ACCENT" Classes="caption" />
+                <ItemsControl ItemsSource="{Binding Accents}">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="10" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:AccentOption">
+                      <RadioButton GroupName="accent" IsChecked="{Binding IsSelected}" Theme="{StaticResource SwatchTheme}" ToolTip.Tip="{Binding Label}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <Ellipse Width="16" Height="16" Fill="{Binding Hex}" />
+                          <TextBlock Text="{Binding Label}" FontSize="12.5" VerticalAlignment="Center" />
+                        </StackPanel>
+                      </RadioButton>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Button Classes="link small" HorizontalAlignment="Left" Command="{Binding OpenConfigFolderCommand}">
+          <TextBlock Text="{Binding ConfigPath, StringFormat='Settings file: {0}'}" FontSize="12" Classes="mono" />
+        </Button>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+
+</UserControl>

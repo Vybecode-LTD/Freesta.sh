@@ -1,0 +1,23 @@
+{
+ "_synthetic": "Hand-built from documented response shape; re-record with a real key (IMPLEMENTATION.md P1).",
+ "total_results": 1,
+ "page": 1,
+ "per_page": 1,
+ "photos": [
+  {
+   "id": 1234567,
+   "width": 6000,
+   "height": 4000,
+   "url": "https://www.pexels.com/photo/lighthouse-on-cliff-1234567/",
+   "photographer": "Jane Doe",
+   "photographer_url": "https://www.pexels.com/@jane-doe",
+   "alt": "Lighthouse on a cliff at sunset",
+   "src": {
+    "original": "https://images.pexels.com/photos/1234567/pexels-photo-1234567.jpeg",
+    "large2x": "https://images.pexels.com/photos/1234567/pexels-photo-1234567.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "large": "https://images.pexels.com/photos/1234567/pexels-photo-1234567.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+    "medium": "https://images.pexels.com/photos/1234567/pexels-photo-1234567.jpeg?auto=compress&cs=tinysrgb&h=350"
+   }
+  }
+ ]
+}

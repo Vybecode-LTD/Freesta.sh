@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Renders every view headless with Skia and saves PNGs to docs/screenshots.
+       Usage: dotnet run (project tools/Freestash.Desktop.Snapshots) with args: apiBaseUrl outDir -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.Desktop" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Freestash.Desktop/Freestash.Desktop.csproj" />
+  </ItemGroup>
+</Project>

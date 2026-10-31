@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Freestash.Desktop.ViewModels"
+             xmlns:v="using:Freestash.Desktop.Views"
+             xmlns:fc="using:Freestash.Client"
+             xmlns:c="using:Freestash.Desktop.Controls"
+             x:Class="Freestash.Desktop.Views.CollectionsView"
+             x:DataType="vm:CollectionsViewModel">
+  <Grid ColumnDefinitions="300,*,Auto">
+    <!-- collection list -->
+    <Border BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,1,0" Background="{DynamicResource SurfaceBrush}">
+      <DockPanel Margin="18,24,18,18">
+        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="4,0,0,16">
+          <TextBlock Text="Collections" Classes="h1" />
+          <TextBlock Text="Shared boards, scored for one use case." Classes="muted small" />
+        </StackPanel>
+        <Border DockPanel.Dock="Top" Classes="raised" Padding="12" Margin="0,0,0,16">
+          <StackPanel Spacing="8">
+            <TextBox Text="{Binding NewName}" PlaceholderText="New collection name">
+              <TextBox.KeyBindings><KeyBinding Gesture="Enter" Command="{Binding CreateCommand}" /></TextBox.KeyBindings>
+            </TextBox>
+            <Grid ColumnDefinitions="*,Auto">
+              <ComboBox ItemsSource="{Binding UseCases}" SelectedItem="{Binding NewUseCase}" HorizontalAlignment="Stretch" />
+              <Button Grid.Column="1" Classes="accent" Margin="8,0,0,0" Command="{Binding CreateCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6"><c:Icon Data="{StaticResource IconPlus}" Size="14" /><TextBlock Text="Create" /></StackPanel>
+              </Button>
+            </Grid>
+          </StackPanel>
+        </Border>
+        <ListBox ItemsSource="{Binding List}" SelectedItem="{Binding Selected}" Background="Transparent">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="fc:Collection">
+              <StackPanel Spacing="2" Margin="2,4">
+                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Classes="faint small">
+                  <Run Text="{Binding UseCase}" /><Run Text=" · " /><Run Text="{Binding ItemCount}" /><Run Text=" items" />
+                </TextBlock>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Border>
+
+    <!-- selected collection -->
+    <Grid Grid.Column="1" RowDefinitions="Auto,*" Margin="28,24,20,0">
+      <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasSelection}" Margin="0,0,0,18">
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding Selected.Name, FallbackValue=''}" Classes="h1" />
+          <TextBlock Text="{Binding SelectedSummary}" Classes="muted" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <Button Classes="accent" Command="{Binding DownloadAllCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="7"><c:Icon Data="{StaticResource IconDownload}" Size="15" /><TextBlock Text="Download all" /></StackPanel>
+          </Button>
+          <Button Command="{Binding CopyCreditsCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="7"><c:Icon Data="{StaticResource IconCopy}" Size="15" /><TextBlock Text="Copy credits" /></StackPanel>
+          </Button>
+          <Button Classes="ghost icon" Command="{Binding DeleteCommand}" ToolTip.Tip="Delete collection"><c:Icon Data="{StaticResource IconTrash}" Size="15" /></Button>
+        </StackPanel>
+      </Grid>
+      <ScrollViewer Grid.Row="1" Padding="0,2,6,24">
+        <ItemsControl ItemsSource="{Binding Items}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><c:AdaptiveGrid MinItemWidth="228" ItemHeight="300" Spacing="16" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:AssetCardViewModel">
+              <Button Classes="asset" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                      Command="{Binding $parent[UserControl].((vm:CollectionsViewModel)DataContext).OpenCommand}" CommandParameter="{Binding}">
+                <v:AssetCardView />
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+      <StackPanel Grid.Row="1" IsVisible="{Binding IsEmpty}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8" Margin="0,0,0,80">
+        <TextBlock Text="No collections yet" Classes="h2" HorizontalAlignment="Center" />
+        <TextBlock Text="Create one on the left, then add results from the search detail panel." Classes="muted" HorizontalAlignment="Center" />
+        <TextBlock Text="{Binding Error}" Classes="faint small" HorizontalAlignment="Center" />
+      </StackPanel>
+    </Grid>
+
+    <Border Grid.Column="2" Width="472" IsVisible="{Binding HasDetail}" Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1,0,0,0">
+      <v:AssetDetailView DataContext="{Binding Detail}" />
+    </Border>
+  </Grid>
+</UserControl>

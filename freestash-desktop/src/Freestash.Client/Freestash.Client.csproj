@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- UI-free core: models, API client, SSE, download engine, settings + secrets, engine host.
+       Reusable by other C# apps (SoundPacker, KitRoll tooling) that want to search and record assets. -->
+  <PropertyGroup>
+    <RootNamespace>Freestash.Client</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Freestash.Client.Tests" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,36 @@
+{
+ "_synthetic": "Hand-built from documented response shape; re-record with a real key (IMPLEMENTATION.md P1).",
+ "total": 1,
+ "total_pages": 1,
+ "results": [
+  {
+   "id": "abc123XYZ",
+   "width": 5000,
+   "height": 3333,
+   "created_at": "2021-05-01T12:00:00Z",
+   "description": null,
+   "alt_description": "white lighthouse under blue sky",
+   "urls": {
+    "raw": "https://images.unsplash.com/photo-1?ixid=x",
+    "full": "https://images.unsplash.com/photo-1?q=85",
+    "regular": "https://images.unsplash.com/photo-1?w=1080",
+    "small": "https://images.unsplash.com/photo-1?w=400"
+   },
+   "links": {
+    "html": "https://unsplash.com/photos/abc123XYZ",
+    "download_location": "https://api.unsplash.com/photos/abc123XYZ/download?ixid=x"
+   },
+   "user": {
+    "name": "Sam Example",
+    "links": {
+     "html": "https://unsplash.com/@samexample"
+    }
+   },
+   "tags": [
+    {
+     "title": "lighthouse"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,104 @@
+{
+ "metadata": {
+  "identifier": "lighthouse-keeping-1932",
+  "mediatype": "movies",
+  "collection": [
+   "feature_films_unsorted",
+   "feature_films",
+   "moviesandfilms"
+  ],
+  "creator": "Manny Gould, Ben Harrison",
+  "date": "1932-08-15",
+  "description": "<div>Krazy Kat runs his own lighthouse and when rough seas take over, he has to save a damsel in distress.</div><div><br /></div><div>Watch on RetroFlix: <a class=\"in-cell-link\" href=\"https://retroflix.org/light-house-keeping-1932/\" style=\"font-family:Arial;font-size:10pt;\" rel=\"ugc nofollow\">https://retroflix.org/light-house-keeping-1932/</a></div>",
+  "language": "eng",
+  "licenseurl": "https://creativecommons.org/publicdomain/mark/1.0/",
+  "scanner": "Internet Archive HTML5 Uploader 1.7.0",
+  "subject": "Lighthouse Keeping (1932)",
+  "title": "Lighthouse Keeping (1932)",
+  "uploader": "upload@retroflix.org",
+  "publicdate": "2024-03-14 12:24:41",
+  "addeddate": "2024-03-14 12:24:41",
+  "curation": "[curator]validator@archive.org[/curator][date]20240314122556[/date][comment]checked for malware[/comment]",
+  "year": "1932",
+  "sound": "sound",
+  "color": "color",
+  "collection_added": [
+   "feature_films",
+   "moviesandfilms"
+  ]
+ },
+ "files": [
+  {
+   "name": "Lighthouse Keeping (1932).ia.mp4",
+   "source": "derivative",
+   "format": "h.264 IA",
+   "original": "Lighthouse Keeping (1932).mp4",
+   "mtime": "1710419685",
+   "size": "44308832",
+   "md5": "6737c3d0ce6b18c954a4ca2e9493b08c",
+   "crc32": "a83b8933",
+   "sha1": "637b6d87f60d2f12ef586501fc411dce34efe5b9",
+   "length": "398.11",
+   "width": "640",
+   "height": "480"
+  },
+  {
+   "name": "Lighthouse Keeping (1932).mp4",
+   "source": "original",
+   "mtime": "1710419042",
+   "size": "44308832",
+   "md5": "0a80ec7267dd9f3b26e59e0e838dc050",
+   "crc32": "4c73bf28",
+   "sha1": "244a2741e8dc2ed2d2ac22e738307508498e4700",
+   "format": "MPEG4",
+   "length": "398.11",
+   "width": "640",
+   "height": "480"
+  },
+  {
+   "name": "__ia_thumb.jpg",
+   "source": "original",
+   "mtime": "1710419735",
+   "size": "7783",
+   "md5": "5938c052c874a1690c383783a8c20eee",
+   "crc32": "e822ab99",
+   "sha1": "e796662421659db9ed2c2bc9d7f4666413261f66",
+   "format": "Item Tile"
+  },
+  {
+   "name": "lighthouse-keeping-1932.thumbs/Lighthouse Keeping (1932)_000001.jpg",
+   "source": "derivative",
+   "format": "Thumbnail",
+   "original": "Lighthouse Keeping (1932).mp4",
+   "mtime": "1710419424",
+   "size": "14256",
+   "md5": "dbbfab53f94a5ece4d3c4aaac2d6d863",
+   "crc32": "8bb60222",
+   "sha1": "e894b6f63a535d7314db3012ce1d97ee0a2d34ea"
+  },
+  {
+   "name": "lighthouse-keeping-1932.thumbs/Lighthouse Keeping (1932)_000058.jpg",
+   "source": "derivative",
+   "format": "Thumbnail",
+   "original": "Lighthouse Keeping (1932).mp4",
+   "mtime": "1710419426",
+   "size": "29701",
+   "md5": "661f18dd849c622a5caaa8ce31674aae",
+   "crc32": "3c3d39e6",
+   "sha1": "5bd7914dc5731ac2f28b640f9d90b6164af81dc3"
+  },
+  {
+   "name": "lighthouse-keeping-1932.thumbs/Lighthouse Keeping (1932)_000090.jpg",
+   "source": "derivative",
+   "format": "Thumbnail",
+   "original": "Lighthouse Keeping (1932).mp4",
+   "mtime": "1710419427",
+   "size": "30969",
+   "md5": "fac202e2152b6c3babd70b337656495b",
+   "crc32": "95ec4996",
+   "sha1": "414a8576126d5bbc68084eb3d12f8cede057b09b"
+  }
+ ],
+ "server": "dn800304.us.archive.org",
+ "dir": "/0/items/lighthouse-keeping-1932"
+}

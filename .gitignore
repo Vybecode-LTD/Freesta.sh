@@ -1,0 +1,36 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# node / web
+node_modules/
+freestash/web/dist/
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+.idea/
+TestResults/
+publish/
+
+# secrets and local config
+.env
+.env.*
+!.env.example
+.mcp.json
+*.db
+*.part
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp

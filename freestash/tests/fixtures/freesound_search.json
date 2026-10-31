@@ -1,0 +1,28 @@
+{
+ "_synthetic": "Hand-built from documented response shape; re-record with a real key (IMPLEMENTATION.md P1).",
+ "count": 1,
+ "results": [
+  {
+   "id": 457447,
+   "name": "Rain Sound and Rainforest.mp3",
+   "username": "INNORECORDS",
+   "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+   "duration": 170.9,
+   "tags": [
+    "rain",
+    "ambience"
+   ],
+   "url": "https://freesound.org/people/INNORECORDS/sounds/457447/",
+   "type": "mp3",
+   "samplerate": 44100,
+   "channels": 2,
+   "filesize": 5468620,
+   "created": "2019-02-11T10:00:00",
+   "previews": {
+    "preview-hq-mp3": "https://cdn.freesound.org/previews/457/457447_9518146-hq.mp3",
+    "preview-hq-ogg": "https://cdn.freesound.org/previews/457/457447_9518146-hq.ogg",
+    "preview-lq-mp3": "https://cdn.freesound.org/previews/457/457447_9518146-lq.mp3"
+   }
+  }
+ ]
+}

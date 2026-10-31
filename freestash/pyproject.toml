@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "freestash"
+version = "0.1.0"
+description = "Internal federated search for public domain and openly licensed assets, with use-case-aware license tiers."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary (internal)" }
+authors = [{ name = "VybeCod.ing" }]
+dependencies = [
+  "httpx>=0.27",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "typer>=0.12",
+  "rich>=13.7",
+  "sqlalchemy>=2.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp>=2.0"]
+api = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pyjwt[crypto]>=2.8",
+  "psycopg[binary]>=3.2",
+]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "respx>=0.21",
+  "ruff>=0.6",
+]
+all = ["freestash[mcp,api,dev]"]
+
+[project.scripts]
+freestash = "freestash.cli:app"
+freestash-mcp = "freestash.mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/freestash"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = ["live: hits real provider APIs (deselected by default; run with -m live)"]
+addopts = "-m 'not live'"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501", "B008", "SIM105"]  # B008: FastAPI Depends() idiom

@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Freestash.Desktop.ViewModels"
+             xmlns:c="using:Freestash.Desktop.Controls"
+             x:Class="Freestash.Desktop.Views.LicenseCheckView"
+             x:DataType="vm:LicenseCheckViewModel">
+  <ScrollViewer Padding="30,26,30,30">
+    <StackPanel Spacing="18" MaxWidth="960" HorizontalAlignment="Left">
+      <StackPanel Spacing="4">
+        <TextBlock Text="License check" Classes="h1" />
+        <TextBlock Text="Paste any license name, SPDX id, or URL and see where it lands for each use." Classes="muted" />
+        <TextBlock Text="{Binding CutoffText}" Classes="faint small" Margin="0,4,0,0" />
+      </StackPanel>
+
+      <Border Classes="card" Padding="18">
+        <StackPanel Spacing="12">
+          <TextBox Text="{Binding LicenseText}" PlaceholderText="CC BY-SA 4.0 · https://unsplash.com/license · OFL-1.1 · Public domain" FontSize="15" MinHeight="46">
+            <TextBox.InnerLeftContent><c:Icon Data="{StaticResource IconShield}" Size="17" Classes="faint" Margin="14,0,8,0" /></TextBox.InnerLeftContent>
+            <TextBox.KeyBindings><KeyBinding Gesture="Enter" Command="{Binding CheckCommand}" /></TextBox.KeyBindings>
+          </TextBox>
+          <Grid ColumnDefinitions="*,*,150,Auto">
+            <StackPanel Spacing="6" Margin="0,0,10,0">
+              <TextBlock Text="ASSERTED BY" Classes="caption" />
+              <ComboBox ItemsSource="{Binding TrustChoices}" SelectedItem="{Binding Trust}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="6" Margin="0,0,10,0">
+              <TextBlock Text="MEDIA" Classes="caption" />
+              <ComboBox ItemsSource="{Binding MediaChoices}" SelectedItem="{Binding Media}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Spacing="6" Margin="0,0,10,0">
+              <TextBlock Text="YEAR" Classes="caption" />
+              <NumericUpDown Value="{Binding Year}" Minimum="1000" Maximum="2100" FormatString="0" PlaceholderText="optional" ShowButtonSpinner="False" />
+            </StackPanel>
+            <Button Grid.Column="3" Classes="accent" VerticalAlignment="Bottom" Padding="22,9" Command="{Binding CheckCommand}" Content="Check" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <StackPanel Spacing="10" IsVisible="{Binding HasResult}">
+        <TextBlock Classes="muted"><Run Text="Recognized as " /><Run Text="{Binding Recognized}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" /></TextBlock>
+        <ItemsControl ItemsSource="{Binding Rows}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:VerdictRowViewModel">
+              <Border Classes="raised" Padding="16,12" CornerRadius="12">
+                <Grid ColumnDefinitions="110,100,*">
+                  <TextBlock Text="{Binding Label}" FontWeight="SemiBold" Margin="0,2,0,0" />
+                  <Border Grid.Column="1" Classes="tier" Classes.green="{Binding IsGreen}" Classes.yellow="{Binding IsYellow}" Classes.red="{Binding IsRed}">
+                    <StackPanel Orientation="Horizontal" Spacing="6"><Ellipse Width="6" Height="6" VerticalAlignment="Center" /><TextBlock Text="{Binding TierText}" /></StackPanel>
+                  </Border>
+                  <StackPanel Grid.Column="2" Spacing="4">
+                    <ItemsControl ItemsSource="{Binding Reasons}">
+                      <ItemsControl.ItemTemplate><DataTemplate DataType="x:String"><TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="13" /></DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ItemsControl ItemsSource="{Binding Obligations}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="x:String">
+                          <Grid ColumnDefinitions="16,*"><TextBlock Text="→" Classes="faint" /><TextBlock Grid.Column="1" Text="{Binding}" Classes="muted small" TextWrapping="Wrap" /></Grid>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

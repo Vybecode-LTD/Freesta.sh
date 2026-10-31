@@ -1,0 +1,156 @@
+{
+ "Diffuse": {
+  "1k": {
+   "jpg": {
+    "size": 635143,
+    "md5": "b41fc0114556f15fe59b260cf0978b89",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_asphalt_01/aerial_asphalt_01_diff_1k.jpg"
+   },
+   "png": {
+    "size": 2337475,
+    "md5": "423f88cd96c687ac0e26f27d195e0bc9",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/aerial_asphalt_01/aerial_asphalt_01_diff_1k.png"
+   },
+   "exr": {
+    "size": 1483717,
+    "md5": "4cf2c9b6629c48d565b66ac348d94283",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/aerial_asphalt_01/aerial_asphalt_01_diff_1k.exr"
+   }
+  },
+  "4k": {
+   "jpg": {
+    "size": 9782694,
+    "md5": "18381eef4142d7cc6a3598e9b42c3758",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/aerial_asphalt_01/aerial_asphalt_01_diff_4k.jpg"
+   },
+   "png": {
+    "size": 35971346,
+    "md5": "761f995ea3a83945cf77d7a84616fc3d",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/aerial_asphalt_01/aerial_asphalt_01_diff_4k.png"
+   },
+   "exr": {
+    "size": 25810464,
+    "md5": "393ce6a68275d428d75f5e8c86a104ea",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/aerial_asphalt_01/aerial_asphalt_01_diff_4k.exr"
+   }
+  }
+ },
+ "blend": {
+  "8k": {
+   "blend": {
+    "size": 273215,
+    "md5": "70780763cc03634e826831bc61ab9d0b",
+    "include": {
+     "textures/aerial_asphalt_01_nor_gl_8k.exr": {
+      "size": 111931569,
+      "md5": "bc45d9c1ba938cc945a6d63c933f1a59",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/8k/aerial_asphalt_01/aerial_asphalt_01_nor_gl_8k.exr"
+     },
+     "textures/aerial_asphalt_01_disp_8k.png": {
+      "size": 50764018,
+      "md5": "91758df2d6a75c74f234e7a6768fc128",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/8k/aerial_asphalt_01/aerial_asphalt_01_disp_8k.png"
+     },
+     "textures/aerial_asphalt_01_rough_8k.jpg": {
+      "size": 13753797,
+      "md5": "4390c7290c1592b5fe4dae2a4aee1025",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/aerial_asphalt_01/aerial_asphalt_01_rough_8k.jpg"
+     },
+     "textures/aerial_asphalt_01_diff_8k.jpg": {
+      "size": 37506182,
+      "md5": "fa9d01af92bfbbd23d16a272687ff5bd",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/8k/aerial_asphalt_01/aerial_asphalt_01_diff_8k.jpg"
+     }
+    },
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/blend/8k/aerial_asphalt_01/aerial_asphalt_01_8k.blend"
+   }
+  },
+  "4k": {
+   "blend": {
+    "size": 273160,
+    "md5": "00351e6b5232c2b5ae33a7368044ba89",
+    "include": {
+     "textures/aerial_asphalt_01_rough_4k.jpg": {
+      "size": 4604684,
+      "md5": "530bd68a085f14cd49b4d63ee3d09b39",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/aerial_asphalt_01/aerial_asphalt_01_rough_4k.jpg"
+     },
+     "textures/aerial_asphalt_01_disp_4k.png": {
+      "size": 28471675,
+      "md5": "5ac2dc887625810d43bb144f042cdb7e",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/4k/aerial_asphalt_01/aerial_asphalt_01_disp_4k.png"
+     },
+     "textures/aerial_asphalt_01_nor_gl_4k.exr": {
+      "size": 28002352,
+      "md5": "c2eda45653c8c51d76efe0e72278746d",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/4k/aerial_asphalt_01/aerial_asphalt_01_nor_gl_4k.exr"
+     },
+     "textures/aerial_asphalt_01_diff_4k.jpg": {
+      "size": 9782694,
+      "md5": "18381eef4142d7cc6a3598e9b42c3758",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/aerial_asphalt_01/aerial_asphalt_01_diff_4k.jpg"
+     }
+    },
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/blend/4k/aerial_asphalt_01/aerial_asphalt_01_4k.blend"
+   }
+  },
+  "2k": {
+   "blend": {
+    "size": 273171,
+    "md5": "fda0a622dbad77485e45e2c06c2ec465",
+    "include": {
+     "textures/aerial_asphalt_01_nor_gl_2k.exr": {
+      "size": 7130000,
+      "md5": "2c5a83ab336235e1919d0cf3539a95c7",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/2k/aerial_asphalt_01/aerial_asphalt_01_nor_gl_2k.exr"
+     },
+     "textures/aerial_asphalt_01_disp_2k.png": {
+      "size": 7466629,
+      "md5": "01c2e6a3797ba973e8078edaf7bd1ab2",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/aerial_asphalt_01/aerial_asphalt_01_disp_2k.png"
+     },
+     "textures/aerial_asphalt_01_diff_2k.jpg": {
+      "size": 2802005,
+      "md5": "4cb311fc7638c0b1d5e9641ca9c6ea78",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_asphalt_01/aerial_asphalt_01_diff_2k.jpg"
+     },
+     "textures/aerial_asphalt_01_rough_2k.jpg": {
+      "size": 1392536,
+      "md5": "f46f34b5509cec4b7fccdff8dfe4dc59",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/aerial_asphalt_01/aerial_asphalt_01_rough_2k.jpg"
+     }
+    },
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/blend/2k/aerial_asphalt_01/aerial_asphalt_01_2k.blend"
+   }
+  },
+  "1k": {
+   "blend": {
+    "size": 273243,
+    "md5": "4747d5b68bf3921c0702c316949f684f",
+    "include": {
+     "textures/aerial_asphalt_01_rough_1k.jpg": {
+      "size": 312445,
+      "md5": "086103ec0d34b82ba2def2d3584da8ed",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_asphalt_01/aerial_asphalt_01_rough_1k.jpg"
+     },
+     "textures/aerial_asphalt_01_nor_gl_1k.exr": {
+      "size": 1682254,
+      "md5": "7e5150551aa4e2d32351b77e61aa52fd",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/exr/1k/aerial_asphalt_01/aerial_asphalt_01_nor_gl_1k.exr"
+     },
+     "textures/aerial_asphalt_01_disp_1k.png": {
+      "size": 1930160,
+      "md5": "1560b8b1f1afcd4e2596fbfb7ebfc695",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/aerial_asphalt_01/aerial_asphalt_01_disp_1k.png"
+     },
+     "textures/aerial_asphalt_01_diff_1k.jpg": {
+      "size": 635143,
+      "md5": "b41fc0114556f15fe59b260cf0978b89",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_asphalt_01/aerial_asphalt_01_diff_1k.jpg"
+     }
+    },
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/blend/1k/aerial_asphalt_01/aerial_asphalt_01_1k.blend"
+   }
+  }
+ }
+}

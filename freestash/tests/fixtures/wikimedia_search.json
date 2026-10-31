@@ -1,0 +1,85 @@
+{
+ "_synthetic": "Hand-built from documented response shape; re-record with a real key (IMPLEMENTATION.md P1).",
+ "batchcomplete": true,
+ "query": {
+  "pages": [
+   {
+    "pageid": 4242001,
+    "ns": 6,
+    "title": "File:Westerheversand Lighthouse 2015.jpg",
+    "index": 1,
+    "imageinfo": [
+     {
+      "size": 2456789,
+      "width": 4000,
+      "height": 3000,
+      "mime": "image/jpeg",
+      "thumburl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Westerheversand_Lighthouse_2015.jpg/640px-Westerheversand_Lighthouse_2015.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Westerheversand_Lighthouse_2015.jpg",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Westerheversand_Lighthouse_2015.jpg",
+      "extmetadata": {
+       "ObjectName": {
+        "value": "Westerheversand Lighthouse 2015"
+       },
+       "DateTimeOriginal": {
+        "value": "2015-06-14 10:21:03"
+       },
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Example\" title=\"User:Example\">Example Photographer</a>"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 4.0"
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/4.0"
+       },
+       "AttributionRequired": {
+        "value": "true"
+       },
+       "Copyrighted": {
+        "value": "True"
+       },
+       "ImageDescription": {
+        "value": "Lighthouse at <b>Westerhever</b>, North Frisia."
+       }
+      }
+     }
+    ]
+   },
+   {
+    "pageid": 4242002,
+    "ns": 6,
+    "title": "File:Old map of a harbour (1720).png",
+    "index": 2,
+    "imageinfo": [
+     {
+      "size": 812345,
+      "width": 2000,
+      "height": 1400,
+      "mime": "image/png",
+      "thumburl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Old_map.png/640px-Old_map.png",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/c/cd/Old_map.png",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Old_map_of_a_harbour_(1720).png",
+      "extmetadata": {
+       "DateTimeOriginal": {
+        "value": "1720"
+       },
+       "Artist": {
+        "value": "Unknown author"
+       },
+       "LicenseShortName": {
+        "value": "Public domain"
+       },
+       "UsageTerms": {
+        "value": "Public domain"
+       },
+       "Copyrighted": {
+        "value": "False"
+       }
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

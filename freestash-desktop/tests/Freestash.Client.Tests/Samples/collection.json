@@ -1,0 +1,86 @@
+{
+ "id": "74383bf4-94b8-41db-9ebe-87847ef6890b",
+ "name": "Hero images",
+ "description": null,
+ "use_case": "bundled",
+ "team_id": null,
+ "created_by": "00000000-0000-0000-0000-000000000001",
+ "created_at": "2026-10-31T02:32:42.192970",
+ "item_count": 1,
+ "items": [
+  {
+   "uid": "cleveland:173965",
+   "asset": {
+    "provider": "cleveland",
+    "source_id": "173965",
+    "title": "Lighthouse Village (also known as Cape Elizabeth)",
+    "media_type": "image",
+    "license": {
+     "id": "CC0-1.0",
+     "label": "CC0 1.0",
+     "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+     "raw": "share_license_status=CC0"
+    },
+    "trust": "institution",
+    "landing_url": "https://clevelandart.org/art/1930.851",
+    "source_name": null,
+    "creator": "Edward Hopper (American, 1882\u20131967)",
+    "creator_url": null,
+    "thumbnail_url": "https://openaccess-cdn.clevelandart.org/1930.851/1930.851_web.jpg",
+    "preview_url": "https://openaccess-cdn.clevelandart.org/1930.851/1930.851_web.jpg",
+    "renditions": [
+     {
+      "url": "https://openaccess-cdn.clevelandart.org/1930.851/1930.851_web.jpg",
+      "label": "web",
+      "width": 900,
+      "height": 582,
+      "mime": null,
+      "bytes": 180727
+     },
+     {
+      "url": "https://openaccess-cdn.clevelandart.org/1930.851/1930.851_print.jpg",
+      "label": "print",
+      "width": 3400,
+      "height": 2198,
+      "mime": null,
+      "bytes": 2239978
+     },
+     {
+      "url": "https://openaccess-cdn.clevelandart.org/1930.851/1930.851_full.tif",
+      "label": "full",
+      "width": 13041,
+      "height": 8429,
+      "mime": null,
+      "bytes": 329797422
+     }
+    ],
+    "width": 3400,
+    "height": 2198,
+    "duration_seconds": null,
+    "date": "1929",
+    "year": 1929,
+    "tags": [],
+    "description": "Drawing \u00b7 Watercolor with graphite and scraping on paper",
+    "attribution_hint": null,
+    "notes": [],
+    "tips": [
+     "The 'full' rendition is an uncompressed TIFF and can run to hundreds of MB."
+    ],
+    "detail_required": false,
+    "extra": {}
+   },
+   "verdict": {
+    "use_case": "bundled",
+    "tier": "green",
+    "reasons": [
+     "CC0 1.0 (rights determination published by the institution)."
+    ],
+    "obligations": [],
+    "attribution": "\u201cLighthouse Village (also known as Cape Elizabeth)\u201d by Edward Hopper (American, 1882\u20131967), via Cleveland Museum of Art (CC0 1.0)."
+   },
+   "note": null,
+   "added_by": "00000000-0000-0000-0000-000000000001",
+   "added_at": "2026-10-31T02:32:42.202891"
+  }
+ ]
+}

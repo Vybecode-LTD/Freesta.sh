@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Freestash.Desktop.ViewModels"
+             xmlns:fc="using:Freestash.Client"
+             xmlns:c="using:Freestash.Desktop.Controls"
+             x:Class="Freestash.Desktop.Views.LedgerView"
+             x:DataType="vm:LedgerViewModel">
+  <Grid RowDefinitions="Auto,Auto,*" Margin="30,26,30,0">
+    <StackPanel Spacing="4">
+      <TextBlock Text="License ledger" Classes="h1" />
+      <TextBlock Text="Every asset taken, with the license exactly as it stood that day. Append-only." Classes="muted" />
+    </StackPanel>
+
+    <Grid Grid.Row="1" ColumnDefinitions="260,*,Auto" Margin="0,20,0,14">
+      <ComboBox ItemsSource="{Binding Projects}" SelectedItem="{Binding SelectedProject}" HorizontalAlignment="Stretch" />
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+        <Button Classes="accent" Command="{Binding ExportCommand}" CommandParameter="md">
+          <StackPanel Orientation="Horizontal" Spacing="7"><c:Icon Data="{StaticResource IconFile}" Size="15" /><TextBlock Text="ATTRIBUTION.md" /></StackPanel>
+        </Button>
+        <Button Command="{Binding ExportCommand}" CommandParameter="html" Content="Credits HTML" />
+        <Button Command="{Binding ExportCommand}" CommandParameter="csv" Content="CSV" />
+      </StackPanel>
+    </Grid>
+
+    <Border Grid.Row="2" Classes="card" Margin="0,0,0,24" ClipToBounds="True">
+      <DockPanel>
+        <Border DockPanel.Dock="Top" Padding="18,12" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
+          <Grid ColumnDefinitions="90,96,1.2*,2.2*,1.4*,90,110">
+            <TextBlock Text="TIER" Classes="caption" />
+            <TextBlock Grid.Column="1" Text="TAKEN" Classes="caption" />
+            <TextBlock Grid.Column="2" Text="PROJECT" Classes="caption" />
+            <TextBlock Grid.Column="3" Text="ASSET" Classes="caption" />
+            <TextBlock Grid.Column="4" Text="LICENSE" Classes="caption" />
+            <TextBlock Grid.Column="5" Text="USE" Classes="caption" />
+            <TextBlock Grid.Column="6" Text="SOURCE" Classes="caption" />
+          </Grid>
+        </Border>
+        <Panel>
+          <ScrollViewer>
+            <ItemsControl ItemsSource="{Binding Entries}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="fc:LedgerEntry">
+                  <Border Padding="18,11" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,0,1" Classes="row">
+                    <Grid ColumnDefinitions="90,96,1.2*,2.2*,1.4*,90,110">
+                      <Border Classes="tier" Classes.green="{Binding Tier, Converter={x:Static vm:LedgerConv.IsGreen}}"
+                              Classes.yellow="{Binding Tier, Converter={x:Static vm:LedgerConv.IsYellow}}"
+                              Classes.red="{Binding Tier, Converter={x:Static vm:LedgerConv.IsRed}}">
+                        <TextBlock Text="{Binding Tier}" />
+                      </Border>
+                      <TextBlock Grid.Column="1" Text="{Binding RetrievedAt, Converter={x:Static vm:LedgerConv.Date}}" Classes="mono faint" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="2" Text="{Binding Project, TargetNullValue='—'}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Creator}" Classes="faint small" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="4" Text="{Binding LicenseLabel}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Classes="small" />
+                      <TextBlock Grid.Column="5" Text="{Binding UseCase}" VerticalAlignment="Center" Classes="muted small" />
+                      <Button Grid.Column="6" Classes="link small" HorizontalAlignment="Left" Content="{Binding Provider}"
+                              Command="{Binding $parent[UserControl].((vm:LedgerViewModel)DataContext).OpenUrlCommand}" CommandParameter="{Binding LandingUrl}" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <StackPanel IsVisible="{Binding IsEmpty}" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6">
+            <TextBlock Text="Nothing recorded yet" Classes="h3" HorizontalAlignment="Center" />
+            <TextBlock Text="Downloads from search land here automatically." Classes="muted small" HorizontalAlignment="Center" />
+            <TextBlock Text="{Binding Error}" Classes="faint small" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Panel>
+      </DockPanel>
+    </Border>
+  </Grid>
+  <UserControl.Styles>
+    <Style Selector="Border.row:pointerover"><Setter Property="Background" Value="{DynamicResource RaisedBrush}" /></Style>
+  </UserControl.Styles>
+</UserControl>
