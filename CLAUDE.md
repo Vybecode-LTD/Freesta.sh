@@ -7,9 +7,10 @@ the website at **freesta.sh** and a Windows desktop app, on **one account**. Git
 Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner, 2026-10-31).
 
 ## Current State
-- Branch `feat/accounts-sync-aperture` (not pushed yet): accounts, synced keys + prefs, key help, Aperture redesign
+- PR #1 (`feat/accounts-sync-aperture` → `main`): accounts, synced keys + prefs, key help, Aperture redesign
   on both apps, parity gates. `main` = the imported v0.1.0 baseline.
-- Not deployed. Railway project, domain and secrets are owner steps (`freestash/IMPLEMENTATION.md` → P2).
+- Railway project **Freesta.sh** (service `freestash` + Postgres) being set up from the PR branch; state in
+  `docs/HANDOFF.md`. DNS for freesta.sh is the owner's step.
 - Gates last run 2026-10-31: pytest 99 · ruff clean · vitest 6 · dotnet 27 · 0 warnings · rendered-contrast 11 runs / 136 states / 0 failing.
 
 ## The parity rule (binding)
