@@ -1,9 +1,9 @@
 # CLAUDE.md — Freestash
 
-Internal tool for VybeCod.ing / Vibrant Mindz: **federated search for public domain and openly licensed
-assets** (images, audio, video, PBR textures, HDRIs, 3D, fonts, icons) across ~20 sources, with every
-result scored **GREEN / YELLOW / RED for a specific use case**. Used by a small team for demo website
-templates, client work, plugin factory libraries, and app assets.
+The engine, API and website of **Freesta.sh** (monorepo root: `../CLAUDE.md`, read it first: it holds the
+web/desktop parity rule). **Federated search for public domain and openly licensed assets** (images, audio,
+video, PBR textures, HDRIs, 3D, fonts, icons) across ~20 sources, with every result scored **GREEN / YELLOW / RED
+for a specific use case** (shown to users as Clear / Check / Blocked). Open sign-up; one account on web and desktop.
 
 Surfaces, all sharing one Python core:
 
@@ -12,10 +12,10 @@ Surfaces, all sharing one Python core:
 | Python core (`src/freestash/`) | `from freestash.search import Freestash` | Done, tested |
 | CLI | `python -m freestash …` | Done |
 | MCP server (stdio) | `python -m freestash mcp` | Done, verified over stdio |
-| Web API (FastAPI) | `python -m freestash serve` | Done, tested (local + Supabase auth) |
-| Web UI (React 19 + Vite) | `web/` | Done, builds clean, screenshots verified |
-| Supabase schema + RLS | `supabase/migrations/` | Done, RLS verified on real Postgres 16 |
-| Avalonia desktop app | `desktop/` | **Planned**: see `desktop/README.md` |
+| Web API (FastAPI) | `python -m freestash serve` | Done: accounts mode (sign-up, JWT, encrypted keys, prefs) + local mode |
+| Web UI (React 19 + Vite) | `web/` | Done: Aperture redesign, sign-in, Settings with key help; contrast-gated |
+| Accounts + data | `accounts.py`, `store.py` | SQLite locally, **Railway Postgres** in production (`DATABASE_URL`) |
+| Avalonia desktop app | `../freestash-desktop/` | Done: same account, same look (see its CLAUDE.md) |
 
 **Start here:** `IMPLEMENTATION.md` is the ordered runbook of what's left. Work it top to bottom.
 
@@ -37,8 +37,10 @@ Surfaces, all sharing one Python core:
    New provider = adapter + fixture + parser test + row in `docs/PROVIDERS.md`.
 6. **Python CLI commands always use the `python -m` form** (`python -m pip`, `python -m pytest`,
    `python -m freestash`). The owner's machine doesn't have pip/python script dirs on PATH.
-7. **Models are the contract.** `src/freestash/models.py` ↔ `web/src/lib/types.ts` ↔ `supabase/migrations/*`
-   ↔ `src/freestash/store.py` must stay in sync. The future Avalonia app consumes the same JSON.
+7. **Models are the contract.** `src/freestash/models.py` + `accounts.py` ↔ `web/src/lib/types.ts` ↔
+   `../freestash-desktop/src/Freestash.Client/{Models.cs,Account/AccountModels.cs}` must stay in sync.
+9. **Accounts:** never store a provider key unencrypted, never return one except to its owner
+   (`GET /api/me/keys/{name}`), never log one. Server env keys reach users only with `FREESTASH_SHARE_SERVER_KEYS=true`.
 8. The ledger is **append-only** for members (RLS enforces it). Don't add update paths.
 
 ## Commands
@@ -57,7 +59,9 @@ python -m freestash check "CC BY-SA 4.0" --trust community
 python -m freestash ledger export -f md --project aurora-template -o ATTRIBUTION.md
 python -m freestash pd-cutoff
 
-python -m freestash serve --reload            # API on :8787 (serves web/dist if built)
+python -m freestash serve --reload            # API on :8787, local mode (serves web/dist if built)
+python scripts/dev_accounts.py --port 8790    # accounts mode, as on Railway (throwaway DB + secrets in %LOCALAPPDATA%)
+python scripts/export_shared.py               # after editing providers/keys.py or ../shared/design-tokens.json
 cd web && npm install && npm run dev       # UI on :5173, proxies /api to :8787
 python -m freestash mcp                       # MCP over stdio
 ```
@@ -106,21 +110,19 @@ tests/                 fixtures are REAL recorded responses except files with "_
 
 ## Design system
 
-Dark identity: `#0a0a0a` canvas, Ember `#e8440a` accent, Geist Sans + JetBrains Mono, OKLCH tokens
-(`web/src/styles.css`). To reskin with **Machined Light**, point Claude Code at the
-machined-light-design-system repo and swap the tokens; component class names are stable.
+**Aperture** (owner-approved, `../dev plans/design-directions.html`, direction B): cold glass strata, warm sodium
+accent, the live source aperture as the signature. Geist + Geist Mono. Colours come only from
+`../shared/design-tokens.json` → generated `web/src/tokens.css` (dark "Glass" + light "Frost", four accents).
+Every web page passes the rendered-contrast gate (`verify-real-pass`) in both themes at 1440 and 390.
 
 ---
 
 ## Last Completed Task
 
-**2026-10-30 — v0.1.0 scaffold, built in claude.ai and handed to Claude Code.**
+**2026-10-31: accounts on Railway Postgres + Aperture redesign (PR #1, merged 2026-11-01).**
+Supabase removed; app-level accounts (open sign-up, password reset, rate limits keyed on the real client IP);
+per-user Fernet-encrypted provider keys used by search; synced preferences; `GET /api/keys/catalog` with verified
+where-to-get-it steps (Pexels has paused new keys; Openverse registers via a button). Web redesigned (sign-in,
+Settings, Downloads page with `.license.json`), Vitest added. 99 pytest, 6 vitest.
 
-- Core engine, 20 provider adapters (15 live-verified against real responses, 5 keyed ones from docs),
-  license policy engine with trust levels and the US PD date heuristic.
-- CLI, MCP server (7 tools), FastAPI with SSE streaming search, React UI (search, drawer with verdict
-  matrix, collections, ledger, license check, sources).
-- Supabase migration with RLS, verified on Postgres 16 with three simulated users.
-- 79 tests passing, ruff clean, `npm run build` clean (TS 7, Vite 8).
-
-**Next:** `IMPLEMENTATION.md` → P0.
+**Next:** `../docs/HANDOFF.md`.

@@ -1,0 +1,28 @@
+{
+  "$comment": "Aperture: cold glass strata, warm sodium light. The one source for both apps' colours. After editing, run `python scripts/export_shared.py` in freestash/ (writes web/src/tokens.css and the desktop's DesignTokens.g.cs). Colours are #RRGGBB or #RRGGBBAA.",
+  "name": "Aperture",
+  "fonts": { "sans": "Geist", "mono": "Geist Mono" },
+  "radius": { "sm": 8, "md": 11, "lg": 15, "xl": 18 },
+  "themes": {
+    "dark": {
+      "canvas": "#06090E", "chrome": "#070B11", "surface": "#0B1018", "raised": "#101722", "hover": "#162030",
+      "inset": "#080C12", "borderSubtle": "#96ACCC24", "borderStrong": "#96ACCC40", "highlight": "#FFFFFF12",
+      "hairline": "#96ACCC1A", "text": "#E8EEF6", "textSecondary": "#8D9BAD", "textFaint": "#66758A",
+      "scrim": "#020407B3", "overlay": "#0B1018F2", "green": "#4BE08A", "yellow": "#F3D35B", "red": "#FF6B6B",
+      "shadow": "#000000CC"
+    },
+    "light": {
+      "canvas": "#EDF1F6", "chrome": "#E6EBF2", "surface": "#FFFFFF", "raised": "#F5F7FA", "hover": "#EBF0F6",
+      "inset": "#F1F4F8", "borderSubtle": "#1E304A1F", "borderStrong": "#1E304A38", "highlight": "#FFFFFFE6",
+      "hairline": "#1E304A14", "text": "#0D1520", "textSecondary": "#4C5A6D", "textFaint": "#8592A3",
+      "scrim": "#0D152066", "overlay": "#FFFFFFF2", "green": "#0F7A3F", "yellow": "#8A6500", "red": "#C0362C",
+      "shadow": "#1E304A2E"
+    }
+  },
+  "accents": {
+    "sodium": { "fill": "#FF8C42", "textDark": "#FF9D5C", "textLight": "#B04A12", "on": "#1D0C00" },
+    "iris":   { "fill": "#9B8CFF", "textDark": "#B3A8FF", "textLight": "#5A43D6", "on": "#0E0A24" },
+    "teal":   { "fill": "#2DD4BF", "textDark": "#5FE3D3", "textLight": "#0B7569", "on": "#032420" },
+    "cobalt": { "fill": "#5B8CFF", "textDark": "#8AADFF", "textLight": "#2350C4", "on": "#050E26" }
+  }
+}

@@ -1,0 +1,62 @@
+/* GENERATED from shared/design-tokens.json by freestash/scripts/export_shared.py. Don't edit; edit the JSON. */
+
+:root, [data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #06090E;
+  --chrome: #070B11;
+  --surface: #0B1018;
+  --raised: #101722;
+  --hover: #162030;
+  --inset: #080C12;
+  --border-subtle: #96ACCC24;
+  --border-strong: #96ACCC40;
+  --highlight: #FFFFFF12;
+  --hairline: #96ACCC1A;
+  --text: #E8EEF6;
+  --text-secondary: #8D9BAD;
+  --text-faint: #66758A;
+  --scrim: #020407B3;
+  --overlay: #0B1018F2;
+  --green: #4BE08A;
+  --yellow: #F3D35B;
+  --red: #FF6B6B;
+  --shadow: #000000CC;
+  --accent-text: var(--accent-text-dark);
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --canvas: #EDF1F6;
+  --chrome: #E6EBF2;
+  --surface: #FFFFFF;
+  --raised: #F5F7FA;
+  --hover: #EBF0F6;
+  --inset: #F1F4F8;
+  --border-subtle: #1E304A1F;
+  --border-strong: #1E304A38;
+  --highlight: #FFFFFFE6;
+  --hairline: #1E304A14;
+  --text: #0D1520;
+  --text-secondary: #4C5A6D;
+  --text-faint: #8592A3;
+  --scrim: #0D152066;
+  --overlay: #FFFFFFF2;
+  --green: #0F7A3F;
+  --yellow: #8A6500;
+  --red: #C0362C;
+  --shadow: #1E304A2E;
+  --accent-text: var(--accent-text-light);
+}
+
+:root, [data-accent="sodium"] { --accent: #FF8C42; --on-accent: #1D0C00; --accent-text-dark: #FF9D5C; --accent-text-light: #B04A12; --accent-soft: #FF8C421F; --accent-line: #FF8C428C; }
+[data-accent="iris"] { --accent: #9B8CFF; --on-accent: #0E0A24; --accent-text-dark: #B3A8FF; --accent-text-light: #5A43D6; --accent-soft: #9B8CFF1F; --accent-line: #9B8CFF8C; }
+[data-accent="teal"] { --accent: #2DD4BF; --on-accent: #032420; --accent-text-dark: #5FE3D3; --accent-text-light: #0B7569; --accent-soft: #2DD4BF1F; --accent-line: #2DD4BF8C; }
+[data-accent="cobalt"] { --accent: #5B8CFF; --on-accent: #050E26; --accent-text-dark: #8AADFF; --accent-text-light: #2350C4; --accent-soft: #5B8CFF1F; --accent-line: #5B8CFF8C; }
+
+:root {
+  --r-sm: 8px;
+  --r-md: 11px;
+  --r-lg: 15px;
+  --r-xl: 18px;
+  --sans: "Geist Variable", "Geist", system-ui, sans-serif;
+  --mono: "Geist Mono Variable", "Geist Mono", ui-monospace, monospace;
+}

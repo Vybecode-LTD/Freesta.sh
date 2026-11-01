@@ -42,6 +42,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         LicenseCheck = new LicenseCheckViewModel(services);
         Sources = new SourcesViewModel(services, () => Navigate(SettingsItem!)); // SettingsItem is assigned below; the lambda runs later
         Settings = new SettingsViewModel(services);
+        SignIn = new SignInViewModel(services);
 
         NavItems =
         [
@@ -67,7 +68,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         Search.QueuedDownload += () => DownloadsItem.Badge = Downloads.ActiveCount;
 
         services.Engine.StateChanged += () => Dispatcher.UIThread.Post(UpdateEngine);
+        services.Session.Changed += () => Dispatcher.UIThread.Post(UpdateAccount);
         UpdateEngine();
+        UpdateAccount();
         NavItems[0].IsSelected = true;
     }
 
@@ -82,12 +85,18 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public LicenseCheckViewModel LicenseCheck { get; }
     public SourcesViewModel Sources { get; }
     public SettingsViewModel Settings { get; }
+    public SignInViewModel SignIn { get; }
     public ToastService Toasts => _services.Toasts;
 
     [ObservableProperty] public partial ViewModelBase? CurrentPage { get; set; }
     [ObservableProperty] public partial string EngineText { get; set; } = "Connecting…";
     [ObservableProperty] public partial bool EngineOnline { get; set; }
     [ObservableProperty] public partial bool EngineStarting { get; set; }
+    [ObservableProperty] public partial bool NeedsSignIn { get; set; }
+    [ObservableProperty] public partial string AccountName { get; set; } = "";
+    [ObservableProperty] public partial string AccountSub { get; set; } = "";
+    public bool ShowShell => !NeedsSignIn;
+    partial void OnNeedsSignInChanged(bool value) => OnPropertyChanged(nameof(ShowShell));
 
     public bool EngineOffline => !EngineOnline && !EngineStarting;
     partial void OnEngineOnlineChanged(bool value) => OnPropertyChanged(nameof(EngineOffline));
@@ -110,6 +119,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             if (!ReferenceEquals(item, selected)) item.IsSelected = false;
         CurrentPage = selected.Page;
         _ = selected.Page.OnShownAsync();
+    }
+
+    /// <summary>The account card at the foot of the rail, and the sign-in gate (hosted mode, no session).</summary>
+    private void UpdateAccount()
+    {
+        NeedsSignIn = _services.NeedsSignIn;
+        var user = _services.Session.CurrentFor(_services.Settings.ApiBaseUri)?.User;
+        AccountName = user?.DisplayName ?? user?.Email?.Split('@')[0] ?? "This computer";
+        AccountSub = _services.UsesAccounts ? "synced · web + desktop" : "local engine";
     }
 
     private void UpdateEngine()

@@ -1,7 +1,9 @@
 // Headless visual check: boots the real app with Skia rendering, drives it against a running Freestash engine,
 // and writes a PNG per screen. Usage:
 //   python -m freestash serve --port 8787          (in the freestash repo)
-//   dotnet run --project tools/Freestash.Desktop.Snapshots -- http://127.0.0.1:8787 docs/screenshots
+//   dotnet run --project tools/Freestash.Desktop.Snapshots -- http://127.0.0.1:8787 docs/screenshots [http://127.0.0.1:8790]
+// The third argument is an accounts-mode server (freestash/scripts/dev_accounts.py): signs up through the real
+// sign-in screen, saves a key and an accent from Settings, and reads them back through the account API.
 
 using Avalonia;
 using Avalonia.Headless;
@@ -16,6 +18,7 @@ using Freestash.Desktop.ViewModels;
 
 var api = new Uri(args.Length > 0 ? args[0] : "http://127.0.0.1:8787");
 var outDir = Path.GetFullPath(args.Length > 1 ? args[1] : "docs/screenshots");
+var accountsUrl = args.Length > 2 ? args[2] : null; // optional: an accounts-mode server, for the sign-in + sync phase
 Directory.CreateDirectory(outDir);
 
 AppBuilder.Configure<App>()
@@ -147,27 +150,63 @@ async Task Script()
     Go(vm.Settings);
     await Shot("09-settings.png");
 
-    // ---- Machined Light + icons/fonts/textures mix
-    services.Theme.Apply(AppTheme.MachinedLight, AccentColor.Ember);
+    // ---- Frost (light) + icons/fonts/textures mix
+    services.Theme.Apply(AppTheme.Frost, AccentColor.Sodium);
     foreach (var m in vm.Search.Media) m.IsSelected = m.Value is MediaType.Texture or MediaType.Icon or MediaType.Font or MediaType.Hdri;
     vm.Search.Query = "wood";
     Go(vm.Search);
     await vm.Search.SearchAsync();
     await WaitFor(() => !vm.Search.IsSearching, 60_000, "search 2");
     await Wait(7000);
-    await Shot("10-machined-light-search.png");
+    await Shot("10-frost-search.png");
     var tex = vm.Search.Results.FirstOrDefault(r => r.Asset.Provider == "polyhaven") ?? vm.Search.Results.First();
     await vm.Search.OpenCommand.ExecuteAsync(tex);
     await WaitFor(() => vm.Search.Detail is { IsLoading: false }, 30_000, "detail 2");
     await Wait(3000);
-    await Shot("11-machined-light-detail.png");
+    await Shot("11-frost-detail.png");
 
     Go(vm.Settings);
-    await Shot("12-machined-light-settings.png");
+    await Shot("12-frost-settings.png");
 
-    services.Theme.Apply(AppTheme.EmberDark, AccentColor.Iris);
+    services.Theme.Apply(AppTheme.Glass, AccentColor.Iris);
     vm.Search.CloseDetailCommand.Execute(null);
     Go(vm.Search);
     await Wait(1500);
     await Shot("13-iris-accent.png");
+
+    if (accountsUrl is null) return;
+
+    // ---- hosted mode: sign up on the sign-in screen, then prove keys and prefs reach the account
+    services.Theme.Apply(AppTheme.Glass, AccentColor.Sodium);
+    var hosted = services.Settings;
+    hosted.Mode = ConnectionMode.Remote;
+    hosted.RemoteUrl = accountsUrl;
+    services.SaveSettings(hosted);
+    await services.Engine.EnsureRunningAsync();
+    services.Session.Set(null);
+    await WaitFor(() => vm.NeedsSignIn, 5_000, "sign-in gate");
+    await Shot("14-sign-in.png");
+
+    vm.SignIn.ShowSignUpCommand.Execute(null);
+    vm.SignIn.DisplayName = "Jordan Vale";
+    vm.SignIn.Email = $"desktop-{DateTime.UtcNow:HHmmss}@example.com";
+    vm.SignIn.Password = "desktop password 1";
+    await Shot("15-sign-up.png");
+    await vm.SignIn.SubmitCommand.ExecuteAsync(null);
+    await WaitFor(() => !vm.NeedsSignIn, 15_000, "sign-up");
+    Console.WriteLine($"  signed up: {services.Session.Current?.User.Email} · error: {vm.SignIn.Error ?? "none"}");
+
+    Go(vm.Settings);
+    await vm.Settings.OnShownAsync();
+    var pexels = vm.Settings.Keys.First(k => k.Name == "PEXELS_API_KEY");
+    pexels.Value = "desktop-key-7Q2x";
+    vm.Settings.Accents.First(a => a.Value == AccentColor.Teal).IsSelected = true;
+    await vm.Settings.SaveCommand.ExecuteAsync(null);
+    var keys = await services.Account.Current.KeysAsync();
+    var prefs = (await services.Account.Current.PrefsAsync()).Data;
+    var keyOk = keys.Single(k => k.Name == "PEXELS_API_KEY") is { Set: true, Hint: "7Q2x" };
+    Console.WriteLine($"  SYNC key in account: {(keyOk ? "OK" : "FAILED")} · accent in account: {prefs.Accent}");
+    if (!keyOk || prefs.Accent != "teal") throw new InvalidOperationException("account sync failed");
+    await Wait(800);
+    await Shot("16-account-settings.png");
 }

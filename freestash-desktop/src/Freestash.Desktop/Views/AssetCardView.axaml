@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Freestash.Desktop.ViewModels"
              xmlns:c="using:Freestash.Desktop.Controls"
-             xmlns:conv="using:Freestash.Desktop.Converters"
              x:Class="Freestash.Desktop.Views.AssetCardView"
              x:DataType="vm:AssetCardViewModel">
-  <Grid RowDefinitions="176,*">
+  <!-- Same card as the web's components/AssetCard.tsx: image, then a plate with title, source · year, verdict + license. -->
+  <Grid RowDefinitions="180,*">
     <Border CornerRadius="15,15,0,0" ClipToBounds="True" Background="{DynamicResource InsetBrush}">
       <Panel>
         <c:AsyncImage Url="{Binding ThumbnailUrl}" IsVisible="{Binding ShowImage}" DecodeWidth="480" Placeholder="{Binding MediaText}" />
@@ -14,32 +14,32 @@
           <TextBlock Text="{Binding FontSample}" FontSize="56" FontWeight="Medium" LetterSpacing="-2" HorizontalAlignment="Center" />
           <TextBlock Text="{Binding Title}" Classes="caption" HorizontalAlignment="Center" />
         </StackPanel>
-        <c:Icon IsVisible="{Binding IsAudio}" Data="{StaticResource IconWave}" Size="54" StrokeThickness="1.5" Classes="faint"
+        <c:Icon IsVisible="{Binding IsAudio}" Data="{StaticResource IconWave}" Size="54" StrokeThickness="1.5" Classes="muted"
                 HorizontalAlignment="Center" VerticalAlignment="Center" />
-
-        <Border Classes="tier overlay" Classes.green="{Binding IsGreen}" Classes.yellow="{Binding IsYellow}" Classes.red="{Binding IsRed}"
-                Margin="10" ToolTip.Tip="{Binding TopReason}">
-          <StackPanel Orientation="Horizontal" Spacing="6">
-            <Ellipse Width="6" Height="6" VerticalAlignment="Center" />
-            <TextBlock Text="{Binding TierText}" />
-          </StackPanel>
-        </Border>
-        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" CornerRadius="999" Padding="6" Background="{DynamicResource OverlayBrush}" BoxShadow="0 2 10 0 #33000000">
-          <c:Icon Data="{Binding MediaIcon, Converter={x:Static conv:IconKeyConverter.Instance}}" Size="13" Classes="muted" />
-        </Border>
       </Panel>
     </Border>
 
-    <StackPanel Grid.Row="1" Margin="14,12,14,14" Spacing="5">
-      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13.5" TextWrapping="Wrap" MaxLines="2"
-                 TextTrimming="CharacterEllipsis" LineHeight="18" />
-      <TextBlock Text="{Binding SourceText}" Classes="muted small" TextTrimming="CharacterEllipsis" />
-      <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
-        <Border Classes="pill" HorizontalAlignment="Left" Padding="8,2" Background="{DynamicResource InsetBrush}">
-          <TextBlock Text="{Binding LicenseText}" FontSize="10.5" TextTrimming="CharacterEllipsis" MaxWidth="150"
+    <StackPanel Grid.Row="1" Margin="14,12,14,14" Spacing="4">
+      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14.5" TextTrimming="CharacterEllipsis" />
+      <TextBlock Text="{Binding CardMeta}" Classes="mono" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+      <Grid ColumnDefinitions="Auto,*" Margin="0,10,0,0">
+        <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center" ToolTip.Tip="{Binding TopReason}">
+          <Panel Width="7" Height="7" VerticalAlignment="Center">
+            <Ellipse Classes="dot" Fill="{DynamicResource GreenBrush}" IsVisible="{Binding IsGreen}" Effect="drop-shadow(0 0 6 #904BE08A)" />
+            <Ellipse Classes="dot" Fill="{DynamicResource YellowBrush}" IsVisible="{Binding IsYellow}" Effect="drop-shadow(0 0 6 #90F3D35B)" />
+            <Ellipse Classes="dot" Fill="{DynamicResource RedBrush}" IsVisible="{Binding IsRed}" Effect="drop-shadow(0 0 6 #90FF6B6B)" />
+          </Panel>
+          <Panel>
+            <TextBlock Classes="verdict" Text="{Binding TierText}" Foreground="{DynamicResource GreenBrush}" IsVisible="{Binding IsGreen}" />
+            <TextBlock Classes="verdict" Text="{Binding TierText}" Foreground="{DynamicResource YellowBrush}" IsVisible="{Binding IsYellow}" />
+            <TextBlock Classes="verdict" Text="{Binding TierText}" Foreground="{DynamicResource RedBrush}" IsVisible="{Binding IsRed}" />
+          </Panel>
+        </StackPanel>
+        <Border Grid.Column="1" HorizontalAlignment="Right" CornerRadius="6" Padding="7,2" Margin="10,0,0,0"
+                BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1">
+          <TextBlock Text="{Binding LicenseText}" Classes="mono" FontSize="10.5" TextTrimming="CharacterEllipsis" MaxWidth="130"
                      Foreground="{DynamicResource TextSecondaryBrush}" />
         </Border>
-        <TextBlock Grid.Column="1" Text="{Binding MetaText}" Classes="mono faint" FontSize="10.5" VerticalAlignment="Center" />
       </Grid>
     </StackPanel>
   </Grid>

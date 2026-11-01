@@ -19,8 +19,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from freestash import __version__
-from freestash.api.auth import CurrentUser, current_user
-from freestash.config import get_settings
+from freestash.accounts import AccountService
+from freestash.api import account as account_routes
+from freestash.api import auth as auth_routes
+from freestash.api.auth import CurrentUser, current_user, optional_user
+from freestash.config import Settings, get_settings
 from freestash.export import attribution_markdown, credits_html, ledger_csv
 from freestash.licenses import (
     build_attribution_html,
@@ -40,6 +43,7 @@ from freestash.models import (
     UseCase,
 )
 from freestash.providers import PROVIDERS
+from freestash.providers.keys import settings_with_keys
 from freestash.search import Freestash
 from freestash.store import Store, entry_from_scored
 
@@ -52,6 +56,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     app.state.engine = Freestash(settings)
     app.state.store = Store(settings=settings)
+    app.state.accounts = AccountService(app.state.store, settings)
     yield
     await app.state.engine.http.aclose()
 
@@ -61,6 +66,10 @@ app.add_middleware(CORSMiddleware, allow_origins=get_settings().cors_origins, al
                    allow_methods=["*"], allow_headers=["*"])
 
 User = Annotated[CurrentUser, Depends(current_user)]
+MaybeUser = Annotated[CurrentUser | None, Depends(optional_user)]
+
+app.include_router(auth_routes.router)
+app.include_router(account_routes.router)
 
 
 def engine(request: Request) -> Freestash:
@@ -71,20 +80,32 @@ def store(request: Request) -> Store:
     return request.app.state.store
 
 
+def user_settings(request: Request, user: CurrentUser | None) -> Settings:
+    """Engine settings for this caller: in accounts mode, search runs with the caller's own provider keys."""
+    settings = get_settings()
+    if settings.auth_mode != "accounts":
+        return settings
+    keys = request.app.state.accounts.key_values(user.id) if user and not user.local else {}
+    return settings_with_keys(settings, keys, share_server_keys=settings.share_server_keys)
+
+
 # --------------------------------------------------------------------------------- meta
 @app.get("/api/health")
 async def health() -> dict[str, Any]:
-    return {"ok": True, "version": __version__, "auth_mode": get_settings().auth_mode}
+    s = get_settings()
+    return {"ok": True, "version": __version__, "auth_mode": s.auth_mode,
+            "signup_open": s.auth_mode == "accounts" and s.signup_open}
 
 
 @app.get("/api/me")
 async def me(user: User) -> dict[str, Any]:
-    return {"id": user.id, "email": user.email, "team_id": user.team_id, "teams": user.teams}
+    return {"id": user.id, "email": user.email, "display_name": user.display_name, "team_id": user.team_id,
+            "teams": user.teams}
 
 
 @app.get("/api/providers")
-async def providers() -> list[dict[str, Any]]:
-    s = get_settings()
+async def providers(request: Request, user: MaybeUser) -> list[dict[str, Any]]:
+    s = user_settings(request, user)
     return [{"id": c.info.id, "name": c.info.name, "homepage": c.info.homepage,
              "media_types": sorted(m.value for m in c.info.media_types), "enabled": c.is_enabled(s),
              "key_setting": c.info.key_setting, "key_optional": c.info.key_optional,
@@ -100,7 +121,7 @@ async def pd_cutoff() -> dict[str, int]:
 # --------------------------------------------------------------------------------- search
 @app.post("/api/search", response_model=SearchResponse)
 async def search(query: SearchQuery, user: User, request: Request) -> SearchResponse:
-    return await engine(request).search(query)
+    return await engine(request).search(query, settings=user_settings(request, user))
 
 
 @app.get("/api/search/stream")
@@ -120,7 +141,7 @@ async def search_stream(
                         limit_per_provider=limit, page=page)
 
     async def events() -> AsyncIterator[str]:
-        async for batch in engine(request).search_stream(query):
+        async for batch in engine(request).search_stream(query, settings=user_settings(request, user)):
             if await request.is_disconnected():
                 break
             payload = {"status": batch.status.model_dump(mode="json"), "hidden": batch.hidden,
@@ -135,7 +156,7 @@ async def search_stream(
 @app.get("/api/assets/{uid:path}")
 async def get_asset(uid: str, user: User, request: Request, use: UseCase = UseCase.DEMO) -> dict[str, Any]:
     try:
-        scored = await engine(request).get_asset(uid, use)
+        scored = await engine(request).get_asset(uid, use, settings=user_settings(request, user))
     except (LookupError, KeyError, NotImplementedError) as exc:
         raise HTTPException(404, str(exc)) from exc
     return {"uid": scored.uid, "asset": scored.asset.model_dump(mode="json"),
@@ -210,7 +231,7 @@ async def add_item(collection_id: str, body: CollectionItemIn, user: User, reque
 
         scored = ScoredAsset(uid=body.asset.uid, asset=body.asset, verdict=evaluate(body.asset, use))
     else:
-        scored = await engine(request).get_asset(body.uid, use)
+        scored = await engine(request).get_asset(body.uid, use, settings=user_settings(request, user))
     return store(request).add_to_collection(collection_id, scored, note=body.note, user_id=user.id, team_id=user.team_id)
 
 
@@ -247,7 +268,7 @@ async def add_ledger(body: LedgerIn, user: User, request: Request) -> LedgerEntr
     if body.asset:
         scored = ScoredAsset(uid=body.asset.uid, asset=body.asset, verdict=evaluate(body.asset, body.use_case))
     else:
-        scored = await engine(request).get_asset(body.uid, body.use_case)
+        scored = await engine(request).get_asset(body.uid, body.use_case, settings=user_settings(request, user))
     if scored.verdict.tier == Tier.RED:
         raise HTTPException(409, {"message": "RED for this use case", "reasons": scored.verdict.reasons})
     return store(request).add_entry(entry_from_scored(scored, project=body.project, file_url=body.file_url,

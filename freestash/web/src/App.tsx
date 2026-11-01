@@ -1,53 +1,62 @@
 import { useEffect, useState } from "react";
 import { useToast } from "./components/bits";
+import { Icon, type IconName } from "./components/Icon";
 import { api } from "./lib/api";
-import { AUTH_MODE, currentSession, setActiveTeam, supabase } from "./lib/auth";
-import { CollectionsPage, LedgerPage, LicenseCheckPage, SourcesPage } from "./pages/OtherPages";
+import { PrefsProvider } from "./lib/prefs";
+import { showsSignIn } from "./lib/gate";
+import { useSession } from "./lib/session";
+import { CollectionsPage, DownloadsPage, LedgerPage, LicenseCheckPage, SourcesPage } from "./pages/OtherPages";
 import { SearchPage } from "./pages/SearchPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { SignInPage } from "./pages/SignInPage";
 
-type Route = "search" | "collections" | "ledger" | "check" | "sources";
-const ROUTES: { id: Route; label: string }[] = [
-  { id: "search", label: "Search" }, { id: "collections", label: "Collections" }, { id: "ledger", label: "Ledger" },
-  { id: "check", label: "License check" }, { id: "sources", label: "Sources" },
+type Route = "search" | "collections" | "downloads" | "ledger" | "check" | "sources" | "settings";
+// Same screens, same order, same names as the desktop app's nav rail (shared/parity.json).
+const NAV: { group: string; items: { id: Route; label: string; icon: IconName }[] }[] = [
+  { group: "Library", items: [
+    { id: "search", label: "Search", icon: "search" }, { id: "collections", label: "Collections", icon: "collections" },
+    { id: "downloads", label: "Downloads", icon: "downloads" }, { id: "ledger", label: "Ledger", icon: "ledger" },
+  ] },
+  { group: "Tools", items: [
+    { id: "check", label: "License check", icon: "shield" }, { id: "sources", label: "Sources", icon: "globe" },
+    { id: "settings", label: "Settings", icon: "settings" },
+  ] },
 ];
+const ROUTES = NAV.flatMap((g) => g.items.map((i) => i.id));
 
 function routeFromHash(): Route {
-  const h = window.location.hash.replace("#/", "") as Route;
-  return ROUTES.some((r) => r.id === h) ? h : "search";
-}
-
-function Login() {
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    const { error } = await supabase().auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
-    if (error) setErr(error.message); else setSent(true);
-  }
-  return (
-    <div className="login">
-      <form className="panel" onSubmit={send}>
-        <div className="brand"><span className="brand-dot" />Freestash</div>
-        <p className="muted" style={{ margin: 0 }}>Sign in with your work email. We'll send a magic link.</p>
-        {sent ? <p>Check your inbox for the link.</p> : (
-          <>
-            <input className="input" type="email" required placeholder="you@studio.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <button className="btn btn-primary" type="submit">Send magic link</button>
-          </>
-        )}
-        {err && <p style={{ color: "var(--red)", margin: 0 }}>{err}</p>}
-      </form>
-    </div>
-  );
+  const h = window.location.hash.replace(/^#\//, "").split("?")[0] as Route;
+  return ROUTES.includes(h) ? h : "search";
 }
 
 export default function App() {
+  const [health, setHealth] = useState<{ auth_mode: "none" | "accounts"; signup_open: boolean } | null>(null);
+  const [offline, setOffline] = useState(false);
+  const [hash, setHash] = useState(window.location.hash);
+  const session = useSession();
+
+  useEffect(() => { api.health().then(setHealth).catch(() => setOffline(true)); }, []);
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  if (offline) return <div className="boot"><strong>Can't reach the Freesta.sh server.</strong><span className="muted">Check your connection and reload.</span></div>;
+  if (!health) return <div className="boot" aria-busy="true" />;
+
+  const accountMode = health.auth_mode === "accounts";
+  return (
+    <PrefsProvider accountMode={accountMode} signedIn={!!session}>
+      {showsSignIn(accountMode, !!session, hash) ? <SignInPage signupOpen={health.signup_open} /> : <Shell accountMode={accountMode} />}
+    </PrefsProvider>
+  );
+}
+
+function Shell({ accountMode }: { accountMode: boolean }) {
   const [route, setRoute] = useState<Route>(routeFromHash);
-  const [authed, setAuthed] = useState(AUTH_MODE === "none");
-  const [checking, setChecking] = useState(AUTH_MODE === "supabase");
-  const [teamError, setTeamError] = useState<string | null>(null);
   const [toast, setToast] = useToast();
+  const session = useSession();
 
   useEffect(() => {
     const onHash = () => setRoute(routeFromHash());
@@ -55,47 +64,39 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  useEffect(() => {
-    if (AUTH_MODE !== "supabase") return;
-    currentSession().then((s) => { setAuthed(!!s); setChecking(false); });
-    const { data } = supabase().auth.onAuthStateChange((_e, s) => setAuthed(!!s));
-    return () => data.subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!authed || AUTH_MODE !== "supabase") return;
-    api.me().then((me) => me.team_id && setActiveTeam(me.team_id)).catch((e) => setTeamError(e.message));
-  }, [authed]);
-
-  if (checking) return null;
-  if (!authed) return <Login />;
-
-  const go = (r: Route) => { window.location.hash = `#/${r}`; };
+  const name = session?.user.display_name || session?.user.email?.split("@")[0] || "This computer";
 
   return (
     <div className="shell">
-      <header className="topbar">
-        <div className="brand"><span className="brand-dot" />Freestash</div>
-        <nav className="nav">
-          {ROUTES.map((r) => (
-            <button key={r.id} aria-current={route === r.id ? "page" : undefined} onClick={() => go(r.id)}>{r.label}</button>
+      <aside className="rail">
+        <a className="wordmark" href="#/search" aria-label="Freesta.sh home">freesta<span>.sh</span></a>
+        <nav className="nav" aria-label="Main">
+          {NAV.map((g) => (
+            <div key={g.group} className="nav-group">
+              <span className="eyebrow nav-eyebrow">{g.group}</span>
+              {g.items.map((i) => (
+                <a key={i.id} href={`#/${i.id}`} className="nav-link" aria-current={route === i.id ? "page" : undefined}>
+                  <Icon name={i.icon} />{i.label}
+                </a>
+              ))}
+            </div>
           ))}
         </nav>
-        <span className="spacer" />
-        {AUTH_MODE === "supabase" && <button className="btn btn-ghost btn-sm" onClick={() => supabase().auth.signOut()}>Sign out</button>}
-      </header>
-      {teamError ? (
-        <div className="page"><div className="empty"><strong>Almost there</strong>{teamError}</div></div>
-      ) : (
-        <main>
-          {route === "search" && <SearchPage onToast={setToast} />}
-          {route === "collections" && <CollectionsPage onToast={setToast} />}
-          {route === "ledger" && <LedgerPage onToast={setToast} />}
-          {route === "check" && <LicenseCheckPage />}
-          {route === "sources" && <SourcesPage />}
-        </main>
-      )}
-      {toast && <div className="toast">{toast}</div>}
+        <a className="acct" href="#/settings">
+          <span className="acct-name">{name}</span>
+          <span className="acct-sync mono"><b aria-hidden="true" />{accountMode ? "synced · web + desktop" : "local engine"}</span>
+        </a>
+      </aside>
+      <main className="main" id="main">
+        {route === "search" && <SearchPage onToast={setToast} />}
+        {route === "collections" && <CollectionsPage onToast={setToast} />}
+        {route === "downloads" && <DownloadsPage onToast={setToast} />}
+        {route === "ledger" && <LedgerPage onToast={setToast} />}
+        {route === "check" && <LicenseCheckPage />}
+        {route === "sources" && <SourcesPage />}
+        {route === "settings" && <SettingsPage onToast={setToast} accountMode={accountMode} />}
+      </main>
+      {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
 }

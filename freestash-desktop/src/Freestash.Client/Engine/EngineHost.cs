@@ -92,7 +92,7 @@ public sealed class EngineHost : IAsyncDisposable
         };
         if (!string.IsNullOrWhiteSpace(s.ContactEmail)) env["FREESTASH_CONTACT_EMAIL"] = s.ContactEmail.Trim();
         foreach (var key in ProviderKeys.All)
-            if (_secrets.Get(key.EnvVar) is { } value) env[key.EnvVar] = value;
+            if (_secrets.Get(key.Name) is { } value) env[key.Name] = value;
         return env;
     }
 

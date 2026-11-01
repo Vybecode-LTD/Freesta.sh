@@ -1,7 +1,4 @@
-import time
-
 import httpx
-import jwt
 import pytest
 import respx
 from fastapi.testclient import TestClient
@@ -74,27 +71,3 @@ def test_ledger_refuses_red(client):
     r = client.post("/api/ledger", json={"uid": "pexels:photo-1234567", "asset": a, "use_case": "bundled"})
     assert r.status_code == 409
 
-
-def test_supabase_mode_requires_valid_token_and_team(tmp_path, monkeypatch):
-    secret = "x" * 40
-    monkeypatch.setenv("FREESTASH_DATA_DIR", str(tmp_path))
-    monkeypatch.setenv("FREESTASH_AUTH_MODE", "supabase")
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
-    get_settings.cache_clear()
-    from freestash.api.app import app
-    from freestash.store import TeamMemberRow, TeamRow
-
-    with TestClient(app) as c:
-        assert c.get("/api/me").status_code == 401
-        token = jwt.encode({"sub": "11111111-1111-1111-1111-111111111111", "aud": "authenticated",
-                            "exp": int(time.time()) + 60, "email": "a@b.c"}, secret, algorithm="HS256")
-        hdr = {"Authorization": f"Bearer {token}"}
-        assert c.get("/api/me", headers=hdr).status_code == 403  # valid token, no team yet
-        with app.state.store.session() as s, s.begin():
-            s.add(TeamRow(id="22222222-2222-2222-2222-222222222222", name="Studio"))
-            s.add(TeamMemberRow(team_id="22222222-2222-2222-2222-222222222222", user_id="11111111-1111-1111-1111-111111111111", role="owner"))
-        me = c.get("/api/me", headers=hdr).json()
-        assert me["team_id"] == "22222222-2222-2222-2222-222222222222" and me["email"] == "a@b.c"
-        coll = c.post("/api/collections", json={"name": "Team set"}, headers=hdr).json()
-        assert coll["team_id"] == "22222222-2222-2222-2222-222222222222"
-    get_settings.cache_clear()

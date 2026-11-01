@@ -1,22 +1,25 @@
 import { useEffect, useState } from "react";
 import { AssetCard } from "../components/AssetCard";
 import { AssetDrawer } from "../components/AssetDrawer";
-import { TierBadge, download } from "../components/bits";
+import { Empty, PageHead, Verdict, download } from "../components/bits";
+import { Icon } from "../components/Icon";
 import { api } from "../lib/api";
-import type { Collection, LedgerEntry, MediaType, ProviderInfo, ScoredAsset, Trust, UseCase, Verdict } from "../lib/types";
+import { sidecarFromEntry, sidecarName } from "../lib/sidecar";
+import type { Collection, LedgerEntry, MediaType, ProviderInfo, ScoredAsset, Trust, UseCase, Verdict as V } from "../lib/types";
 import { MEDIA_TYPES, USE_CASES } from "../lib/types";
 
 type Toast = { onToast: (m: string) => void };
+const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 // ===================================================================== Collections
 export function CollectionsPage({ onToast }: Toast) {
-  const [list, setList] = useState<Collection[]>([]);
+  const [list, setList] = useState<Collection[] | null>(null);
   const [active, setActive] = useState<Collection | null>(null);
   const [name, setName] = useState("");
   const [useCase, setUseCase] = useState<UseCase>("demo");
   const [open, setOpen] = useState<ScoredAsset | null>(null);
 
-  const load = () => api.collections().then(setList).catch((e) => onToast(String(e.message ?? e)));
+  const load = () => api.collections().then(setList).catch((e) => onToast(msg(e)));
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function create(e: React.FormEvent) {
@@ -34,19 +37,18 @@ export function CollectionsPage({ onToast }: Toast) {
   }
 
   if (active) {
-    const items: ScoredAsset[] = (active.items ?? []).map((i) => ({ uid: i.uid, asset: i.asset, verdict: i.verdict as Verdict }));
+    const items: ScoredAsset[] = (active.items ?? []).map((i) => ({ uid: i.uid, asset: i.asset, verdict: i.verdict as V }));
     return (
       <div className="page">
-        <button className="btn btn-ghost btn-sm" onClick={() => setActive(null)}>← All collections</button>
-        <h1 style={{ marginTop: 12 }}>{active.name}</h1>
-        <p className="page-sub">Scored for <strong>{active.use_case}</strong> · {active.item_count} item(s)</p>
-        <div className="row" style={{ marginBottom: 18 }}>
-          <button className="btn" onClick={() => copyCredits(active)}>Copy credits</button>
-          <button className="btn" onClick={async () => { if (confirm("Delete this collection?")) { await api.deleteCollection(active.id); setActive(null); void load(); } }}>Delete</button>
-        </div>
+        <button className="btn btn-ghost btn-sm back" onClick={() => setActive(null)}><Icon name="back" size={15} />All collections</button>
+        <PageHead title={active.name} sub={<>Cleared for <strong>{active.use_case}</strong> use · {active.item_count} item{active.item_count === 1 ? "" : "s"}</>}>
+          <button className="btn" onClick={() => copyCredits(active)}><Icon name="copy" size={15} />Copy credits</button>
+          <button className="btn btn-danger" onClick={async () => { if (confirm(`Delete “${active.name}”? Its items stay in your ledger.`)) { await api.deleteCollection(active.id); setActive(null); void load(); } }}>
+            <Icon name="trash" size={15} />Delete</button>
+        </PageHead>
         {items.length ? <div className="grid">{items.map((r) => <AssetCard key={r.uid} item={r} onOpen={setOpen} />)}</div>
-          : <div className="empty"><strong>Empty for now</strong>Add results from the search drawer.</div>}
-        {open && <AssetDrawer item={open} useCase={active.use_case} collections={list} onClose={() => setOpen(null)}
+          : <Empty title="Empty for now">Open a search result and choose “Add to a collection”.</Empty>}
+        {open && <AssetDrawer item={open} useCase={active.use_case} collections={list ?? []} onClose={() => setOpen(null)}
                               onToast={onToast} onCollectionsChanged={() => openCollection(active.id)} />}
       </div>
     );
@@ -54,25 +56,58 @@ export function CollectionsPage({ onToast }: Toast) {
 
   return (
     <div className="page">
-      <h1>Collections</h1>
-      <p className="page-sub">Shared boards for a project. Every item is scored for the collection's use case.</p>
-      <form className="row panel" style={{ marginBottom: 18 }} onSubmit={create}>
-        <input className="input" style={{ flex: 1, minWidth: 220 }} placeholder="New collection, e.g. Aurora template — hero images"
-               value={name} onChange={(e) => setName(e.target.value)} />
-        <select className="input" style={{ width: 160 }} value={useCase} onChange={(e) => setUseCase(e.target.value as UseCase)}>
+      <PageHead title="Collections" sub="Boards for a project. Every item is cleared for the collection's use, and they sync to the desktop app." />
+      <form className="panel inline-form" onSubmit={create}>
+        <input className="input grow" placeholder="New collection, e.g. Aurora template — hero images"
+               value={name} onChange={(e) => setName(e.target.value)} aria-label="Collection name" />
+        <select className="input" value={useCase} onChange={(e) => setUseCase(e.target.value as UseCase)} aria-label="Use">
           {USE_CASES.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
         </select>
-        <button className="btn btn-primary" type="submit">Create</button>
+        <button className="btn btn-primary" type="submit"><Icon name="plus" size={16} />Create</button>
       </form>
-      <div className="list">
-        {list.map((c) => (
-          <div key={c.id} className="panel coll">
-            <div><strong>{c.name}</strong><div className="faint">{c.use_case} · {c.item_count} item(s)</div></div>
-            <button className="btn btn-sm" onClick={() => openCollection(c.id)}>Open</button>
-          </div>
+      <div className="coll-grid">
+        {(list ?? []).map((c) => (
+          <button key={c.id} className="panel coll" onClick={() => openCollection(c.id)}>
+            <Icon name="collections" size={20} />
+            <span className="coll-name">{c.name}</span>
+            <span className="mono faint">{c.use_case} · {c.item_count} item{c.item_count === 1 ? "" : "s"}</span>
+          </button>
         ))}
-        {!list.length && <div className="empty"><strong>No collections yet</strong>Create one above, then add search results to it.</div>}
       </div>
+      {list && !list.length && <Empty title="No collections yet">Create one above, then add search results to it.</Empty>}
+    </div>
+  );
+}
+
+// ===================================================================== Downloads
+/** The browser downloads files itself; this is every file taken on any of your devices, with its provenance. */
+export function DownloadsPage({ onToast }: Toast) {
+  const [entries, setEntries] = useState<LedgerEntry[] | null>(null);
+  useEffect(() => { api.ledger().then(setEntries).catch((e) => onToast(msg(e))); }, [onToast]);
+  const files = (entries ?? []).filter((e) => e.file_url);
+
+  return (
+    <div className="page">
+      <PageHead title="Downloads" sub="Every file you've taken, on the web or in the desktop app, newest first. Re-download it or save its license file." />
+      <div className="dl-list">
+        {files.map((e) => {
+          const side = sidecarFromEntry(e);
+          return (
+            <div key={e.id} className="panel dl">
+              <Verdict tier={e.tier} />
+              <div className="dl-main">
+                <div className="dl-title">{e.title}</div>
+                <div className="mono faint">{e.provider} · {e.license_label} · {e.use_case}{e.project ? ` · ${e.project}` : ""} · {e.retrieved_at.slice(0, 10)}</div>
+              </div>
+              <a className="btn btn-sm" href={e.file_url!} target="_blank" rel="noreferrer"><Icon name="downloads" size={15} />File</a>
+              <button className="btn btn-sm" disabled={!side} title={side ? "" : "Recorded before license files existed"}
+                      onClick={() => side && download(sidecarName(e.file_url ?? null, e.title), side, "application/json")}>
+                <Icon name="file" size={15} />.license.json</button>
+            </div>
+          );
+        })}
+      </div>
+      {entries && !files.length && <Empty title="Nothing downloaded yet">Open a search result and choose “Record and open file”.</Empty>}
     </div>
   );
 }
@@ -84,7 +119,7 @@ export function LedgerPage({ onToast }: Toast) {
   const [project, setProject] = useState("");
 
   useEffect(() => { api.projects().then(setProjects).catch(() => undefined); }, []);
-  useEffect(() => { api.ledger(project || undefined).then(setEntries).catch((e) => onToast(String(e.message ?? e))); }, [project, onToast]);
+  useEffect(() => { api.ledger(project || undefined).then(setEntries).catch((e) => onToast(msg(e))); }, [project, onToast]);
 
   async function exportAs(fmt: "md" | "html" | "csv") {
     const body = await api.exportLedger(fmt, project || undefined);
@@ -94,25 +129,22 @@ export function LedgerPage({ onToast }: Toast) {
 
   return (
     <div className="page">
-      <h1>License ledger</h1>
-      <p className="page-sub">Every asset the team has taken, with the license as it stood that day. Append-only.</p>
-      <div className="row" style={{ marginBottom: 16 }}>
-        <select className="input" style={{ width: 240 }} value={project} onChange={(e) => setProject(e.target.value)}>
+      <PageHead title="License ledger" sub="Everything you've taken, with the license as it stood that day. Nothing here is ever edited.">
+        <select className="input" value={project} onChange={(e) => setProject(e.target.value)} aria-label="Project">
           <option value="">All projects</option>
           {projects.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
-        <span style={{ flex: 1 }} />
         <button className="btn" onClick={() => exportAs("md")}>ATTRIBUTION.md</button>
         <button className="btn" onClick={() => exportAs("html")}>Credits HTML</button>
         <button className="btn" onClick={() => exportAs("csv")}>CSV</button>
-      </div>
-      <div className="panel" style={{ padding: 0, overflowX: "auto" }}>
+      </PageHead>
+      <div className="panel table-wrap">
         <table className="table">
-          <thead><tr><th /><th>Taken</th><th>Project</th><th>Title</th><th>License</th><th>Use</th><th>Source</th></tr></thead>
+          <thead><tr><th>Clearance</th><th>Taken</th><th>Project</th><th>Title</th><th>License</th><th>Use</th><th>Source</th></tr></thead>
           <tbody>
             {entries.map((e) => (
               <tr key={e.id}>
-                <td><TierBadge tier={e.tier} /></td>
+                <td><Verdict tier={e.tier} /></td>
                 <td className="mono faint">{e.retrieved_at.slice(0, 10)}</td>
                 <td>{e.project ?? "—"}</td>
                 <td>{e.title}{e.creator && <div className="faint">{e.creator}</div>}</td>
@@ -121,7 +153,7 @@ export function LedgerPage({ onToast }: Toast) {
                 <td>{e.landing_url ? <a href={e.landing_url} target="_blank" rel="noreferrer">{e.provider} ↗</a> : e.provider}</td>
               </tr>
             ))}
-            {!entries.length && <tr><td colSpan={7} className="faint" style={{ padding: 30, textAlign: "center" }}>Nothing recorded yet.</td></tr>}
+            {!entries.length && <tr><td colSpan={7} className="faint table-empty">Nothing recorded yet.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -145,33 +177,33 @@ export function LicenseCheckPage() {
   }
 
   return (
-    <div className="page" style={{ maxWidth: 980 }}>
-      <h1>License check</h1>
-      <p className="page-sub">Paste any license name, SPDX id, or URL and see where it lands for each use.
-        {cutoff && <> US public domain today: works from <strong>{cutoff.works}</strong> and earlier, recordings from <strong>{cutoff.sound_recordings}</strong> and earlier.</>}</p>
-      <form className="panel" style={{ display: "grid", gap: 12, marginBottom: 18 }} onSubmit={check}>
-        <input className="input" placeholder="CC BY-SA 4.0 · https://unsplash.com/license · OFL-1.1 · Public domain"
-               value={text} onChange={(e) => setText(e.target.value)} />
-        <div className="row">
-          <select className="input" style={{ width: 200 }} value={trust} onChange={(e) => setTrust(e.target.value as Trust)}>
+    <div className="page page-narrow">
+      <PageHead title="License check" sub={<>Paste any license name, SPDX id or URL and see where it lands for each use.
+        {cutoff && <> US public domain today: works from <strong>{cutoff.works}</strong> and earlier, recordings from <strong>{cutoff.sound_recordings}</strong> and earlier.</>}</>} />
+      <form className="panel check-form" onSubmit={check}>
+        <input className="input input-lg" placeholder="CC BY-SA 4.0 · https://unsplash.com/license · OFL-1.1 · Public domain"
+               value={text} onChange={(e) => setText(e.target.value)} aria-label="License" />
+        <div className="row wrap">
+          <select className="input" value={trust} onChange={(e) => setTrust(e.target.value as Trust)} aria-label="Asserted by">
             {["unknown", "institution", "government", "curated", "community", "uploader"].map((t) => <option key={t} value={t}>Asserted by: {t}</option>)}
           </select>
-          <select className="input" style={{ width: 160 }} value={media} onChange={(e) => setMedia(e.target.value as MediaType)}>
+          <select className="input" value={media} onChange={(e) => setMedia(e.target.value as MediaType)} aria-label="Media">
             {MEDIA_TYPES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
           </select>
-          <input className="input" style={{ width: 150 }} placeholder="Year (optional)" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, ""))} />
-          <button className="btn btn-primary" type="submit">Check</button>
+          <input className="input year" placeholder="Year (optional)" value={year} inputMode="numeric"
+                 onChange={(e) => setYear(e.target.value.replace(/\D/g, ""))} aria-label="Year" />
+          <button className="btn btn-primary" type="submit"><Icon name="shield" size={16} />Check</button>
         </div>
       </form>
       {result && (
         <>
-          <p>Recognized as <strong>{result.recognized_as.label}</strong> <span className="mono faint">({result.recognized_as.id})</span></p>
+          <p className="recognized">Recognized as <strong>{result.recognized_as.label}</strong> <span className="mono faint">({result.recognized_as.id})</span></p>
           <div className="matrix">
             {USE_CASES.map((u) => {
               const v = result.verdicts[u.id];
               return (
                 <div key={u.id} className="matrix-row">
-                  <span className="use">{u.label}</span><TierBadge tier={v.tier} />
+                  <span className="use">{u.label}</span><Verdict tier={v.tier} />
                   <ul>{v.reasons.map((r) => <li key={r}>{r}</li>)}{v.obligations.map((o) => <li key={o} className="ob">{o}</li>)}</ul>
                 </div>
               );
@@ -187,29 +219,23 @@ export function LicenseCheckPage() {
 export function SourcesPage() {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   useEffect(() => { api.providers().then(setProviders).catch(() => undefined); }, []);
+  const on = providers.filter((p) => p.enabled).length;
   return (
     <div className="page">
-      <h1>Sources</h1>
-      <p className="page-sub">Keys are optional for most sources. Ones marked “docs” were built from documentation and get verified once a key is added.</p>
-      <div className="panel" style={{ padding: 0, overflowX: "auto" }}>
-        <table className="table">
-          <thead><tr><th>Source</th><th>Media</th><th>Status</th><th>Verified</th><th>Notes</th></tr></thead>
-          <tbody>
-            {providers.map((p) => (
-              <tr key={p.id}>
-                <td><a href={p.homepage} target="_blank" rel="noreferrer"><strong>{p.name}</strong></a><div className="mono faint">{p.id}</div></td>
-                <td>{p.media_types.join(", ")}</td>
-                <td>{p.enabled ? <span className="tier tier-green">on</span> : (
-                  <span>
-                    <span className="tier tier-red">off</span>{" "}
-                    {p.key_signup_url && <a href={p.key_signup_url} target="_blank" rel="noreferrer" className="faint">get {p.key_setting?.toUpperCase()} ↗</a>}
-                  </span>)}</td>
-                <td className="mono">{p.verified_live ? "live" : "docs"}</td>
-                <td className="faint" style={{ maxWidth: 420 }}>{p.notes.join(" ")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <PageHead title="Sources" sub={`${on} of ${providers.length} sources are on for you. Sources that need a key turn on when you add it in Settings.`} />
+      <div className="source-grid">
+        {providers.map((p) => (
+          <div key={p.id} className={`panel source ${p.enabled ? "on" : "off"}`}>
+            <div className="source-head">
+              <span className={`dot ${p.enabled ? "on" : ""}`} aria-hidden="true" />
+              <a href={p.homepage} target="_blank" rel="noreferrer" className="source-name">{p.name}</a>
+              <span className="mono faint">{p.verified_live ? "verified" : "from docs"}</span>
+            </div>
+            <div className="mono faint">{p.media_types.join(" · ")}</div>
+            {p.notes.length > 0 && <p className="source-notes">{p.notes.join(" ")}</p>}
+            {!p.enabled && p.key_setting && <a className="link" href="#/settings?keys">Add a {p.name} key in Settings →</a>}
+          </div>
+        ))}
       </div>
     </div>
   );

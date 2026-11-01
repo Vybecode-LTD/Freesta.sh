@@ -63,7 +63,42 @@ export interface LedgerEntry {
   id: string; asset_uid: string; provider: string; title: string; creator?: string | null; landing_url?: string | null;
   file_url?: string | null; license_id: string; license_label: string; license_url?: string | null; trust: Trust;
   use_case: UseCase; tier: Tier; attribution?: string | null; project?: string | null; retrieved_at: string;
+  sha256?: string | null; snapshot?: { asset?: Asset; verdict?: Verdict };
 }
+
+/** Mirrors freestash.providers.keys.KeySpec: where to get one provider credential. */
+export interface KeySpec {
+  name: string; setting: string; provider: string; provider_name: string; label: string; url: string; url_label: string;
+  steps: string[]; limits: string | null; unlocks: string; optional: boolean; notice: string | null; action: string | null;
+}
+export interface KeyState { name: string; set: boolean; hint: string | null; updated_at: string | null }
+
+export type Theme = "dark" | "light";
+export type Accent = "sodium" | "iris" | "teal" | "cobalt";
+
+/** Mirrors freestash.accounts.UserPrefs: what follows the account between web and desktop. */
+export interface Prefs {
+  default_use_case: UseCase; default_max_tier: Tier; default_media: MediaType[]; results_per_source: number;
+  theme: Theme; accent: Accent;
+}
+
+export const DEFAULT_PREFS: Prefs = {
+  default_use_case: "demo", default_max_tier: "yellow", default_media: ["image"], results_per_source: 12,
+  theme: "dark", accent: "sodium",
+};
+
+export const ACCENTS: { id: Accent; label: string }[] = [
+  { id: "sodium", label: "Sodium" }, { id: "iris", label: "Iris" }, { id: "teal", label: "Teal" }, { id: "cobalt", label: "Cobalt" },
+];
+
+/** The verdict words both apps use. GREEN/YELLOW/RED stay the engine's names. */
+export const TIER_WORD: Record<Tier, string> = { green: "Clear", yellow: "Check", red: "Blocked" };
+
+export const SHOW_OPTIONS: { id: Tier; label: string; hint: string }[] = [
+  { id: "green", label: "Clear", hint: "Only results that are clear for this use" },
+  { id: "yellow", label: "+ Check", hint: "Also results to check before you use them" },
+  { id: "red", label: "All", hint: "Everything, including blocked results" },
+];
 
 export const MEDIA_TYPES: { id: MediaType; label: string }[] = [
   { id: "image", label: "Images" }, { id: "audio", label: "Audio" }, { id: "video", label: "Video" },

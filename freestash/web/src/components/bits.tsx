@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import type { Asset, Tier } from "../lib/types";
+import { TIER_WORD } from "../lib/types";
 
-export function TierBadge({ tier }: { tier: Tier }) {
-  return <span className={`tier tier-${tier}`}>{tier}</span>;
+/** Verdict as a glowing dot plus its word (Clear / Check / Blocked). */
+export function Verdict({ tier, size = "sm" }: { tier: Tier; size?: "sm" | "lg" }) {
+  return <span className={`verdict v-${tier} ${size}`}><b aria-hidden="true" />{TIER_WORD[tier]}</span>;
 }
 
 /** Load a webfont from a URL once per family so font results render in their own face. */
@@ -51,7 +53,7 @@ export function useToast(): [string | null, (msg: string) => void] {
   const [msg, setMsg] = useState<string | null>(null);
   useEffect(() => {
     if (!msg) return;
-    const t = setTimeout(() => setMsg(null), 2600);
+    const t = setTimeout(() => setMsg(null), 2800);
     return () => clearTimeout(t);
   }, [msg]);
   return [msg, setMsg];
@@ -62,4 +64,18 @@ export function download(filename: string, body: string, type = "text/plain") {
   const a = Object.assign(document.createElement("a"), { href: url, download: filename });
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/** Page header shared by every screen: title, one plain sentence, optional actions on the right. */
+export function PageHead({ title, sub, children }: { title: string; sub?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <header className="page-head">
+      <div><h1>{title}</h1>{sub && <p className="page-sub">{sub}</p>}</div>
+      {children && <div className="page-actions">{children}</div>}
+    </header>
+  );
+}
+
+export function Empty({ title, children }: { title: string; children?: React.ReactNode }) {
+  return <div className="empty"><strong>{title}</strong>{children}</div>;
 }

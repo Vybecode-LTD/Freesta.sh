@@ -33,23 +33,35 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
 
 **Done when:** no fixture contains `"_synthetic"` and all tests pass.
 
-## P2 — Team deployment (Supabase + Railway)
+## P2 — Deploy to Railway (one service + Railway Postgres)
 
-1. Create a Supabase project. `supabase link` → `supabase db push` (applies `supabase/migrations/`).
-2. Enable email magic-link auth; add the Railway URL to Auth → URL configuration → redirect URLs.
-3. Create the team: sign in once via the UI, then in the SQL editor run
-   `select public.create_team('Studio');` *as that user* (or insert into `teams` + `team_members` directly).
-   Add teammates to `team_members` (roles: owner/admin/member).
-4. Railway: new service from this repo (Dockerfile). Env vars:
-   `FREESTASH_AUTH_MODE=supabase`, `SUPABASE_URL`, `FREESTASH_DATABASE_URL=postgresql+psycopg://…` (Supabase
-   **session pooler** string, port 5432), `FREESTASH_CONTACT_EMAIL`, provider keys,
-   `FREESTASH_CORS_ORIGINS=["https://<railway-domain>"]`.
-   Build args for the UI: `VITE_AUTH_MODE=supabase`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
-   Legacy JWT projects also need `SUPABASE_JWT_SECRET`; new projects verify via JWKS automatically.
-5. Smoke test: sign in → search → add to collection → "Record + open file" → Ledger shows it.
+**Live since 2026-11-01** at https://freestash-production.up.railway.app (workspace "color8's Projects", project
+**Freesta.sh** `ba994460-f01e-4a4d-9e83-994f352b6634`, environment `production`). Done:
+- Service `freestash` (`977b573d-bfbc-4b10-a432-26ace23770bf`): GitHub `Vybecode-LTD/Freesta.sh`, Root Directory
+  `/freestash`, Dockerfile build, healthcheck `/api/health`, watch `/freestash/**`. **Builds from
+  `main`** (switched from the PR branch when PR #1 merged, 2026-11-01).
+- Postgres (template), referenced as `DATABASE_URL=${{Postgres.DATABASE_URL}}`. Schema is created at startup.
+- Variables: `FREESTASH_AUTH_MODE=accounts`, `FREESTASH_PUBLIC_URL`, `FREESTASH_CORS_ORIGINS=["https://freesta.sh"]`,
+  `FREESTASH_SIGNUP_OPEN=true`, and the two secrets, generated and set through the CLI's stdin (never shown):
+  `FREESTASH_SECRET_KEY` (signs sessions) and `FREESTASH_SECRETS_KEY` (encrypts users' keys: **copy it from the
+  Variables tab into your password manager**; losing it makes every saved key unreadable).
+- Custom domain `freesta.sh` added; it waits for DNS.
 
-**Done when:** two teammates can see each other's collections and ledger entries, and an outsider can't.
+Owner steps left:
+1. **DNS at Spaceship** (freesta.sh's nameservers are `launch1/2.spaceship.net`): Advanced DNS → Custom records.
+   Delete the parking `A` records on `@`, then add `CNAME @ → ud2ssbe5.up.railway.app` (Spaceship serves it as an
+   ALIAS) and `TXT _railway-verify → railway-verify=f64a94cd…` (full value: Railway → freestash → Settings →
+   Networking → freesta.sh). Railway issues the certificate once both resolve.
+2. Optional variables: `FREESTASH_CONTACT_EMAIL` (sent to providers in the User-Agent), `RESEND_API_KEY` +
+   `FREESTASH_EMAIL_FROM` for reset email. **Without it password reset doesn't work**: no email goes out, and links
+   are never written to the log (log access would be account takeover).
+   `FREESTASH_TRUST_CF_CONNECTING_IP=true` **only** if the domain moves behind Cloudflare's proxy.
+3. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
+   you can create an account on the site, and the desktop app (default server `https://freesta.sh`) signs into it.
 
+Before 2026-12-01: Railway retires config-as-code (`railway.json`); it already refuses a config-file path on new
+services. That's why the healthcheck, restart policy and watch path are set on the service itself, so nothing breaks; delete `railway.json` or move to `.railway/railway.ts` (read the playbook's IaC
+warning first: a whole-project file deletes whatever it omits). Add Alembic before the first change to an existing table.
 ## P3 — CLI/MCP remote mode (team ledger from the terminal)
 
 Today the CLI/MCP write to a local SQLite ledger. Add `FREESTASH_API_URL` + `FREESTASH_API_TOKEN`:

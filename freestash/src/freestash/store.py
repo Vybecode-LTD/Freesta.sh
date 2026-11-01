@@ -1,8 +1,7 @@
-"""Persistence: license ledger + collections. SQLite locally, Supabase Postgres in team mode.
+"""Persistence: license ledger + collections. SQLite locally, Railway Postgres for the hosted app.
 
-The ORM mirrors supabase/migrations/0001_init.sql column for column. In team mode the API connects
-with a server-side connection string and enforces team scoping itself; the RLS policies in the
-migration are defense in depth for anything that talks to Supabase directly (supabase-js, SQL editor).
+The API is the only thing that talks to the database, and every query here is scoped to a team, so
+there is no row-level security to keep in sync. Each account owns a personal team (see accounts.py).
 """
 
 from __future__ import annotations
@@ -19,7 +18,7 @@ from freestash.config import Settings, get_settings
 from freestash.models import LedgerEntry, ScoredAsset, Tier, Trust, UseCase
 
 JSONType = JSON().with_variant(JSONB(), "postgresql")
-UUID = Uuid(as_uuid=False)  # native uuid on Postgres (matches auth.users), CHAR(32) on SQLite
+UUID = Uuid(as_uuid=False)  # native uuid on Postgres, CHAR(32) on SQLite
 
 
 def _uuid() -> str:
@@ -132,8 +131,9 @@ class Store:
         connect_args = {"check_same_thread": False} if self.url.startswith("sqlite") else {}
         self.engine = create_engine(self.url, connect_args=connect_args, pool_pre_ping=True)
         self._session = sessionmaker(self.engine, expire_on_commit=False)
-        if self.url.startswith("sqlite"):
-            Base.metadata.create_all(self.engine)  # Postgres schema comes from the Supabase migration
+        import freestash.accounts  # noqa: F401  (registers the account tables on Base)
+
+        Base.metadata.create_all(self.engine)  # idempotent; move to Alembic before the first breaking change
 
     def session(self) -> Session:
         return self._session()

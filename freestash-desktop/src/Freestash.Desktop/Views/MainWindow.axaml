@@ -6,7 +6,7 @@
         xmlns:conv="using:Freestash.Desktop.Converters"
         x:Class="Freestash.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="Freestash"
+        Title="Freesta.sh"
         Icon="avares://Freestash/Assets/freestash.ico"
         Width="1440" Height="920" MinWidth="1080" MinHeight="700"
         WindowStartupLocation="CenterScreen"
@@ -22,65 +22,37 @@
     <DataTemplate DataType="vm:SettingsViewModel"><v:SettingsView /></DataTemplate>
   </Window.DataTemplates>
 
-  <Panel>
-    <!-- ambient accent glow, top-left -->
-    <Border Background="{DynamicResource AmbientGlowBrush}" IsHitTestVisible="False" />
+  <!-- Same shell as the web's App.tsx: rail with LIBRARY / TOOLS, account card at the foot, page on the canvas. -->
+  <Grid RowDefinitions="46,*" ColumnDefinitions="236,*">
 
-    <Grid RowDefinitions="46,*" ColumnDefinitions="232,*">
+    <!-- ===================================================== rail -->
+    <Border Grid.RowSpan="2" Background="{DynamicResource ChromeBrush}" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,1,0" />
+    <Border WindowDecorationProperties.ElementRole="TitleBar" Background="Transparent">
+      <StackPanel x:Name="Wordmark" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
+        <TextBlock Text="freesta" FontSize="21" FontWeight="Bold" LetterSpacing="-0.9" />
+        <TextBlock Text=".sh" FontSize="21" FontWeight="Bold" LetterSpacing="-0.9" Foreground="{DynamicResource AccentTextBrush}" />
+      </StackPanel>
+    </Border>
 
-      <!-- ===================================================== title bar (draggable) -->
-      <Border Grid.ColumnSpan="2" WindowDecorationProperties.ElementRole="TitleBar" Background="Transparent">
-        <Grid x:Name="TitleBarGrid" ColumnDefinitions="Auto,*,Auto" Margin="18,0,150,0">
-          <StackPanel Orientation="Horizontal" Spacing="11" VerticalAlignment="Center">
-            <Panel Width="14" Height="14" VerticalAlignment="Center">
-              <Border CornerRadius="7" Background="{DynamicResource AccentBrush}" BoxShadow="{DynamicResource AccentGlowShadow}" />
-              <Border CornerRadius="3" Width="5" Height="3" Background="#66FFFFFF" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,3,0,0" />
-            </Panel>
-            <TextBlock Text="Freestash" FontSize="15" FontWeight="SemiBold" LetterSpacing="-0.3" VerticalAlignment="Center" />
-            <Border Classes="pill" Padding="7,1" VerticalAlignment="Center" BorderBrush="{DynamicResource HairlineBrush}">
-              <TextBlock Text="DESKTOP" FontSize="9.5" LetterSpacing="1.4" Foreground="{DynamicResource TextSecondaryBrush}" />
-            </Border>
+    <DockPanel Grid.Row="1" Margin="14,4,14,16" LastChildFill="False">
+      <!-- account card -->
+      <Button DockPanel.Dock="Bottom" Command="{Binding GoSettingsCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+              Padding="14,12" CornerRadius="13" Background="{DynamicResource SurfaceBrush}" ToolTip.Tip="Account and settings">
+        <StackPanel Spacing="4">
+          <TextBlock Text="{Binding AccountName}" FontWeight="SemiBold" FontSize="13.5" TextTrimming="CharacterEllipsis" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Ellipse Width="6" Height="6" Fill="{DynamicResource GreenBrush}" VerticalAlignment="Center" Effect="drop-shadow(0 0 6 #904BE08A)" />
+            <TextBlock Text="{Binding AccountSub}" Classes="mono" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
           </StackPanel>
-
-          <!-- engine status pill -->
-          <Button Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="ghost small"
-                  Command="{Binding GoSettingsCommand}" ToolTip.Tip="Engine status · click for Settings">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-              <Panel Width="8" Height="8" VerticalAlignment="Center">
-                <Ellipse Fill="{DynamicResource GreenBrush}" IsVisible="{Binding EngineOnline}" />
-                <Ellipse Fill="{DynamicResource YellowBrush}" IsVisible="{Binding EngineStarting}" />
-                <Ellipse Fill="{DynamicResource RedBrush}" IsVisible="{Binding EngineOffline}" />
-              </Panel>
-              <TextBlock Text="{Binding EngineText}" Classes="mono" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-            </StackPanel>
-          </Button>
-
-          <Button Grid.Column="2" Classes="ghost small" VerticalAlignment="Center" Command="{Binding GoSearchCommand}" ToolTip.Tip="Focus search">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <c:Icon Data="{StaticResource IconSearch}" Size="14" Classes="faint" />
-              <Border Classes="pill" Padding="6,0"><TextBlock Text="Ctrl K" FontSize="10" Foreground="{DynamicResource TextFaintBrush}" /></Border>
-            </StackPanel>
-          </Button>
-        </Grid>
-      </Border>
-
-      <!-- ===================================================== nav rail -->
-      <DockPanel Grid.Row="1" Margin="14,6,10,16" LastChildFill="False">
-        <StackPanel DockPanel.Dock="Bottom" Spacing="10">
-          <Border Classes="hairline" Margin="6,0" />
-          <RadioButton Theme="{StaticResource NavTheme}" IsChecked="{Binding SettingsItem.IsSelected}">
-            <StackPanel Orientation="Horizontal" Spacing="12">
-              <c:Icon Data="{StaticResource IconSliders}" Size="17" />
-              <TextBlock Text="Settings" VerticalAlignment="Center" />
-            </StackPanel>
-          </RadioButton>
         </StackPanel>
+      </Button>
 
-        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding NavItems}">
+      <StackPanel DockPanel.Dock="Top" Spacing="2">
+        <ItemsControl ItemsSource="{Binding NavItems}">
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="vm:NavItem">
               <StackPanel Spacing="2">
-                <TextBlock Text="{Binding Section}" Classes="caption" Margin="12,16,0,8" IsVisible="{Binding HasSection}" />
+                <TextBlock Text="{Binding Section}" Classes="caption" Margin="10,16,0,8" IsVisible="{Binding HasSection}" />
                 <RadioButton Theme="{StaticResource NavTheme}" IsChecked="{Binding IsSelected}">
                   <Grid ColumnDefinitions="Auto,*,Auto">
                     <c:Icon Data="{Binding Icon, Converter={x:Static conv:IconKeyConverter.Instance}}" Size="17" />
@@ -96,24 +68,45 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-      </DockPanel>
+        <RadioButton Theme="{StaticResource NavTheme}" IsChecked="{Binding SettingsItem.IsSelected}">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <c:Icon Data="{StaticResource IconSliders}" Size="17" />
+            <TextBlock Text="Settings" VerticalAlignment="Center" />
+          </StackPanel>
+        </RadioButton>
+      </StackPanel>
+    </DockPanel>
 
-      <!-- ===================================================== page -->
-      <Border Grid.Row="1" Grid.Column="1" Margin="0,0,14,14" CornerRadius="18" ClipToBounds="True"
-              Background="{DynamicResource ChromeBrush}" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1"
-              BoxShadow="{DynamicResource CardShadow}">
-        <ContentControl Content="{Binding CurrentPage}" />
-      </Border>
-    </Grid>
+    <!-- ===================================================== title bar over the page (draggable) -->
+    <Border Grid.Column="1" WindowDecorationProperties.ElementRole="TitleBar" Background="Transparent">
+      <Grid x:Name="TitleBarGrid" ColumnDefinitions="*,Auto,Auto" Margin="30,0,150,0">
+        <Button Grid.Column="1" Classes="ghost small" VerticalAlignment="Center" Command="{Binding GoSettingsCommand}" ToolTip.Tip="Connection · click for Settings">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Panel Width="7" Height="7" VerticalAlignment="Center">
+              <Ellipse Fill="{DynamicResource GreenBrush}" IsVisible="{Binding EngineOnline}" />
+              <Ellipse Fill="{DynamicResource YellowBrush}" IsVisible="{Binding EngineStarting}" />
+              <Ellipse Fill="{DynamicResource RedBrush}" IsVisible="{Binding EngineOffline}" />
+            </Panel>
+            <TextBlock Text="{Binding EngineText}" Classes="mono" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="2" Classes="ghost small" Margin="6,0,0,0" VerticalAlignment="Center" Command="{Binding GoSearchCommand}" ToolTip.Tip="Focus search">
+          <Border Classes="pill" Padding="7,1"><TextBlock Text="CTRL K" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" /></Border>
+        </Button>
+      </Grid>
+    </Border>
+
+    <!-- ===================================================== page -->
+    <ContentControl Grid.Row="1" Grid.Column="1" Content="{Binding CurrentPage}" />
+
+    <!-- ===================================================== sign-in (hosted mode, no session) -->
+    <v:SignInView Grid.Row="1" Grid.ColumnSpan="2" DataContext="{Binding SignIn}" IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).NeedsSignIn}" />
 
     <!-- ===================================================== toast -->
-    <Border IsVisible="{Binding Toasts.IsVisible}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,34"
+    <Border Grid.RowSpan="2" Grid.ColumnSpan="2" IsVisible="{Binding Toasts.IsVisible}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="236,0,0,30"
             Background="{DynamicResource RaisedBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
-            CornerRadius="999" Padding="18,10" BoxShadow="{DynamicResource PopShadow}" IsHitTestVisible="False">
-      <StackPanel Orientation="Horizontal" Spacing="10">
-        <Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
-        <TextBlock Text="{Binding Toasts.Message}" FontSize="13" VerticalAlignment="Center" />
-      </StackPanel>
+            CornerRadius="13" Padding="18,11" BoxShadow="{DynamicResource PopShadow}" IsHitTestVisible="False" MaxWidth="560">
+      <TextBlock Text="{Binding Toasts.Message}" FontSize="13" TextWrapping="Wrap" />
     </Border>
-  </Panel>
+  </Grid>
 </Window>

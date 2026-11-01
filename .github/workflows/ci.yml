@@ -1,0 +1,50 @@
+name: ci
+# One workflow for the monorepo. Each job proves one app; the engine job also runs the parity gates
+# (shared/parity.json, generated tokens + key catalog), which is what keeps web and desktop identical.
+on:
+  push: { branches: [main] }
+  pull_request:
+concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: freestash } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: python -m pip install -e ".[all]"
+      - run: ruff check src tests scripts
+      - run: python scripts/export_shared.py --check
+      - run: python -m pytest
+  web:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: freestash/web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+  desktop:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: freestash-desktop } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "10.0.x" }
+      - run: dotnet build Freestash.Desktop.sln -c Release
+      - run: dotnet test --project tests/Freestash.Client.Tests -c Release
+  publish-windows:
+    needs: desktop
+    runs-on: windows-latest
+    if: github.ref == 'refs/heads/main'
+    defaults: { run: { working-directory: freestash-desktop } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "10.0.x" }
+      - run: dotnet publish src/Freestash.Desktop -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish
+      - uses: actions/upload-artifact@v4
+        with: { name: freestash-desktop-win-x64, path: freestash-desktop/publish }

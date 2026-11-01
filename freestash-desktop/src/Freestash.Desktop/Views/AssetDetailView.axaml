@@ -97,7 +97,7 @@
 
         <!-- verdict matrix -->
         <StackPanel Spacing="8">
-          <TextBlock Text="VERDICT BY USE CASE" Classes="caption" />
+          <TextBlock Text="CLEARANCE BY USE" Classes="caption" />
           <ItemsControl ItemsSource="{Binding VerdictRows}">
             <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>

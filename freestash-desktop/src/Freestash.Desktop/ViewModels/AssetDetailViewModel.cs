@@ -12,7 +12,7 @@ public sealed class VerdictRowViewModel(string label, Verdict verdict, bool isCu
     public string Label { get; } = label;
     public Verdict Verdict { get; } = verdict;
     public bool IsCurrent { get; } = isCurrent;
-    public string TierText => Verdict.Tier.ToString().ToUpperInvariant();
+    public string TierText => VerdictWords.Of(Verdict.Tier);
     public bool IsGreen => Verdict.Tier == Tier.Green;
     public bool IsYellow => Verdict.Tier == Tier.Yellow;
     public bool IsRed => Verdict.Tier == Tier.Red;
@@ -71,7 +71,7 @@ public sealed partial class AssetDetailViewModel : ObservableObject
     public string TrustText => Asset.Trust.ToString().ToLowerInvariant();
     public string SourceText => Asset.SourceName ?? Asset.Provider;
     public string? PreviewUrl => Asset.PreviewUrl ?? Asset.ThumbnailUrl;
-    public string TierText => Verdict.Tier.ToString().ToUpperInvariant();
+    public string TierText => VerdictWords.Of(Verdict.Tier);
     public bool IsGreen => Verdict.Tier == Tier.Green;
     public bool IsYellow => Verdict.Tier == Tier.Yellow;
     public bool IsRed => Verdict.Tier == Tier.Red;
