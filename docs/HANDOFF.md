@@ -1,12 +1,13 @@
 # Handoff — Freesta.sh (2026-11-01, second session)
 
 ## State
-- `main` = the merge of PR #1 (ff49186). Railway builds `main`.
-- **PR #2, `fix/spa-path-traversal` (critical hotfix):** the SPA catch-all served any file the server could read
-  (`GET /..%2f..%2fpyproject.toml`). Confirmed live on both hosts with a harmless file only. CI green. **Waiting on
-  the owner's merge OK**; merging deploys the fix.
+- `main` = the merge of **PR #2** (3ac162b, on the owner's OK). Railway builds `main`.
+- **PR #2 (critical hotfix), merged and live:** the SPA catch-all served any file the server could read
+  (`GET /..%2f..%2fpyproject.toml`). Found and confirmed on production with a harmless file only. After the deploy,
+  traversal and `%00` paths get the page on both hosts. It also carries two review fixes: the route runs in the
+  threadpool, and a NUL path no longer 500s on Linux.
 - **PR #3, `feat/pr2-followups`:** ledger paging on both apps, a strict CSP, reset email over Spacemail SMTP, and
-  decision 0002. It's cut from `main` without PR #2; once #2 merges, merge `main` into it (they don't overlap).
+  decision 0002. `main` is merged into it. Not merged yet.
 - **https://freesta.sh is live:** the certificate is valid, and `/api/health` reports `auth_mode: accounts`. The domain
   was re-created in Railway during the session, and its CNAME target is now `cgl6fdva.up.railway.app`
   (`freestash/IMPLEMENTATION.md` → P2).
@@ -21,14 +22,16 @@
   no violations on any page, and an injected script is blocked (the positive control). Provider thumbnails, font
   previews and https audio all load.
 - **SMTP mailer** (`mailer.py`): `mail.spacemail.com:465` with implicit TLS. Logs carry no address and no link.
-- **Path traversal:** found, and confirmed on production. Fixed in PR #2, with a regression test.
-- PR #1's three review threads are answered (paging, cookie/CSP, Resend → SMTP).
+- **Path traversal:** found, and confirmed on production. Fixed in PR #2 with a regression test, merged, and
+  verified live.
+- PR #1's three review threads are answered, but still unresolved: resolving them needs the owner (the permission
+  check blocked it).
 
 ## Next
-1. Owner: merge PR #2. Then check production: `/..%2f..%2fpyproject.toml` must return the HTML page.
+1. Review and merge PR #3 (owner).
 2. Owner: put Railway on **Pro** (outbound SMTP is blocked below it). Create the Spacemail mailbox and its DNS records.
    Set `FREESTASH_SMTP_USERNAME`, then pipe in `FREESTASH_SMTP_PASSWORD` with `--stdin`. Then test a real reset.
-3. Owner: sign up on https://freesta.sh and sign the desktop app in. Then review and merge PR #3.
+3. Owner: sign up on https://freesta.sh and sign the desktop app in.
 4. HttpOnly cookie for the web (decision 0002; the desktop keeps bearer). `www.freesta.sh`: the owner adds the
    CNAME, then a Railway domain and a redirect to the root. Google sign-in on both apps (Seeq'r's PKCE).
 5. Live on-screen check of the desktop build (computer-use; ask first). Retire `railway.json` before 2026-12-01.
