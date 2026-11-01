@@ -1,12 +1,11 @@
 # Handoff — Freesta.sh (2026-11-01)
 
 ## State
-- **PR #1** https://github.com/Vybecode-LTD/Freesta.sh/pull/1 (`feat/accounts-sync-aperture` → `main`), open, Auto-fix
-  on. Holds the accounts + key help + Aperture work and the rate-limit fix below. `main` = baseline 95f3cc9.
-  **Merging is the owner's call.**
+- **PR #1 is merged into `main`** (https://github.com/Vybecode-LTD/Freesta.sh/pull/1, a merge commit, on the owner's
+  OK). CI was green on its last code commit, c83dda4. No PRs are open; the next is #2.
 - **Live on Railway** at https://freestash-production.up.railway.app: project **Freesta.sh**, service `freestash` and
-  Postgres. `/api/health` reports `auth_mode: accounts`. The service **deploys from the PR branch**; switch it to
-  `main` after the merge. Facts, IDs and owner steps: `freestash/IMPLEMENTATION.md` → P2.
+  Postgres, **building from `main`**. `/api/health` reports `auth_mode: accounts`. Facts, IDs and owner steps:
+  `freestash/IMPLEMENTATION.md` → P2.
 - **freesta.sh is not pointing at Railway yet.** The custom domain is added in Railway, and the DNS records
   (Spaceship) are the owner's step (P2 step 1). The certificate issues once they resolve.
 
@@ -46,11 +45,15 @@
   - a late 401 for an old token no longer signs out its replacement;
   - "sign out everywhere" clears the local session only once the server confirms, on both apps.
 - Gates: pytest 113 · ruff clean · export check clean · vitest 13 · web build clean · dotnet 32 · 0 warnings.
+- Merged PR #1 on the owner's OK, and switched the Railway source to `main`.
 
 ## Next
 1. Owner: DNS at Spaceship (P2 step 1). Then check `https://freesta.sh/api/health`, sign up on the site, and sign
    the desktop app into it (default server `https://freesta.sh`).
-2. Owner: merge PR #1 once CI is green, then switch the Railway branch to `main`.
+2. The three review threads still open on the merged PR #1:
+   - Resend for reset email (owner; thread 4437200744);
+   - where the web keeps the JWT (owner; thread 4437200772; record the answer in decision 0002);
+   - paging Downloads past 500 ledger entries (thread 4437200777): a small PR #2 with a desktop parity check.
 3. Live on-screen check of the desktop build (computer-use was declined before; ask first).
 4. Google sign-in on both apps (Seeq'r's loopback PKCE); Alembic; thumbnail proxy; config-as-code exit before 2026-12-01.
 

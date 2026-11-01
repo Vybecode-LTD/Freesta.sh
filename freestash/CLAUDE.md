@@ -119,7 +119,7 @@ Every web page passes the rendered-contrast gate (`verify-real-pass`) in both th
 
 ## Last Completed Task
 
-**2026-10-31: accounts on Railway Postgres + Aperture redesign (branch `feat/accounts-sync-aperture`).**
+**2026-10-31: accounts on Railway Postgres + Aperture redesign (PR #1, merged 2026-11-01).**
 Supabase removed; app-level accounts (open sign-up, password reset, rate limits keyed on the real client IP);
 per-user Fernet-encrypted provider keys used by search; synced preferences; `GET /api/keys/catalog` with verified
 where-to-get-it steps (Pexels has paused new keys; Openverse registers via a button). Web redesigned (sign-in,

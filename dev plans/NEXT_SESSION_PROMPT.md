@@ -12,16 +12,17 @@ Read the root `CLAUDE.md`, then `docs/HANDOFF.md`.
 - **No Supabase.** Never list or print Railway variables (the playbook's secrets rule). Set a secret only through
   `railway variable set KEY --stdin`, from a value generated in the shell.
 - Owner's OK is needed for:
-  - merging PR #1, and switching the Railway branch to `main`;
+  - merging any PR;
   - DNS, and anything sent to providers;
   - creating accounts on production (smoke tests use made-up emails and create nothing);
   - computer-use.
 
 ## 3. State (verified 2026-11-01, end of session)
-- `main` = 95f3cc9 (baseline). **PR #1** https://github.com/Vybecode-LTD/Freesta.sh/pull/1 is open, head is the
-  review-fix commit on `feat/accounts-sync-aperture`. Auto-fix is on. Check CI with the ccd_pr tools; don't poll.
+- `main` = the merge of **PR #1** (https://github.com/Vybecode-LTD/Freesta.sh/pull/1). It holds accounts, key help,
+  the Aperture redesign and every review fix. No PRs are open; the next is #2.
+- The checkout is on `feat/accounts-sync-aperture`, fast-forwarded to `origin/main`. Start new work on a fresh branch.
 - Railway project **Freesta.sh** (`ba994460-f01e-4a4d-9e83-994f352b6634`): service `freestash` and Postgres.
-  It deploys from the **PR branch**. Live at https://freestash-production.up.railway.app, health reports
+  It builds from **`main`**. Live at https://freestash-production.up.railway.app, health reports
   `auth_mode: accounts`.
 - Live smoke test: search returns 401 without a session; the CF-Connecting-IP forgery fix was re-probed (429).
   IDs and owner steps: `freestash/IMPLEMENTATION.md` → P2.
@@ -29,18 +30,17 @@ Read the root `CLAUDE.md`, then `docs/HANDOFF.md`.
   Check with the Railway MCP `domain-status`.
 
 ## 4. First job, then the order
-1. Read PR #1's CI (`mcp__ccd_pr__get_status`). Fix any red with one batched push.
-2. If the owner has set DNS, check `domain-status` and then `https://freesta.sh/api/health`. Ask the owner to sign
+1. If the owner has set DNS, check `domain-status` and then `https://freesta.sh/api/health`. Ask the owner to sign
    up on the site and sign the desktop app into it.
-3. When the owner says "merge": merge PR #1, then switch the Railway source branch to `main`
-   (`connect-service-source`), and check the new deployment builds from `main`.
+2. Ask the owner the open decisions in section 5, then do PR #2: page Downloads past 500 ledger entries, plus
+   whatever the owner decides on token storage. Check the desktop for the same limit, for parity.
+3. Resolve PR #1's last three review threads once each item lands.
 4. Live on-screen check of the desktop build (computer-use; ask first, it was declined before).
 5. Then: Google sign-in on both apps (Seeq'r: `C:\DEV\Seeqr\backend\app\routers\auth.py` `/auth/google`).
 6. Before 2026-12-01: retire `freestash/railway.json` (config-as-code). The service's own settings already hold
    everything it sets.
 
 ## 5. Open owner decisions (ask, don't decide)
-- Merge PR #1 now?
 - Resend for reset email (needs the freesta.sh domain verified there)? **Until then, password reset doesn't work
   on production**, because links are never logged (CodeRabbit thread 4437200744, still open).
 - The web keeps the JWT in `localStorage`. Keep it, add a strict CSP, or move to an HttpOnly cookie (the desktop

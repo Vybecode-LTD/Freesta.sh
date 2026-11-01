@@ -7,11 +7,11 @@ the website at **freesta.sh** and a Windows desktop app, on **one account**. Git
 Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner, 2026-10-31).
 
 ## Current State
-- PR #1 (`feat/accounts-sync-aperture` → `main`): accounts, synced keys + prefs, key help, Aperture redesign
-  on both apps, parity gates. `main` = the imported v0.1.0 baseline.
+- `main` holds PR #1 (merged 2026-11-01): accounts, synced keys + prefs, key help, the Aperture redesign on both
+  apps, parity gates, and every review fix. Three review items are still open: `docs/HANDOFF.md` → Next.
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at
-  https://freestash-production.up.railway.app, deploying from the PR branch until the merge. freesta.sh waits for
-  the owner's DNS at Spaceship. IDs and steps: `freestash/IMPLEMENTATION.md` → P2.
+  https://freestash-production.up.railway.app, building from `main`. freesta.sh waits for the owner's DNS at
+  Spaceship. IDs and steps: `freestash/IMPLEMENTATION.md` → P2.
 - Gates 2026-11-01: pytest 113 · ruff clean · vitest 13 · dotnet 32 · 0 warnings. Rendered-contrast 11 runs /
   136 states / 0 failing (2026-10-31).
 

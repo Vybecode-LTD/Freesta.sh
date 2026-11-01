@@ -90,7 +90,7 @@ tools/Freestash.Desktop.Snapshots/  headless Skia renderer → PNGs
 
 ## Last Completed Task
 
-**2026-10-31: one account with the web, Aperture redesign (branch `feat/accounts-sync-aperture`).**
+**2026-10-31: one account with the web, Aperture redesign (PR #1, merged 2026-11-01).**
 Sign-in screen; hosted engine default; keys + prefs synced with the account; key help under every input;
 rail + lens + `ApertureRing` + spectrum + glass cards; Geist Mono; 27 tests. Live on-screen check still owed
 (the owner declined computer-use this session): see `../docs/HANDOFF.md`.

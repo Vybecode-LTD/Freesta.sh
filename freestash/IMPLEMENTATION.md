@@ -38,8 +38,8 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
 **Live since 2026-11-01** at https://freestash-production.up.railway.app (workspace "color8's Projects", project
 **Freesta.sh** `ba994460-f01e-4a4d-9e83-994f352b6634`, environment `production`). Done:
 - Service `freestash` (`977b573d-bfbc-4b10-a432-26ace23770bf`): GitHub `Vybecode-LTD/Freesta.sh`, Root Directory
-  `/freestash`, Dockerfile build, healthcheck `/api/health`, watch `/freestash/**`. **Deploys from
-  `feat/accounts-sync-aperture` until PR #1 merges; then switch the branch to `main`** (Settings → Source).
+  `/freestash`, Dockerfile build, healthcheck `/api/health`, watch `/freestash/**`. **Builds from
+  `main`** (switched from the PR branch when PR #1 merged, 2026-11-01).
 - Postgres (template), referenced as `DATABASE_URL=${{Postgres.DATABASE_URL}}`. Schema is created at startup.
 - Variables: `FREESTASH_AUTH_MODE=accounts`, `FREESTASH_PUBLIC_URL`, `FREESTASH_CORS_ORIGINS=["https://freesta.sh"]`,
   `FREESTASH_SIGNUP_OPEN=true`, and the two secrets, generated and set through the CLI's stdin (never shown):
