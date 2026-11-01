@@ -45,18 +45,22 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
   `FREESTASH_SIGNUP_OPEN=true`, and the two secrets, generated and set through the CLI's stdin (never shown):
   `FREESTASH_SECRET_KEY` (signs sessions) and `FREESTASH_SECRETS_KEY` (encrypts users' keys: **copy it from the
   Variables tab into your password manager**; losing it makes every saved key unreadable).
-- Custom domain `freesta.sh` added; it waits for DNS.
+- Custom domain `freesta.sh` (port 8080): **verified 2026-11-01**. DNS is at Spaceship (nameservers
+  `launch1/2.spaceship.net`); the root is a `CNAME @ → cgl6fdva.up.railway.app`, which Spaceship serves as an ALIAS.
+  Re-adding the domain in Railway issues a new target (it did on 2026-11-01, from `xx0vt3ns`): update that record.
+  Certificate valid since 2026-11-01; `https://freesta.sh/api/health` answers in accounts mode.
 
 Owner steps left:
-1. **DNS at Spaceship** (freesta.sh's nameservers are `launch1/2.spaceship.net`): Advanced DNS → Custom records.
-   Delete the parking `A` records on `@`, then add `CNAME @ → ud2ssbe5.up.railway.app` (Spaceship serves it as an
-   ALIAS) and `TXT _railway-verify → railway-verify=f64a94cd…` (full value: Railway → freestash → Settings →
-   Networking → freesta.sh). Railway issues the certificate once both resolve.
-2. Optional variables: `FREESTASH_CONTACT_EMAIL` (sent to providers in the User-Agent), `RESEND_API_KEY` +
-   `FREESTASH_EMAIL_FROM` for reset email. **Without it password reset doesn't work**: no email goes out, and links
-   are never written to the log (log access would be account takeover).
-   `FREESTASH_TRUST_CF_CONNECTING_IP=true` **only** if the domain moves behind Cloudflare's proxy.
-3. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
+1. Reset email (decision 0002), **without which password reset doesn't work** (no email goes out; links are never
+   logged, since log access would be account takeover):
+   - Railway must be on the **Pro plan**: outbound SMTP is blocked on Free, Trial and Hobby.
+   - Create the Spacemail mailbox (e.g. `hello@freesta.sh`) and let Spaceship add its MX, SPF and DKIM records.
+   - Set `FREESTASH_SMTP_USERNAME` (the full address) and pipe the password in:
+     `railway variable set FREESTASH_SMTP_PASSWORD --stdin`. Set `FREESTASH_EMAIL_FROM` if the mailbox isn't `hello@`.
+   - Host and port default to `mail.spacemail.com:465` (implicit TLS).
+   Optional: `FREESTASH_CONTACT_EMAIL` (sent to providers in the User-Agent; not set, by choice).
+   No Cloudflare (decision 0002), so `FREESTASH_TRUST_CF_CONNECTING_IP` stays false.
+2. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
    you can create an account on the site, and the desktop app (default server `https://freesta.sh`) signs into it.
 
 Before 2026-12-01: Railway retires config-as-code (`railway.json`); it already refuses a config-file path on new

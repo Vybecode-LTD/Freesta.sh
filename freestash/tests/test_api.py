@@ -63,6 +63,33 @@ def test_collections_and_ledger_flow(client):
     assert client.delete(f"/api/collections/{coll['id']}").status_code == 204
 
 
+@respx.mock
+def test_ledger_pages_past_the_first_page(client):
+    """Downloads stopped at the newest 500 entries (PR #1 review). Every entry must be reachable, page by page."""
+    respx.get("https://api.smk.dk/api/v1/art/search/").mock(return_value=httpx.Response(200, json=load("smk_search")))
+    result = client.post("/api/search", json={"q": "x", "providers": ["smk"]}).json()["results"][0]
+    made = [client.post("/api/ledger", json={"uid": result["uid"], "asset": result["asset"], "use_case": "demo",
+                                             "file_url": f"https://example.org/{i}.jpg" if i % 2 else None}).json()["id"]
+            for i in range(5)]
+
+    seen: list[str] = []
+    before = None
+    for _ in range(5):  # bounded: a server that ignores `before` repeats page one forever
+        page = client.get("/api/ledger", params={"limit": 2, **({"before": before} if before else {})}).json()
+        seen += [e["id"] for e in page]
+        if len(page) < 2:
+            break
+        before = page[-1]["id"]
+    assert len(seen) == len(set(seen)) == 5 and set(seen) == set(made)
+
+    files = client.get("/api/ledger", params={"files": "true", "limit": 1}).json()
+    rest = client.get("/api/ledger", params={"files": "true", "limit": 5, "before": files[0]["id"]}).json()
+    assert [e["file_url"] is not None for e in files + rest] == [True, True]
+
+    assert client.get("/api/ledger", params={"limit": 501}).status_code == 422
+    assert client.get("/api/ledger", params={"before": "not-an-entry"}).status_code == 400
+
+
 def test_ledger_refuses_red(client):
     asset = load("pexels_search")["photos"][0]
     from freestash.providers.stock import parse_pexels_photo

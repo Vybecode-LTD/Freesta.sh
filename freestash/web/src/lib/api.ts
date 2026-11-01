@@ -1,3 +1,4 @@
+import { ledgerPath, type LedgerQuery } from "./ledgerPages";
 import { getToken, setSession, type Session, type SessionUser } from "./session";
 import type {
   Asset, AssetDetail, Collection, KeySpec, KeyState, LedgerEntry, MediaType, Prefs, ProviderInfo, ProviderStatus,
@@ -120,7 +121,7 @@ export const api = {
     req<Collection>(`/api/collections/${id}/items`, { method: "POST", body: json(item) }),
   removeFromCollection: (id: string, uid: string) =>
     req<void>(`/api/collections/${id}/items/${encodeURIComponent(uid)}`, { method: "DELETE" }),
-  ledger: (project?: string) => req<LedgerEntry[]>(`/api/ledger${project ? `?project=${encodeURIComponent(project)}` : ""}`),
+  ledger: (q: LedgerQuery = {}) => req<LedgerEntry[]>(ledgerPath(q)),
   projects: () => req<string[]>("/api/ledger/projects"),
   take: (body: { uid: string; asset: Asset; use_case: UseCase; project?: string; file_url?: string }) =>
     req<LedgerEntry>("/api/ledger", { method: "POST", body: json(body) }),

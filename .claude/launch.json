@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "freestash-accounts",
+      "runtimeExecutable": "freestash/.venv/Scripts/python.exe",
+      "runtimeArgs": ["freestash/scripts/dev_accounts.py", "--port", "8790"],
+      "port": 8790
+    }
+  ]
+}

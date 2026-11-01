@@ -173,17 +173,48 @@ public sealed partial class LedgerViewModel(AppServices services) : ViewModelBas
 
     private string? Filter => SelectedProject is null or AllProjects ? null : SelectedProject;
 
+    // The cursor for the next page (null once the last is in); a page that lands after the filter changed is dropped.
+    private string? _cursor;
+    private int _query;
+
+    public bool HasMore => _cursor is not null;
+
     private async Task LoadAsync()
     {
+        var query = ++_query;
+        Entries.Clear();
+        SetCursor(null);
         try
         {
             Error = null;
-            var list = await services.Api.Current.LedgerAsync(Filter);
-            Entries.Clear();
-            foreach (var e in list) Entries.Add(e);
+            var page = await services.Api.Current.LedgerAsync(Filter);
+            if (query != _query) return;
+            foreach (var e in page) Entries.Add(e);
+            SetCursor(LedgerPages.NextCursor(page));
         }
         catch (Exception ex) { Error = ex.Message; }
         OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private async Task LoadMoreAsync()
+    {
+        if (_cursor is null) return;
+        var query = _query;
+        try
+        {
+            var page = await services.Api.Current.LedgerAsync(Filter, _cursor);
+            if (query != _query) return;
+            foreach (var e in page) Entries.Add(e);
+            SetCursor(LedgerPages.NextCursor(page));
+        }
+        catch (Exception ex) { services.Toasts.Show(ex.Message); }
+    }
+
+    private void SetCursor(string? cursor)
+    {
+        _cursor = cursor;
+        OnPropertyChanged(nameof(HasMore));
     }
 
     [RelayCommand]

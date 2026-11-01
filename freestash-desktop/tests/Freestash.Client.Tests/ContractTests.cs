@@ -77,6 +77,26 @@ public class ContractTests
     }
 
     [Fact]
+    public async Task Ledger_pages_past_the_first_page_with_the_servers_cursor()
+    {
+        // The ledger stopped at the newest 500 entries (PR #1 review); the web pages it the same way (ledgerPages.ts).
+        Assert.Equal("/api/ledger?limit=100", FreestashApiClient.BuildLedgerPath(null, null));
+        Assert.Equal("/api/ledger?project=tpl%2001&before=e99&limit=100", FreestashApiClient.BuildLedgerPath("tpl 01", "e99"));
+
+        var page = Enumerable.Range(0, LedgerPages.Size).Select(i => Entry($"e{i}")).ToList();
+        Assert.Equal($"e{LedgerPages.Size - 1}", LedgerPages.NextCursor(page));
+        Assert.Null(LedgerPages.NextCursor(page[..^1]));
+
+        var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("[]", Encoding.UTF8, "application/json") });
+        using var api = new FreestashApiClient(new Uri("http://localhost:8787"), () => "t0ken", handler);
+        Assert.Empty(await api.LedgerAsync("p", "e99", ct: TestContext.Current.CancellationToken));
+        Assert.Equal("/api/ledger?project=p&before=e99&limit=100", Assert.Single(handler.Requests).RequestUri!.PathAndQuery);
+    }
+
+    private static LedgerEntry Entry(string id) => new(id, "met:1", "met", "Title", null, null, null, "CC0-1.0", "CC0 1.0", null,
+                                                        Trust.Institution, UseCase.Demo, Tier.Green, null, null, "2026-11-01T00:00:00Z");
+
+    [Fact]
     public async Task Client_sends_bearer_token_and_surfaces_api_errors()
     {
         var handler = new StubHandler(req =>

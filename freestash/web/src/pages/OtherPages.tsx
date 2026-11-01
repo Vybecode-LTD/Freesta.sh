@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AssetCard } from "../components/AssetCard";
 import { AssetDrawer } from "../components/AssetDrawer";
 import { Empty, PageHead, Verdict, download } from "../components/bits";
 import { Icon } from "../components/Icon";
 import { api } from "../lib/api";
+import { nextCursor } from "../lib/ledgerPages";
 import { sidecarFromEntry, sidecarName } from "../lib/sidecar";
 import type { Collection, LedgerEntry, MediaType, ProviderInfo, ScoredAsset, Trust, UseCase, Verdict as V } from "../lib/types";
 import { MEDIA_TYPES, USE_CASES } from "../lib/types";
@@ -79,12 +80,46 @@ export function CollectionsPage({ onToast }: Toast) {
   );
 }
 
+// ===================================================================== Ledger pages
+/** One ledger query, a page at a time. `more` is null once the last page is in. */
+function useLedgerPages(project: string, files: boolean, onToast: (m: string) => void) {
+  const [entries, setEntries] = useState<LedgerEntry[] | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const query = useRef(0); // a page that lands after the query changed is dropped
+
+  useEffect(() => {
+    const id = ++query.current;
+    setEntries(null);
+    setCursor(null);
+    api.ledger({ project: project || undefined, files })
+      .then((page) => { if (id === query.current) { setEntries(page); setCursor(nextCursor(page)); } })
+      .catch((e) => onToast(msg(e)));
+  }, [project, files, onToast]);
+
+  async function more() {
+    if (!cursor || busy) return;
+    const id = query.current;
+    setBusy(true);
+    try {
+      const page = await api.ledger({ project: project || undefined, files, before: cursor });
+      if (id === query.current) { setEntries((e) => [...(e ?? []), ...page]); setCursor(nextCursor(page)); }
+    } catch (e) { onToast(msg(e)); } finally { setBusy(false); }
+  }
+
+  return { entries, more: cursor ? more : null, busy };
+}
+
+function LoadMore({ more, busy }: { more: (() => void) | null; busy: boolean }) {
+  if (!more) return null;
+  return <div className="load-more"><button className="btn" onClick={more} disabled={busy}>{busy ? "Loading…" : "Load more"}</button></div>;
+}
+
 // ===================================================================== Downloads
 /** The browser downloads files itself; this is every file taken on any of your devices, with its provenance. */
 export function DownloadsPage({ onToast }: Toast) {
-  const [entries, setEntries] = useState<LedgerEntry[] | null>(null);
-  useEffect(() => { api.ledger().then(setEntries).catch((e) => onToast(msg(e))); }, [onToast]);
-  const files = (entries ?? []).filter((e) => e.file_url);
+  const { entries, more, busy } = useLedgerPages("", true, onToast);
+  const files = entries ?? [];
 
   return (
     <div className="page">
@@ -107,6 +142,7 @@ export function DownloadsPage({ onToast }: Toast) {
           );
         })}
       </div>
+      <LoadMore more={more} busy={busy} />
       {entries && !files.length && <Empty title="Nothing downloaded yet">Open a search result and choose “Record and open file”.</Empty>}
     </div>
   );
@@ -114,12 +150,11 @@ export function DownloadsPage({ onToast }: Toast) {
 
 // ===================================================================== Ledger
 export function LedgerPage({ onToast }: Toast) {
-  const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [projects, setProjects] = useState<string[]>([]);
   const [project, setProject] = useState("");
+  const { entries, more, busy } = useLedgerPages(project, false, onToast);
 
   useEffect(() => { api.projects().then(setProjects).catch(() => undefined); }, []);
-  useEffect(() => { api.ledger(project || undefined).then(setEntries).catch((e) => onToast(msg(e))); }, [project, onToast]);
 
   async function exportAs(fmt: "md" | "html" | "csv") {
     const body = await api.exportLedger(fmt, project || undefined);
@@ -142,7 +177,7 @@ export function LedgerPage({ onToast }: Toast) {
         <table className="table">
           <thead><tr><th>Clearance</th><th>Taken</th><th>Project</th><th>Title</th><th>License</th><th>Use</th><th>Source</th></tr></thead>
           <tbody>
-            {entries.map((e) => (
+            {(entries ?? []).map((e) => (
               <tr key={e.id}>
                 <td><Verdict tier={e.tier} /></td>
                 <td className="mono faint">{e.retrieved_at.slice(0, 10)}</td>
@@ -153,10 +188,11 @@ export function LedgerPage({ onToast }: Toast) {
                 <td>{e.landing_url ? <a href={e.landing_url} target="_blank" rel="noreferrer">{e.provider} ↗</a> : e.provider}</td>
               </tr>
             ))}
-            {!entries.length && <tr><td colSpan={7} className="faint table-empty">Nothing recorded yet.</td></tr>}
+            {entries && !entries.length && <tr><td colSpan={7} className="faint table-empty">Nothing recorded yet.</td></tr>}
           </tbody>
         </table>
       </div>
+      <LoadMore more={more} busy={busy} />
     </div>
   );
 }
