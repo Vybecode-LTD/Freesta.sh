@@ -286,6 +286,14 @@ async def export_ledger(user: User, request: Request, format: str = "md", projec
 
 
 # --------------------------------------------------------------------------------- web UI
+def spa_file(dist: Path, path: str) -> Path:
+    """A real file inside the web build, else index.html (the client routes the rest). Never a file outside `dist`:
+    the path arrives percent-decoded, so `/..%2f..%2fpyproject.toml` read the server's own files (2026-11-01)."""
+    root = dist.resolve()
+    target = (root / path).resolve()
+    return target if path and target.is_file() and target.is_relative_to(root) else root / "index.html"
+
+
 if WEB_DIST.exists():
     app.mount("/assets", StaticFiles(directory=WEB_DIST / "assets"), name="assets")
 
@@ -293,5 +301,4 @@ if WEB_DIST.exists():
     async def spa(path: str) -> FileResponse:
         if path.startswith("api/"):
             raise HTTPException(404, "not found")
-        target = WEB_DIST / path
-        return FileResponse(target if path and target.is_file() else WEB_DIST / "index.html")
+        return FileResponse(spa_file(WEB_DIST, path))
