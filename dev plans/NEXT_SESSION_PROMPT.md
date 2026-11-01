@@ -20,18 +20,19 @@ Read the root `CLAUDE.md`, then `docs/HANDOFF.md`.
 ## 3. State (verified 2026-11-01, end of session)
 - `main` = the merge of **PR #1** (https://github.com/Vybecode-LTD/Freesta.sh/pull/1). It holds accounts, key help,
   the Aperture redesign and every review fix. No PRs are open; the next is #2.
-- The checkout is on `feat/accounts-sync-aperture`, fast-forwarded to `origin/main`. Start new work on a fresh branch.
+- The checkout is on **`feat/pr2-followups`**, cut from `main`, with one local docs commit (not pushed). Do PR #2's
+  work on this branch so that commit goes in with it.
 - Railway project **Freesta.sh** (`ba994460-f01e-4a4d-9e83-994f352b6634`): service `freestash` and Postgres.
   It builds from **`main`**. Live at https://freestash-production.up.railway.app, health reports
   `auth_mode: accounts`.
 - Live smoke test: search returns 401 without a session; the CF-Connecting-IP forgery fix was re-probed (429).
   IDs and owner steps: `freestash/IMPLEMENTATION.md` → P2.
-- **freesta.sh doesn't resolve to Railway yet.** The domain is added in Railway; the owner sets DNS at Spaceship.
-  Check with the Railway MCP `domain-status`.
+- **freesta.sh DNS is set.** The domain is verified in Railway (`domain-status`) and HTTP redirects to HTTPS.
+  The certificate was still being issued at session end (no error).
 
 ## 4. First job, then the order
-1. If the owner has set DNS, check `domain-status` and then `https://freesta.sh/api/health`. Ask the owner to sign
-   up on the site and sign the desktop app into it.
+1. Check `https://freesta.sh/api/health` (and `domain-status` if it fails). Ask the owner to sign up on the site and
+   sign the desktop app into it.
 2. Ask the owner the open decisions in section 5, then do PR #2: page Downloads past 500 ledger entries, plus
    whatever the owner decides on token storage. Check the desktop for the same limit, for parity.
 3. Resolve PR #1's last three review threads once each item lands.

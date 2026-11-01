@@ -6,8 +6,13 @@
 - **Live on Railway** at https://freestash-production.up.railway.app: project **Freesta.sh**, service `freestash` and
   Postgres, **building from `main`**. `/api/health` reports `auth_mode: accounts`. Facts, IDs and owner steps:
   `freestash/IMPLEMENTATION.md` → P2.
-- **freesta.sh is not pointing at Railway yet.** The custom domain is added in Railway, and the DNS records
-  (Spaceship) are the owner's step (P2 step 1). The certificate issues once they resolve.
+- **freesta.sh DNS is done** (the owner, 2026-11-01): Railway shows the domain verified, with the root CNAME on
+  `xx0vt3ns.up.railway.app` propagated. HTTP already redirects to HTTPS. The certificate was still being issued at session end (no error); `https://freesta.sh`
+  answers once it is. Check with `domain-status`.
+- The `main` deploy of the merge commit (ff49186) was **SKIPPED** by the watch path: its tree is identical to
+  7cb0b1c, which is running. The next push to `main` that touches `freestash/` deploys normally.
+- This session's last doc updates are committed on the local branch `feat/pr2-followups` (not pushed): fold them
+  into PR #2.
 
 ## Done this session
 - Pushed `main` and the branch, opened PR #1. Created the Railway project: Postgres template, service from GitHub,
@@ -48,8 +53,8 @@
 - Merged PR #1 on the owner's OK, and switched the Railway source to `main`.
 
 ## Next
-1. Owner: DNS at Spaceship (P2 step 1). Then check `https://freesta.sh/api/health`, sign up on the site, and sign
-   the desktop app into it (default server `https://freesta.sh`).
+1. Check `https://freesta.sh/api/health`. Then the owner signs up on the site and signs the desktop app into it
+   (default server `https://freesta.sh`).
 2. The three review threads still open on the merged PR #1:
    - Resend for reset email (owner; thread 4437200744);
    - where the web keeps the JWT (owner; thread 4437200772; record the answer in decision 0002);
