@@ -71,3 +71,21 @@ def test_ledger_refuses_red(client):
     r = client.post("/api/ledger", json={"uid": "pexels:photo-1234567", "asset": a, "use_case": "bundled"})
     assert r.status_code == 409
 
+
+
+def test_spa_never_serves_files_outside_the_web_build(tmp_path):
+    """`/..%2f..%2fpyproject.toml` read the server's own files on production (2026-11-01)."""
+    from freestash.api.app import spa_file
+
+    dist = tmp_path / "web" / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<!doctype html>", encoding="utf-8")
+    (dist / "favicon.svg").write_text("<svg/>", encoding="utf-8")
+    (tmp_path / "web" / "package.json").write_text("{}", encoding="utf-8")
+    index = (dist / "index.html").resolve()
+
+    assert spa_file(dist, "favicon.svg") == (dist / "favicon.svg").resolve()
+    for path in ("../package.json", "assets/../../package.json", "../../web/package.json",
+                 str(tmp_path / "web" / "package.json"), "", "settings", "assets",
+                 "favicon.svg\x00", "..\x00/package.json"):  # %00: resolve() raises on Linux (CI), so a 500 before
+        assert spa_file(dist, path) == index, path
