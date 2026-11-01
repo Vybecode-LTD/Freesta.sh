@@ -10,7 +10,19 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, Uuid, create_engine, select
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Uuid,
+    and_,
+    create_engine,
+    or_,
+    select,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 
@@ -151,12 +163,27 @@ class Store:
             s.add(row)
         return _entry_from_row(row)
 
-    def list_entries(self, *, team_id: str | None = None, project: str | None = None, limit: int = 500) -> list[LedgerEntry]:
+    def list_entries(self, *, team_id: str | None = None, project: str | None = None, limit: int = 500,
+                     before: str | None = None, files_only: bool = False) -> list[LedgerEntry]:
+        """Newest first. `before` is the id of the last entry of the previous page (a keyset cursor, so entries
+        recorded while someone pages never shift or repeat a page). Raises KeyError for an id this team can't see."""
         with self.session() as s:
-            stmt = select(LedgerRow).order_by(LedgerRow.retrieved_at.desc()).limit(limit)
-            stmt = stmt.where(LedgerRow.team_id == team_id) if team_id else stmt.where(LedgerRow.team_id.is_(None))
+            team = LedgerRow.team_id == team_id if team_id else LedgerRow.team_id.is_(None)
+            stmt = select(LedgerRow).where(team).order_by(LedgerRow.retrieved_at.desc(), LedgerRow.id.desc()).limit(limit)
             if project:
                 stmt = stmt.where(LedgerRow.project == project)
+            if files_only:
+                stmt = stmt.where(LedgerRow.file_url.is_not(None))
+            if before:
+                try:
+                    before = str(uuid.UUID(before))  # Postgres would 500 on a malformed uuid
+                except ValueError:
+                    raise KeyError(before) from None
+                cursor = s.scalar(select(LedgerRow).where(team, LedgerRow.id == before))
+                if cursor is None:
+                    raise KeyError(before)
+                stmt = stmt.where(or_(LedgerRow.retrieved_at < cursor.retrieved_at,
+                                      and_(LedgerRow.retrieved_at == cursor.retrieved_at, LedgerRow.id < cursor.id)))
             return [_entry_from_row(r) for r in s.scalars(stmt)]
 
     def projects(self, *, team_id: str | None = None) -> list[str]:

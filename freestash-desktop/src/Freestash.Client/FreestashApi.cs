@@ -39,7 +39,8 @@ public interface IFreestashApi
     Task DeleteCollectionAsync(string id, CancellationToken ct = default);
     Task<Collection> AddToCollectionAsync(string collectionId, Asset asset, string? note = null, CancellationToken ct = default);
     Task RemoveFromCollectionAsync(string collectionId, string uid, CancellationToken ct = default);
-    Task<List<LedgerEntry>> LedgerAsync(string? project = null, CancellationToken ct = default);
+    /// <summary>One page of the ledger, newest first; pass the last entry's id as <paramref name="before"/> for the next.</summary>
+    Task<List<LedgerEntry>> LedgerAsync(string? project = null, string? before = null, int limit = LedgerPages.Size, CancellationToken ct = default);
     Task<List<string>> ProjectsAsync(CancellationToken ct = default);
     Task<LedgerEntry> RecordAsync(Asset asset, UseCase use, string? project, string? fileUrl, CancellationToken ct = default);
     Task<string> ExportLedgerAsync(string format, string? project = null, CancellationToken ct = default);
@@ -156,8 +157,12 @@ public sealed class FreestashApiClient : IFreestashApi, IDisposable
     public Task RemoveFromCollectionAsync(string collectionId, string uid, CancellationToken ct = default) =>
         SendNoContent(HttpMethod.Delete, $"/api/collections/{Q(collectionId)}/items/{Q(uid)}", ct);
 
-    public Task<List<LedgerEntry>> LedgerAsync(string? project = null, CancellationToken ct = default) =>
-        Send<List<LedgerEntry>>(HttpMethod.Get, project is null ? "/api/ledger" : $"/api/ledger?project={Q(project)}", null, ct);
+    public Task<List<LedgerEntry>> LedgerAsync(string? project = null, string? before = null, int limit = LedgerPages.Size, CancellationToken ct = default) =>
+        Send<List<LedgerEntry>>(HttpMethod.Get, BuildLedgerPath(project, before, limit), null, ct);
+
+    /// <summary>The same parameters as the web's <c>ledgerPath</c> (freestash/web/src/lib/ledgerPages.ts).</summary>
+    public static string BuildLedgerPath(string? project, string? before, int limit = LedgerPages.Size) =>
+        "/api/ledger?" + (project is null ? "" : $"project={Q(project)}&") + (before is null ? "" : $"before={Q(before)}&") + $"limit={limit}";
 
     public Task<List<string>> ProjectsAsync(CancellationToken ct = default) => Send<List<string>>(HttpMethod.Get, "/api/ledger/projects", null, ct);
 

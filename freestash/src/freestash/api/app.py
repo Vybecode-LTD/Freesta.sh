@@ -251,8 +251,16 @@ class LedgerIn(BaseModel):
 
 
 @app.get("/api/ledger", response_model=list[LedgerEntry])
-async def list_ledger(user: User, request: Request, project: str | None = None, limit: int = 500) -> list[LedgerEntry]:
-    return store(request).list_entries(team_id=user.team_id, project=project, limit=limit)
+async def list_ledger(user: User, request: Request, project: str | None = None,
+                      limit: int = Query(500, ge=1, le=500), before: str | None = None,
+                      files: bool = False) -> list[LedgerEntry]:
+    """One page, newest first. For the next page pass the last entry's id as `before`; a page shorter than
+    `limit` is the last. `files=true` keeps only entries with a file (the Downloads page)."""
+    try:
+        return store(request).list_entries(team_id=user.team_id, project=project, limit=limit,
+                                           before=before, files_only=files)
+    except KeyError:
+        raise HTTPException(400, "unknown ledger cursor") from None
 
 
 @app.get("/api/ledger/projects")

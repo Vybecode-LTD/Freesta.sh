@@ -121,6 +121,11 @@ def test_collections_and_team_scoping(settings):
     assert store.remove_from_collection(coll["id"], asset.uid)
     assert store.delete_collection(coll["id"])
 
+    mine = store.add_entry(entry_from_scored(scored, project="p"))
+    with pytest.raises(KeyError):  # another team's entry id is not a cursor you can page from
+        store.list_entries(team_id="00000000-0000-0000-0000-000000000001", before=mine.id)
+    assert store.list_entries(before=mine.id) == []
+
 
 def test_exports(settings):
     from freestash.licenses import evaluate
