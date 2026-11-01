@@ -207,9 +207,31 @@ def test_rate_limit_keys_on_the_client_not_the_proxy(client):
 
     assert [attempt("203.0.113.7") for _ in range(9)][-1] == 429
     assert attempt("198.51.100.4") == 401  # a different client isn't locked out by the first one
-    cf = client.post("/api/auth/login", headers={"CF-Connecting-IP": "203.0.113.7", "X-Forwarded-For": "192.0.2.9"},
-                     json={"email": "ada@example.com", "password": "wrong-guess"})
-    assert cf.status_code == 429  # Cloudflare's header wins
+
+
+def test_a_forged_cloudflare_header_cannot_dodge_the_limit(client):
+    """freesta.sh isn't behind Cloudflare, so nothing strips a CF-Connecting-IP the client sends itself.
+    Rotating it got 9 failed logins past the 8-per-5-minutes limit on production (2026-11-01)."""
+    signup(client)
+
+    def attempt(i: int) -> int:
+        return client.post("/api/auth/login", headers={"CF-Connecting-IP": f"198.51.100.{i}", "X-Forwarded-For": "203.0.113.7"},
+                           json={"email": "ada@example.com", "password": "wrong-guess"}).status_code
+
+    assert [attempt(i) for i in range(9)][-1] == 429
+
+
+def test_cloudflare_header_counts_only_when_cloudflare_fronts_the_site(client, monkeypatch):
+    monkeypatch.setenv("FREESTASH_TRUST_CF_CONNECTING_IP", "true")
+    get_settings.cache_clear()
+    signup(client)
+
+    def attempt(ip: str) -> int:
+        return client.post("/api/auth/login", headers={"CF-Connecting-IP": ip, "X-Forwarded-For": "192.0.2.9"},
+                           json={"email": "ada@example.com", "password": "wrong-guess"}).status_code
+
+    assert [attempt("203.0.113.7") for _ in range(9)][-1] == 429
+    assert attempt("198.51.100.4") == 401  # Cloudflare's header names the client
 
 
 def test_accounts_mode_refuses_to_start_without_a_signing_key(tmp_path):

@@ -40,7 +40,9 @@ Search runs with the caller's own keys (`providers/keys.py::settings_with_keys`)
 client of the same API (`Freestash.Client/Account/*`), hosted engine by default, local Python engine optional.
 
 ## Critical gotchas
-- Behind Railway's edge the peer IP is the proxy: rate limits key on `api/auth.py::_ip` (CF-Connecting-IP / XFF).
+- Behind Railway's edge the peer IP is the proxy: rate limits key on `api/auth.py::_ip` (leftmost XFF, which the edge
+  overwrites). `CF-Connecting-IP` is forgeable unless Cloudflare fronts the domain: trust it only with
+  `FREESTASH_TRUST_CF_CONNECTING_IP=true` (forged rotation got past the login limit on production, 2026-11-01).
 - `FREESTASH_SECRETS_KEY` encrypts users' keys: rotating it makes saved keys unreadable (users re-save). Back it up.
 - Text colours: never `--text-faint` / `TextFaintBrush` for words (3:1). Colour a link by its own class.
 - Windows: open text files with `encoding="utf-8"` (cp1252 crashed exports; `tests/test_cli.py`).

@@ -33,32 +33,34 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
 
 **Done when:** no fixture contains `"_synthetic"` and all tests pass.
 
-## P2 — Deploy to Railway (one service + Railway Postgres; owner steps in the dashboard)
+## P2 — Deploy to Railway (one service + Railway Postgres)
 
-Production, project "Freesta.sh" on https://railway.com/dashboard.
-1. **New project** → *Deploy from GitHub repo* → `Vybecode-LTD/Freesta.sh`. Service → *Settings* → *Source* →
-   **Root Directory** `/freestash` (the Dockerfile and `railway.json` live there). Healthcheck path is `/api/health`.
-2. In the project: **+ New** → *Database* → **PostgreSQL**.
-3. Service → *Variables* (generate secrets on your own machine; never paste them in chat):
+**Live since 2026-11-01** at https://freestash-production.up.railway.app (workspace "color8's Projects", project
+**Freesta.sh** `ba994460-f01e-4a4d-9e83-994f352b6634`, environment `production`). Done:
+- Service `freestash` (`977b573d-bfbc-4b10-a432-26ace23770bf`): GitHub `Vybecode-LTD/Freesta.sh`, Root Directory
+  `/freestash`, Dockerfile build, healthcheck `/api/health`, watch `/freestash/**`. **Deploys from
+  `feat/accounts-sync-aperture` until PR #1 merges; then switch the branch to `main`** (Settings → Source).
+- Postgres (template), referenced as `DATABASE_URL=${{Postgres.DATABASE_URL}}`. Schema is created at startup.
+- Variables: `FREESTASH_AUTH_MODE=accounts`, `FREESTASH_PUBLIC_URL`, `FREESTASH_CORS_ORIGINS=["https://freesta.sh"]`,
+  `FREESTASH_SIGNUP_OPEN=true`, and the two secrets, generated and set through the CLI's stdin (never shown):
+  `FREESTASH_SECRET_KEY` (signs sessions) and `FREESTASH_SECRETS_KEY` (encrypts users' keys: **copy it from the
+  Variables tab into your password manager**; losing it makes every saved key unreadable).
+- Custom domain `freesta.sh` added; it waits for DNS.
 
-| Name | Value |
-|---|---|
-| `FREESTASH_AUTH_MODE` | `accounts` |
-| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (a reference, not a copy) |
-| `FREESTASH_SECRET_KEY` | `python -c "import secrets;print(secrets.token_urlsafe(48))"` |
-| `FREESTASH_SECRETS_KEY` | `python -c "from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())"`, and **keep a copy**: losing it makes every saved key unreadable |
-| `FREESTASH_CONTACT_EMAIL` | the address providers should contact |
-| `FREESTASH_PUBLIC_URL` | `https://freesta.sh` |
-| `FREESTASH_CORS_ORIGINS` | `["https://freesta.sh"]` |
-| `RESEND_API_KEY` | optional: resend.com key for password-reset email (verify the freesta.sh domain there) |
-| `FREESTASH_EMAIL_FROM` | `Freesta.sh <hello@freesta.sh>` |
-
-4. Service → *Settings* → *Networking* → **Custom Domain** `freesta.sh` → add the record Railway shows at your DNS host.
-   An apex domain needs ALIAS/ANAME or Cloudflare CNAME flattening.
-5. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
+Owner steps left:
+1. **DNS at Spaceship** (freesta.sh's nameservers are `launch1/2.spaceship.net`): Advanced DNS → Custom records.
+   Delete the parking `A` records on `@`, then add `CNAME @ → ud2ssbe5.up.railway.app` (Spaceship serves it as an
+   ALIAS) and `TXT _railway-verify → railway-verify=f64a94cd…` (full value: Railway → freestash → Settings →
+   Networking → freesta.sh). Railway issues the certificate once both resolve.
+2. Optional variables: `FREESTASH_CONTACT_EMAIL` (sent to providers in the User-Agent), `RESEND_API_KEY` +
+   `FREESTASH_EMAIL_FROM` for reset email (without it, reset links go to the deploy log only).
+   `FREESTASH_TRUST_CF_CONNECTING_IP=true` **only** if the domain moves behind Cloudflare's proxy.
+3. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
    you can create an account on the site, and the desktop app (default server `https://freesta.sh`) signs into it.
 
-The schema is created at startup (`Store` → `create_all`). Add Alembic before the first change to an existing table.
+Before 2026-12-01: Railway retires config-as-code (`railway.json`). The service's settings above are set on the
+service itself, so nothing breaks; delete `railway.json` or move to `.railway/railway.ts` (read the playbook's IaC
+warning first: a whole-project file deletes whatever it omits). Add Alembic before the first change to an existing table.
 ## P3 — CLI/MCP remote mode (team ledger from the terminal)
 
 Today the CLI/MCP write to a local SQLite ledger. Add `FREESTASH_API_URL` + `FREESTASH_API_TOKEN`:

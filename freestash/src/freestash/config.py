@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     signup_open: bool = True
     share_server_keys: bool = False  # True: users without their own key fall back to the server's env keys
     public_url: str = "https://freesta.sh"  # used in password-reset links
+    trust_cf_connecting_ip: bool = False  # True only when Cloudflare proxies the domain: otherwise clients can forge it
     resend_api_key: str | None = _key("RESEND_API_KEY")
     email_from: str = "Freesta.sh <hello@freesta.sh>"
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])

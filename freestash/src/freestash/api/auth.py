@@ -140,14 +140,15 @@ def _limit(key: str, limit: int, window: float) -> None:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many attempts. Wait a few minutes and try again.")
 
 
-def _ip(request: Request) -> str:
+def _ip(request: Request, settings: Settings) -> str:
     """The real client address behind Railway's edge (the peer address is the proxy, shared by everyone).
 
-    CF-Connecting-IP when Cloudflare fronts the domain, then the leftmost X-Forwarded-For (Railway's edge
-    overwrites the header rather than appending to a client-supplied one), then the peer.
+    The leftmost X-Forwarded-For (Railway's edge overwrites the header rather than appending to a client-supplied
+    one, proven on production 2026-11-01), then the peer. CF-Connecting-IP comes first only with
+    FREESTASH_TRUST_CF_CONNECTING_IP: without Cloudflare in front, any client can send it and dodge the limits.
     """
-    for candidate in (request.headers.get("cf-connecting-ip"),
-                      (request.headers.get("x-forwarded-for") or "").split(",")[0]):
+    cf = request.headers.get("cf-connecting-ip") if settings.trust_cf_connecting_ip else None
+    for candidate in (cf, (request.headers.get("x-forwarded-for") or "").split(",")[0]):
         candidate = (candidate or "").strip()
         try:
             return str(ipaddress.ip_address(candidate))
@@ -166,7 +167,7 @@ def _call(fn, *args):
 @router.post("/register", status_code=201)
 async def register(body: RegisterIn, request: Request, settings: Settings = Depends(get_settings)) -> dict:
     _require_accounts(settings)
-    _limit(f"register:{_ip(request)}", 5, 3600)
+    _limit(f"register:{_ip(request, settings)}", 5, 3600)
     svc = accounts(request)
     return _auth_response(svc, _call(svc.register, body.email, body.password, body.display_name))
 
@@ -174,8 +175,8 @@ async def register(body: RegisterIn, request: Request, settings: Settings = Depe
 @router.post("/login")
 async def login(body: LoginIn, request: Request, settings: Settings = Depends(get_settings)) -> dict:
     _require_accounts(settings)
-    _limit(f"login-ip:{_ip(request)}", 30, 300)
-    _limit(f"login:{_ip(request)}:{body.email.strip().lower()}", 8, 300)
+    _limit(f"login-ip:{_ip(request, settings)}", 30, 300)
+    _limit(f"login:{_ip(request, settings)}:{body.email.strip().lower()}", 8, 300)
     svc = accounts(request)
     return _auth_response(svc, _call(svc.authenticate, body.email, body.password))
 
@@ -215,7 +216,7 @@ async def logout_all(user: User, request: Request, settings: Settings = Depends(
 async def forgot(body: ForgotIn, request: Request, settings: Settings = Depends(get_settings)) -> dict:
     """Always answers the same way, whether or not the email has an account (no account enumeration)."""
     _require_accounts(settings)
-    _limit(f"forgot-ip:{_ip(request)}", 10, 3600)
+    _limit(f"forgot-ip:{_ip(request, settings)}", 10, 3600)
     _limit(f"forgot:{body.email.strip().lower()}", 3, 3600)
     started = accounts(request).start_reset(body.email)
     if started:
@@ -231,6 +232,6 @@ async def forgot(body: ForgotIn, request: Request, settings: Settings = Depends(
 @router.post("/reset", status_code=204)
 async def reset(body: ResetIn, request: Request, settings: Settings = Depends(get_settings)) -> Response:
     _require_accounts(settings)
-    _limit(f"reset:{_ip(request)}", 10, 3600)
+    _limit(f"reset:{_ip(request, settings)}", 10, 3600)
     _call(accounts(request).finish_reset, body.token, body.new_password)
     return Response(status_code=204)
