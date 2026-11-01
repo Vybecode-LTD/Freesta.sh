@@ -8,12 +8,13 @@ Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner,
 
 ## Current State
 - `main` holds PR #1 (merged 2026-11-01): accounts, synced keys + prefs, key help, the Aperture redesign on both
-  apps, parity gates, and every review fix. Three review items are still open: `docs/HANDOFF.md` → Next.
-- **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at
-  https://freestash-production.up.railway.app, building from `main`. **freesta.sh** DNS is set (Spaceship) and the
-  domain is verified in Railway; certificate: see `docs/HANDOFF.md`. IDs and steps: `freestash/IMPLEMENTATION.md` → P2.
-- Gates 2026-11-01: pytest 113 · ruff clean · vitest 13 · dotnet 32 · 0 warnings. Rendered-contrast 11 runs /
-  136 states / 0 failing (2026-10-31).
+  apps, parity gates, and every review fix. PR #2 (path-traversal hotfix) and PR #3 (ledger paging, CSP, SMTP reset
+  email) follow it: `docs/HANDOFF.md`. Decisions: `docs/decisions/0002` (Spacemail SMTP, CSP then cookie, no Cloudflare).
+- **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
+  valid 2026-11-01) and https://freestash-production.up.railway.app, building from `main`. IDs and steps:
+  `freestash/IMPLEMENTATION.md` → P2.
+- Gates 2026-11-01 (PR #3): pytest 120 · ruff clean · vitest 15 · dotnet 33 · 0 warnings. Rendered-contrast 11 runs /
+  136 states / 0 failing (2026-10-31; not re-run: the one new control reuses `.btn`).
 
 ## The parity rule (binding)
 **Web and desktop are the same product.** Every user-facing change lands in both apps in the same pull request:

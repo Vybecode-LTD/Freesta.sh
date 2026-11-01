@@ -4,7 +4,7 @@ The desktop app of **Freesta.sh** (monorepo root: `../CLAUDE.md`, read it first:
 lives there). Same account, same screens, same look as the website. C# / .NET 10 / **Avalonia 12.1.4**,
 MVVM with CommunityToolkit.Mvvm 8.4 (partial-property style).
 
-Verified 2026-10-31: 0 warnings / 0 errors, 27 tests pass (32 on 2026-11-01), every screen rendered headless (`docs/screenshots/`),
+Verified 2026-10-31: 0 warnings / 0 errors, 27 tests pass (33 on 2026-11-01), every screen rendered headless (`docs/screenshots/`),
 and sign-up + key/pref sync proven end to end against a live accounts server. Not yet driven live on screen.
 
 **Start here:** `IMPLEMENTATION.md` is the ordered runbook. Work it top to bottom.
@@ -43,7 +43,7 @@ and sign-up + key/pref sync proven end to end against a live accounts server. No
 
 ```bash
 dotnet build Freestash.Desktop.sln
-dotnet test --project tests/Freestash.Client.Tests        # 32 tests, ~3s, no network
+dotnet test --project tests/Freestash.Client.Tests        # 33 tests, ~3s, no network
 dotnet run --project src/Freestash.Desktop                # the app (auto-starts `python -m freestash serve`)
 
 # visual check: render every screen to PNG against a running engine

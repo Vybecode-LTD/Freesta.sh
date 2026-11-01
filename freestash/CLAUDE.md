@@ -119,6 +119,9 @@ Every web page passes the rendered-contrast gate (`verify-real-pass`) in both th
 
 ## Last Completed Task
 
+**2026-11-01: ledger paging (keyset cursor, both apps), strict CSP, SMTP reset email (PR #3); SPA path-traversal
+hotfix (PR #2).** Decision `../docs/decisions/0002`.
+
 **2026-10-31: accounts on Railway Postgres + Aperture redesign (PR #1, merged 2026-11-01).**
 Supabase removed; app-level accounts (open sign-up, password reset, rate limits keyed on the real client IP);
 per-user Fernet-encrypted provider keys used by search; synced preferences; `GET /api/keys/catalog` with verified

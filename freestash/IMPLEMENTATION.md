@@ -46,8 +46,9 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
   `FREESTASH_SECRET_KEY` (signs sessions) and `FREESTASH_SECRETS_KEY` (encrypts users' keys: **copy it from the
   Variables tab into your password manager**; losing it makes every saved key unreadable).
 - Custom domain `freesta.sh` (port 8080): **verified 2026-11-01**. DNS is at Spaceship (nameservers
-  `launch1/2.spaceship.net`); the root is a `CNAME @ → xx0vt3ns.up.railway.app`, which Spaceship serves as an ALIAS.
-  Re-adding the domain in Railway issues a new target: update that record if it ever happens again.
+  `launch1/2.spaceship.net`); the root is a `CNAME @ → cgl6fdva.up.railway.app`, which Spaceship serves as an ALIAS.
+  Re-adding the domain in Railway issues a new target (it did on 2026-11-01, from `xx0vt3ns`): update that record.
+  Certificate valid since 2026-11-01; `https://freesta.sh/api/health` answers in accounts mode.
 
 Owner steps left:
 1. Reset email (decision 0002), **without which password reset doesn't work** (no email goes out; links are never
