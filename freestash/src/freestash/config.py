@@ -75,6 +75,11 @@ class Settings(BaseSettings):
         return f"{self.user_agent}; {self.contact_email}" if self.contact_email else self.user_agent
 
     @property
+    def database_configured(self) -> bool:
+        """A database URL was given. Railway leaves DATABASE_URL empty when its Postgres service is deleted."""
+        return bool(self.database_url or os.environ.get("DATABASE_URL"))
+
+    @property
     def resolved_database_url(self) -> str:
         """FREESTASH_DATABASE_URL, else Railway's DATABASE_URL, else a local SQLite file.
 
