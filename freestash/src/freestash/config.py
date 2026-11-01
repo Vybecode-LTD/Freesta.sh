@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -49,7 +50,9 @@ class Settings(BaseSettings):
     openverse_client_secret: str | None = _key("OPENVERSE_CLIENT_SECRET")
 
     # --- web API / accounts ----------------------------------------------
-    auth_mode: str = "none"  # "none" (local, single user) | "accounts" (sign-up + JWT, the hosted app)
+    # "none" (local, single user) | "accounts" (sign-up + JWT, the hosted app). Anything else fails at startup:
+    # every guard checks != "accounts", so a typo would otherwise serve everyone as one anonymous user.
+    auth_mode: Literal["none", "accounts"] = "none"
     secret_key: str | None = None  # signs session tokens; required in accounts mode (>= 32 chars)
     secrets_key: str | None = None  # Fernet key that encrypts users' provider keys at rest
     token_days: int = 30
@@ -59,6 +62,7 @@ class Settings(BaseSettings):
     trust_cf_connecting_ip: bool = False  # True only when Cloudflare proxies the domain: otherwise clients can forge it
     resend_api_key: str | None = _key("RESEND_API_KEY")
     email_from: str = "Freesta.sh <hello@freesta.sh>"
+    log_emails: bool = False  # dev only (scripts/dev_accounts.py): log unsent emails, reset links included
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
 
     @property

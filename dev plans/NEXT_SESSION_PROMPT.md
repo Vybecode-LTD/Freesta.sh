@@ -41,7 +41,11 @@ Read the root `CLAUDE.md`, then `docs/HANDOFF.md`.
 
 ## 5. Open owner decisions (ask, don't decide)
 - Merge PR #1 now?
-- Resend for reset email (needs the freesta.sh domain verified there)?
+- Resend for reset email (needs the freesta.sh domain verified there)? **Until then, password reset doesn't work
+  on production**, because links are never logged (CodeRabbit thread 4437200744, still open).
+- The web keeps the JWT in `localStorage`. Keep it, add a strict CSP, or move to an HttpOnly cookie (the desktop
+  uses the same bearer token)? CodeRabbit thread 4437200772 is still open. Record the answer in decision 0002.
+- Downloads reads only the newest 500 ledger entries: page it (thread 4437200777, a follow-up).
 - `FREESTASH_CONTACT_EMAIL` address?
 - Google sign-in?
 - Put Cloudflare in front? If yes, set `FREESTASH_TRUST_CF_CONNECTING_IP=true`.

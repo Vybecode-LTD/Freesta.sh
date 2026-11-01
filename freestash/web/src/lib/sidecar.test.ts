@@ -27,6 +27,13 @@ describe("sidecar", () => {
     expect(sidecarName(null, "Lighthouse Village / 1929")).toBe("Lighthouse-Village-1929.license.json");
   });
 
+  it("survives a file name with a stray % (one such URL used to break the whole Downloads page)", () => {
+    const odd = "https://example.org/files/100%25%20cotton-100%.jpg";
+    expect(sidecarName(odd, "x")).toBe("100%25%20cotton-100%.jpg.license.json");
+    const entry = { file_url: odd, retrieved_at: "2026-11-01T00:00:00Z", sha256: null, snapshot: { asset, verdict } } as unknown as LedgerEntry;
+    expect(JSON.parse(sidecarFromEntry(entry)!).file).toBe("100%25%20cotton-100%.jpg");
+  });
+
   it("rebuilds a sidecar from a ledger entry's snapshot, and declines without one", () => {
     const entry = { id: "1", asset_uid: "cleveland:1930.851", provider: "cleveland", title: "t", license_id: "CC0-1.0",
       license_label: "CC0 1.0", trust: "institution", use_case: "client", tier: "green", retrieved_at: "2026-10-31T12:00:00Z",

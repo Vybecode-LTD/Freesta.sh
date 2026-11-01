@@ -26,7 +26,17 @@
   - Old `settings.json` files still load: the `EmberDark` / `MachinedLight` / `Ember` names are mapped.
   - Switching from the account to the local engine no longer wipes this machine's keys (`LocalKeyWrites`).
   - A web reset link opens even in a browser that's still signed in (`lib/gate.ts`).
-- Gates: pytest 101 · ruff clean · export check clean · vitest 10 · web build clean · dotnet 32 · 0 warnings.
+- Fixed 4 of CodeRabbit's findings, each with a regression test:
+  - An unknown `FREESTASH_AUTH_MODE` now fails at startup instead of serving everyone anonymously.
+  - Mail logs carry no reset link and no address.
+  - `dev_accounts.py` always uses its own SQLite file.
+  - One malformed URL can't crash Downloads.
+  - Two other findings were already fixed.
+- Three findings are still open on PR #1:
+  - Resend before launch: owner.
+  - JWT in `localStorage` versus a cookie or CSP: owner.
+  - Ledger past 500 entries on Downloads: follow-up.
+- Gates: pytest 108 · ruff clean · export check clean · vitest 11 · web build clean · dotnet 32 · 0 warnings.
 
 ## Next
 1. Owner: DNS at Spaceship (P2 step 1). Then check `https://freesta.sh/api/health`, sign up on the site, and sign
@@ -38,8 +48,8 @@
 ## Warnings
 - Copy `FREESTASH_SECRETS_KEY` from Railway → freestash → Variables into a password manager. Losing or changing it
   makes every saved provider key unreadable.
-- No `RESEND_API_KEY`: password-reset links are written to the deploy log only. Only the owner can read that, but
-  users get no email.
+- No `RESEND_API_KEY` yet, so **password reset doesn't work on production**: no email is sent, and links are no
+  longer logged. The owner decides on Resend (needs the freesta.sh domain verified there).
 - `FREESTASH_CONTACT_EMAIL` is unset. The User-Agent carries `+https://freesta.sh` as the contact; set an address if a
   provider asks.
 - Rate limiter is in-process: fine for one replica, move it to Postgres/Redis before scaling out.

@@ -4,8 +4,17 @@ import type { Asset, LedgerEntry, Verdict } from "./types";
  * The `.license.json` provenance file. Same format as the CLI (download.py) and the desktop app (Sidecar.cs),
  * so `freestash audit` reads all three. A browser can't hash a cross-origin file, so sha256 is null here.
  */
+/** The file name at the end of a URL. A name that can't be percent-decoded (a stray "%") is kept as it is:
+ *  throwing here would take the whole Downloads page down with one odd URL. */
+function urlBaseName(url: string): string {
+  let path = url;
+  try { path = new URL(url).pathname; } catch { /* not absolute: read it as a path */ }
+  const raw = path.split("/").pop() || "";
+  try { return decodeURIComponent(raw); } catch { return raw; }
+}
+
 export function sidecarJson(asset: Asset, verdict: Verdict, fileUrl: string | null, retrievedAt: string, sha256?: string | null): string {
-  const fileName = fileUrl ? decodeURIComponent(new URL(fileUrl).pathname.split("/").pop() || "file") : asset.title;
+  const fileName = fileUrl ? urlBaseName(fileUrl) || "file" : asset.title;
   return JSON.stringify({
     freestash_sidecar: 1,
     file: fileName,
@@ -25,7 +34,7 @@ export function sidecarJson(asset: Asset, verdict: Verdict, fileUrl: string | nu
 }
 
 export function sidecarName(fileUrl: string | null, title: string): string {
-  const base = fileUrl ? decodeURIComponent(new URL(fileUrl).pathname.split("/").pop() || "") : "";
+  const base = fileUrl ? urlBaseName(fileUrl) : "";
   return `${base || title.replace(/[^\w.-]+/g, "-").slice(0, 60)}.license.json`;
 }
 

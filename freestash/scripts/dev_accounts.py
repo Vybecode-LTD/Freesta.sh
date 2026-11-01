@@ -12,9 +12,28 @@ import json
 import os
 import secrets
 import sys
+from collections.abc import MutableMapping
 from pathlib import Path
 
 from cryptography.fernet import Fernet
+
+
+def prepare_environment(port: str, base: Path, environ: MutableMapping[str, str]) -> None:
+    """Accounts mode against base/freestash.db, always: an inherited DATABASE_URL must never point this server,
+    with its own fresh encryption key, at a real database."""
+    base.mkdir(parents=True, exist_ok=True)
+    secrets_file = base / "dev-secrets.json"
+    if not secrets_file.exists():
+        secrets_file.write_text(json.dumps({"secret_key": secrets.token_urlsafe(48),
+                                            "secrets_key": Fernet.generate_key().decode()}), encoding="utf-8")
+    s = json.loads(secrets_file.read_text(encoding="utf-8"))
+    environ.pop("DATABASE_URL", None)
+    environ.update({
+        "FREESTASH_AUTH_MODE": "accounts", "FREESTASH_SECRET_KEY": s["secret_key"], "FREESTASH_SECRETS_KEY": s["secrets_key"],
+        "FREESTASH_DATA_DIR": str(base), "FREESTASH_DATABASE_URL": f"sqlite:///{base / 'freestash.db'}",
+        "FREESTASH_PUBLIC_URL": f"http://127.0.0.1:{port}", "FREESTASH_LOG_EMAILS": "true",  # reset links in the console
+    })
+    environ.setdefault("FREESTASH_CONTACT_EMAIL", "dev@freesta.sh")
 
 
 def main() -> None:
@@ -22,17 +41,7 @@ def main() -> None:
     base = Path(os.environ.get("LOCALAPPDATA") or Path.home() / ".local" / "share") / "Freestash" / "dev"
     if "onedrive" in str(base).lower():
         raise SystemExit(f"refusing to write into a OneDrive folder: {base}")
-    base.mkdir(parents=True, exist_ok=True)
-    secrets_file = base / "dev-secrets.json"
-    if not secrets_file.exists():
-        secrets_file.write_text(json.dumps({"secret_key": secrets.token_urlsafe(48),
-                                            "secrets_key": Fernet.generate_key().decode()}), encoding="utf-8")
-    s = json.loads(secrets_file.read_text(encoding="utf-8"))
-    os.environ.update({
-        "FREESTASH_AUTH_MODE": "accounts", "FREESTASH_SECRET_KEY": s["secret_key"], "FREESTASH_SECRETS_KEY": s["secrets_key"],
-        "FREESTASH_DATA_DIR": str(base), "FREESTASH_PUBLIC_URL": f"http://127.0.0.1:{port}",
-    })
-    os.environ.setdefault("FREESTASH_CONTACT_EMAIL", "dev@freesta.sh")
+    prepare_environment(port, base, os.environ)
     import uvicorn
 
     uvicorn.run("freestash.api.app:app", host="127.0.0.1", port=int(port))

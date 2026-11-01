@@ -242,6 +242,65 @@ def test_accounts_mode_refuses_to_start_without_a_signing_key(tmp_path):
         AccountService(Store(settings=s), s)
 
 
+@pytest.mark.parametrize("mode", ["supabase", "Accounts", "account"])
+def test_an_unknown_auth_mode_refuses_to_start(mode):
+    """Every guard checks `!= "accounts"`, so a typo (or the retired "supabase") would serve everyone as one
+    anonymous local user. It must fail at startup instead."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        Settings(auth_mode=mode, _env_file=None)
+
+
+async def test_unsent_email_never_logs_the_reset_link_or_the_address(tmp_path, caplog):
+    from freestash.mailer import send_email
+
+    s = Settings(data_dir=tmp_path, _env_file=None)
+    with caplog.at_level("DEBUG", logger="freestash.mail"):
+        assert await send_email(s, "ada@example.com", "Reset your password", "https://freesta.sh/#/reset?token=SECRET") is False
+    assert "Reset your password" in caplog.text
+    assert "SECRET" not in caplog.text and "ada@example.com" not in caplog.text
+
+
+async def test_dev_server_can_opt_in_to_logging_unsent_email(tmp_path, caplog):
+    from freestash.mailer import send_email
+
+    s = Settings(data_dir=tmp_path, log_emails=True, _env_file=None)
+    with caplog.at_level("DEBUG", logger="freestash.mail"):
+        await send_email(s, "ada@example.com", "Reset your password", "https://127.0.0.1/#/reset?token=LOCAL")
+    assert "token=LOCAL" in caplog.text
+
+
+@respx.mock
+async def test_a_rejected_email_logs_no_address(tmp_path, caplog):
+    from freestash.mailer import send_email
+
+    respx.post("https://api.resend.com/emails").mock(return_value=httpx.Response(422, json={"message": "bad to: ada@example.com"}))
+    s = Settings(data_dir=tmp_path, resend_api_key="re_test", _env_file=None)
+    with caplog.at_level("DEBUG", logger="freestash.mail"):
+        assert await send_email(s, "ada@example.com", "Reset your password", "token=SECRET") is False
+    assert "422" in caplog.text and "ada@example.com" not in caplog.text and "SECRET" not in caplog.text
+
+
+def test_dev_server_always_uses_its_own_throwaway_database(tmp_path):
+    """An inherited DATABASE_URL (or one in .env) must never point the dev server, with its own fresh
+    encryption key, at a real database."""
+    import importlib.util
+    from pathlib import Path
+
+    script = Path(__file__).resolve().parents[1] / "scripts" / "dev_accounts.py"
+    spec = importlib.util.spec_from_file_location("dev_accounts", script)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    env = {"DATABASE_URL": "postgresql://prod.example/railway", "FREESTASH_DATABASE_URL": "postgresql://prod.example/railway"}
+
+    mod.prepare_environment("8790", tmp_path, env)
+
+    assert "DATABASE_URL" not in env
+    assert env["FREESTASH_DATABASE_URL"] == f"sqlite:///{tmp_path / 'freestash.db'}"
+    assert env["FREESTASH_AUTH_MODE"] == "accounts" and env["FREESTASH_LOG_EMAILS"] == "true"
+
+
 def test_railway_database_url_gets_the_psycopg_driver(monkeypatch):
     monkeypatch.delenv("FREESTASH_DATABASE_URL", raising=False)
     monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@db.railway.internal:5432/railway")

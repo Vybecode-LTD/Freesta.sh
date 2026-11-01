@@ -53,7 +53,8 @@ Owner steps left:
    ALIAS) and `TXT _railway-verify → railway-verify=f64a94cd…` (full value: Railway → freestash → Settings →
    Networking → freesta.sh). Railway issues the certificate once both resolve.
 2. Optional variables: `FREESTASH_CONTACT_EMAIL` (sent to providers in the User-Agent), `RESEND_API_KEY` +
-   `FREESTASH_EMAIL_FROM` for reset email (without it, reset links go to the deploy log only).
+   `FREESTASH_EMAIL_FROM` for reset email. **Without it password reset doesn't work**: no email goes out, and links
+   are never written to the log (log access would be account takeover).
    `FREESTASH_TRUST_CF_CONNECTING_IP=true` **only** if the domain moves behind Cloudflare's proxy.
 3. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
    you can create an account on the site, and the desktop app (default server `https://freesta.sh`) signs into it.
