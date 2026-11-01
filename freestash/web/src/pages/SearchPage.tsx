@@ -85,17 +85,19 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
   const results = interleave(byProvider);
   const busy = pending.length > 0;
   const failed = statuses.filter((s) => !s.ok).length;
+  // The source list can fail to load while batches still arrive; never show "5 of 0" (the desktop does the same).
+  const shown = Math.max(total, statuses.length);
   const toggleMedia = (m: MediaType) =>
     setMedia((prev) => (prev.includes(m) ? (prev.length > 1 ? prev.filter((x) => x !== m) : prev) : [...prev, m]));
   const useLabel = USE_CASES.find((u) => u.id === useCase)!;
   const meta = searched
-    ? `${statuses.length} of ${total} sources reported · ${results.length} results${elapsed ? ` · ${(elapsed / 1000).toFixed(1)} s` : ""}`
+    ? `${statuses.length} of ${shown} sources reported · ${results.length} results${elapsed ? ` · ${(elapsed / 1000).toFixed(1)} s` : ""}`
     : "Search 20 open collections at once · Ctrl K";
 
   return (
     <div className="page page-search">
       <form className="lens" onSubmit={(e) => { e.preventDefault(); void run(); }}>
-        <Aperture total={total} reported={statuses.length} failed={failed} busy={busy} />
+        <Aperture total={shown} reported={statuses.length} failed={failed} busy={busy} />
         <div className="lens-field">
           <input ref={inputRef} className="lens-input" autoFocus placeholder="What are you looking for?"
                  value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search" />

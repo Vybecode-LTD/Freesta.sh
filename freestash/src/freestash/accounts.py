@@ -98,6 +98,14 @@ def normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
+def _display_name(raw: str | None) -> str | None:
+    """Trimmed, or None. Longer than the column (String(120)) is a 400: Postgres would refuse it with a 500."""
+    name = (raw or "").strip() or None
+    if name and len(name) > 120:
+        raise AccountError(400, "Keep your display name to 120 characters or fewer.")
+    return name
+
+
 def check_password_rules(password: str) -> None:
     if len(password) < 8:
         raise AccountError(400, "Use at least 8 characters for your password.")
@@ -145,10 +153,10 @@ class AccountService:
         with self.store.session() as s, s.begin():
             if s.scalar(select(UserRow.id).where(UserRow.email == email)):
                 raise AccountError(409, "An account with that email already exists. Sign in instead.")
-            user = UserRow(email=email, password_hash=hashed, display_name=(display_name or "").strip() or None)
+            user = UserRow(email=email, password_hash=hashed, display_name=_display_name(display_name))
             s.add(user)
             s.flush()
-            team = TeamRow(name=f"{user.display_name or email.split('@')[0]}'s library")
+            team = TeamRow(name=f"{(user.display_name or email.split('@')[0])[:180]}'s library")  # String(200)
             s.add(team)
             s.flush()
             s.add(TeamMemberRow(team_id=team.id, user_id=user.id, role="owner"))
@@ -167,7 +175,7 @@ class AccountService:
         with self.store.session() as s, s.begin():
             user = s.get(UserRow, user_id)
             assert user is not None
-            user.display_name = (display_name or "").strip() or None
+            user.display_name = _display_name(display_name)
         return user
 
     def change_password(self, user_id: str, current: str, new: str) -> UserRow:

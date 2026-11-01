@@ -154,7 +154,8 @@ public sealed partial class SearchViewModel : ViewModelBase
     public bool HasDetail => Detail is not null;
     public string ResultSummary => Results.Count == 0 ? "" : $"{Results.Count} results" + (HiddenCount > 0 ? $" · {HiddenCount} hidden by filter" : "");
 
-    partial void OnHasSearchedChanged(bool value) { OnPropertyChanged(nameof(ShowEmptyHero)); OnPropertyChanged(nameof(ShowNoResults)); }
+    partial void OnHasSearchedChanged(bool value) { OnPropertyChanged(nameof(ShowEmptyHero)); OnPropertyChanged(nameof(ShowNoResults)); OnPropertyChanged(nameof(LensMeta)); }
+    partial void OnTotalSourcesChanged(int value) => OnPropertyChanged(nameof(LensMeta)); // "0 OF 20" shows at once, as on the web
     partial void OnIsSearchingChanged(bool value) => OnPropertyChanged(nameof(ShowNoResults));
     partial void OnDetailChanged(AssetDetailViewModel? value) => OnPropertyChanged(nameof(HasDetail));
     partial void OnHiddenCountChanged(int value) => OnPropertyChanged(nameof(ResultSummary));

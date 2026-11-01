@@ -110,7 +110,7 @@
                         <Panel Grid.Column="2">
                           <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource GreenBrush}" IsVisible="{Binding IsSet}" />
                           <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource YellowBrush}" IsVisible="{Binding IsMissing}" />
-                          <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding Spec.Optional}" />
+                          <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding ShowsOptional}" />
                         </Panel>
                       </Grid>
                       <Grid ColumnDefinitions="*,Auto,Auto">

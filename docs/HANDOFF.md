@@ -36,7 +36,16 @@
   - Resend before launch: owner.
   - JWT in `localStorage` versus a cookie or CSP: owner.
   - Ledger past 500 entries on Downloads: follow-up.
-- Gates: pytest 108 · ruff clean · export check clean · vitest 11 · web build clean · dotnet 32 · 0 warnings.
+- CodeRabbit's 18 minor comments were fixed in one batch. Two (the session token's server and mode) were already
+  covered by `TokenFor`. Highlights:
+  - bcrypt now runs in the thread pool;
+  - `/forgot` mails in the background, so an outage can't reveal who has an account;
+  - the rate limiter sweeps idle keys;
+  - names too long for Postgres get a 400;
+  - Openverse registration mails only the account's own address, 3 an hour;
+  - a late 401 for an old token no longer signs out its replacement;
+  - "sign out everywhere" clears the local session only once the server confirms, on both apps.
+- Gates: pytest 113 · ruff clean · export check clean · vitest 13 · web build clean · dotnet 32 · 0 warnings.
 
 ## Next
 1. Owner: DNS at Spaceship (P2 step 1). Then check `https://freesta.sh/api/health`, sign up on the site, and sign

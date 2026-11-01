@@ -209,7 +209,8 @@ function AccountSection({ onToast }: Toast) {
   }
   async function everywhere() {
     if (!confirm("Sign out on every device, including the desktop app?")) return;
-    try { await api.signOutEverywhere(); } finally { setSession(null); }
+    // Sign out here only once the server confirms: if the request failed, other devices are still signed in.
+    try { await api.signOutEverywhere(); setSession(null); } catch (e) { onToast(`Couldn't sign out everywhere: ${msg(e)}`); }
   }
 
   return (

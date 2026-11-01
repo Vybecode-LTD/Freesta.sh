@@ -8,11 +8,13 @@ AUTH_MODE=accounts  open sign-up on this server; clients send `Authorization: Be
 from __future__ import annotations
 
 import ipaddress
+import logging
 from dataclasses import dataclass, field
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 from freestash.accounts import AccountError, AccountService, UserRow
 from freestash.config import Settings, get_settings
@@ -20,6 +22,8 @@ from freestash.mailer import send_email
 from freestash.ratelimit import RateLimiter
 
 LOCAL_USER_ID = "00000000-0000-0000-0000-000000000001"  # AUTH_MODE=none
+
+log = logging.getLogger("freestash.auth")
 
 limiter = RateLimiter()
 
@@ -157,11 +161,22 @@ def _ip(request: Request, settings: Settings) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def _call(fn, *args):
+async def _call(fn, *args):
+    """Run an account call in the thread pool: bcrypt takes ~250 ms, and on the event loop it would stall
+    every other request while it hashes."""
     try:
-        return fn(*args)
+        return await run_in_threadpool(fn, *args)
     except AccountError as exc:
         raise HTTPException(exc.status, exc.message) from exc
+
+
+async def _send_quietly(settings: Settings, to: str, subject: str, text: str) -> None:
+    """Background send for /forgot: a mailer failure must not show up in the response, or only real accounts
+    would see it. The log names the error type only, never the address or the link."""
+    try:
+        await send_email(settings, to, subject, text)
+    except Exception as exc:  # noqa: BLE001 - anything from the mail provider
+        log.error("Reset email failed (%s). Subject: %s", type(exc).__name__, subject)
 
 
 @router.post("/register", status_code=201)
@@ -169,7 +184,7 @@ async def register(body: RegisterIn, request: Request, settings: Settings = Depe
     _require_accounts(settings)
     _limit(f"register:{_ip(request, settings)}", 5, 3600)
     svc = accounts(request)
-    return _auth_response(svc, _call(svc.register, body.email, body.password, body.display_name))
+    return _auth_response(svc, await _call(svc.register, body.email, body.password, body.display_name))
 
 
 @router.post("/login")
@@ -178,7 +193,7 @@ async def login(body: LoginIn, request: Request, settings: Settings = Depends(ge
     _limit(f"login-ip:{_ip(request, settings)}", 30, 300)
     _limit(f"login:{_ip(request, settings)}:{body.email.strip().lower()}", 8, 300)
     svc = accounts(request)
-    return _auth_response(svc, _call(svc.authenticate, body.email, body.password))
+    return _auth_response(svc, await _call(svc.authenticate, body.email, body.password))
 
 
 @router.get("/me")
@@ -193,7 +208,7 @@ async def me(user: User, request: Request) -> dict:
 @router.patch("/me")
 async def update_me(body: ProfileIn, user: User, request: Request, settings: Settings = Depends(get_settings)) -> dict:
     _require_accounts(settings)
-    return user_out(accounts(request).update_profile(user.id, body.display_name))
+    return user_out(await _call(accounts(request).update_profile, user.id, body.display_name))
 
 
 @router.post("/change-password")
@@ -202,7 +217,7 @@ async def change_password(body: ChangePasswordIn, user: User, request: Request,
     _require_accounts(settings)
     _limit(f"change-password:{user.id}", 8, 300)
     svc = accounts(request)
-    return _auth_response(svc, _call(svc.change_password, user.id, body.current_password, body.new_password))
+    return _auth_response(svc, await _call(svc.change_password, user.id, body.current_password, body.new_password))
 
 
 @router.post("/logout-all", status_code=204)
@@ -213,8 +228,10 @@ async def logout_all(user: User, request: Request, settings: Settings = Depends(
 
 
 @router.post("/forgot")
-async def forgot(body: ForgotIn, request: Request, settings: Settings = Depends(get_settings)) -> dict:
-    """Always answers the same way, whether or not the email has an account (no account enumeration)."""
+async def forgot(body: ForgotIn, request: Request, background: BackgroundTasks,
+                 settings: Settings = Depends(get_settings)) -> dict:
+    """Always answers the same way and as fast, whether or not the email has an account (no account
+    enumeration): the email goes out in the background, after the response."""
     _require_accounts(settings)
     _limit(f"forgot-ip:{_ip(request, settings)}", 10, 3600)
     _limit(f"forgot:{body.email.strip().lower()}", 3, 3600)
@@ -222,10 +239,10 @@ async def forgot(body: ForgotIn, request: Request, settings: Settings = Depends(
     if started:
         user, token = started
         link = f"{settings.public_url.rstrip('/')}/#/reset?token={token}"
-        await send_email(settings, user.email, "Reset your Freesta.sh password",
-                         "Someone asked to reset the password for your Freesta.sh account.\n\n"
-                         f"Choose a new one here (the link works for one hour, once):\n{link}\n\n"
-                         "If that wasn't you, ignore this email; your password hasn't changed.")
+        background.add_task(_send_quietly, settings, user.email, "Reset your Freesta.sh password",
+                            "Someone asked to reset the password for your Freesta.sh account.\n\n"
+                            f"Choose a new one here (the link works for one hour, once):\n{link}\n\n"
+                            "If that wasn't you, ignore this email; your password hasn't changed.")
     return {"ok": True}
 
 
@@ -233,5 +250,5 @@ async def forgot(body: ForgotIn, request: Request, settings: Settings = Depends(
 async def reset(body: ResetIn, request: Request, settings: Settings = Depends(get_settings)) -> Response:
     _require_accounts(settings)
     _limit(f"reset:{_ip(request, settings)}", 10, 3600)
-    _call(accounts(request).finish_reset, body.token, body.new_password)
+    await _call(accounts(request).finish_reset, body.token, body.new_password)
     return Response(status_code=204)

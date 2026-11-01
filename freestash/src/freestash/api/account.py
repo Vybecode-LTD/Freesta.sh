@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from freestash.accounts import AccountError
-from freestash.api.auth import User, accounts
+from freestash.api.auth import User, _limit, accounts
 from freestash.config import Settings, get_settings
 from freestash.providers.keys import KEY_CATALOG, KEY_NAMES
 
@@ -59,7 +59,13 @@ async def openverse_register(body: OpenverseRegisterIn, user: User, request: Req
     anonymous limits. In accounts mode the pair is saved to the account; the response carries it either way
     (the desktop's local engine stores it on the machine).
     """
-    email = (body.email or user.email or "").strip()
+    hosted = not user.local and settings.auth_mode == "accounts"
+    if hosted:
+        # Sign-up is open, so a typed address can't be trusted: it would make Openverse mail anyone, on repeat.
+        _limit(f"openverse:{user.id}", 3, 3600)
+        email = (user.email or "").strip()
+    else:
+        email = (body.email or user.email or "").strip()
     if "@" not in email:
         raise HTTPException(400, "Enter the email address Openverse should send its verification link to.")
     payload = {"name": f"freesta.sh-{secrets.token_hex(4)}",
@@ -72,7 +78,7 @@ async def openverse_register(body: OpenverseRegisterIn, user: User, request: Req
     values = {"OPENVERSE_CLIENT_ID": data.get("client_id"), "OPENVERSE_CLIENT_SECRET": data.get("client_secret")}
     if not all(values.values()):
         raise HTTPException(502, "Openverse answered without credentials. Try again in a minute.")
-    if not user.local and settings.auth_mode == "accounts":
+    if hosted:
         _call(accounts(request).set_keys, user.id, values)
     return {"values": values, "email": email,
             "next": f"Click the verification link Openverse sent to {email}; until then searches use anonymous limits."}

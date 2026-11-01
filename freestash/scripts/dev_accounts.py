@@ -24,8 +24,11 @@ def prepare_environment(port: str, base: Path, environ: MutableMapping[str, str]
     base.mkdir(parents=True, exist_ok=True)
     secrets_file = base / "dev-secrets.json"
     if not secrets_file.exists():
-        secrets_file.write_text(json.dumps({"secret_key": secrets.token_urlsafe(48),
-                                            "secrets_key": Fernet.generate_key().decode()}), encoding="utf-8")
+        # 0600 from the start: the file holds the session-signing key and the key that decrypts saved provider keys
+        fd = os.open(secrets_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump({"secret_key": secrets.token_urlsafe(48), "secrets_key": Fernet.generate_key().decode()}, f)
+    os.chmod(secrets_file, 0o600)  # also tightens a file an older version created world-readable
     s = json.loads(secrets_file.read_text(encoding="utf-8"))
     environ.pop("DATABASE_URL", None)
     environ.update({

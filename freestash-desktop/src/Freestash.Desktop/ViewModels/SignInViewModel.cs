@@ -73,6 +73,11 @@ public sealed partial class SignInViewModel(AppServices services) : ViewModelBas
         catch (FreestashApiException ex) { Error = ex.Message; }
         catch (HttpRequestException) { Error = $"Can't reach {ServerHost}. Check your connection, or use a local engine in Settings."; }
         catch (TaskCanceledException) { Error = $"{ServerHost} took too long to answer. Try again."; }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
+        {
+            Error = $"{ServerHost} answered with something that isn't Freesta.sh. A Wi-Fi sign-in page can do this: open a browser, then try again.";
+        }
+        catch (Exception ex) { Error = $"Sign-in didn't finish: {ex.Message}"; } // never crash the sign-in screen
         finally { IsBusy = false; }
     }
 

@@ -242,6 +242,84 @@ def test_accounts_mode_refuses_to_start_without_a_signing_key(tmp_path):
         AccountService(Store(settings=s), s)
 
 
+def test_password_hashing_runs_off_the_event_loop(client, monkeypatch):
+    """bcrypt takes ~250 ms; run on the event loop it stalls every other request while it hashes."""
+    import asyncio
+
+    seen: list[bool] = []
+    real = AccountService.authenticate
+
+    def spy(self, email, password):
+        try:
+            asyncio.get_running_loop()
+            seen.append(False)
+        except RuntimeError:
+            seen.append(True)
+        return real(self, email, password)
+
+    signup(client)
+    monkeypatch.setattr(AccountService, "authenticate", spy)
+    assert client.post("/api/auth/login", json={"email": "ada@example.com", "password": PASSWORD}).status_code == 200
+    assert seen == [True]
+
+
+def test_forgot_answers_the_same_when_the_mailer_fails(client, monkeypatch):
+    """A Resend outage must not turn into a 500 that only real accounts get (that would reveal who has one)."""
+    signup(client)
+
+    async def broken(*_):
+        raise httpx.ConnectError("resend down")
+
+    monkeypatch.setattr("freestash.api.auth.send_email", broken)
+    r = client.post("/api/auth/forgot", json={"email": "ada@example.com"})
+    assert r.status_code == 200 and r.json() == {"ok": True}
+
+
+def test_rate_limiter_forgets_idle_keys():
+    """Keys carry client-chosen emails and IPs; without a sweep the table grows for ever."""
+    from freestash.ratelimit import RateLimiter
+
+    now = [0.0]
+    limiter = RateLimiter(clock=lambda: now[0])
+    for i in range(500):
+        limiter.allow(f"forgot:user{i}@example.com", 3, 3600)
+    now[0] = 3600 * 2
+    limiter.allow("login:203.0.113.7:ada@example.com", 8, 300)
+    assert len(limiter._hits) == 1
+
+
+def test_names_that_postgres_would_reject_are_refused_or_capped(client):
+    long = "x" * 121
+    r = client.post("/api/auth/register", json={"email": "ada@example.com", "password": PASSWORD, "display_name": long})
+    assert r.status_code == 400
+    ada = signup(client)
+    assert client.patch("/api/auth/me", headers=ada, json={"display_name": long}).status_code == 400
+
+    from sqlalchemy import select
+
+    from freestash.store import TeamRow
+
+    signup(client, email=f"{'a' * 250}@example.com")  # the team name falls back to the email's local part
+    svc = client.app.state.accounts
+    with svc.store.session() as s:
+        assert max(len(n) for n in s.scalars(select(TeamRow.name))) <= 200
+
+
+@respx.mock
+def test_openverse_register_mails_only_the_account_and_is_limited(client):
+    """Sign-up is open, so the email in the body can't be trusted: it would let anyone make Openverse mail
+    any address, as often as they like."""
+    ada = signup(client)
+    route = respx.post("https://api.openverse.org/v1/auth_tokens/register/").mock(return_value=httpx.Response(
+        201, json={"name": "x", "client_id": "ov-id-1234", "client_secret": "ov-secret-9876"}))
+    r = client.post("/api/keys/openverse/register", headers=ada, json={"email": "someone-else@example.org"})
+    assert r.status_code == 200
+    assert b"someone-else@example.org" not in route.calls.last.request.content
+    assert b"ada@example.com" in route.calls.last.request.content
+    codes = [client.post("/api/keys/openverse/register", headers=ada, json={}).status_code for _ in range(3)]
+    assert codes[-1] == 429
+
+
 @pytest.mark.parametrize("mode", ["supabase", "Accounts", "account"])
 def test_an_unknown_auth_mode_refuses_to_start(mode):
     """Every guard checks `!= "accounts"`, so a typo (or the retired "supabase") would serve everyone as one

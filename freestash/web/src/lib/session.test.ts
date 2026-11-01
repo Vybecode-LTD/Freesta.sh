@@ -33,4 +33,26 @@ describe("session", () => {
     expect(s.getSession()).toBeNull();
     vi.unstubAllGlobals();
   });
+
+  it("ignores a saved value that isn't a whole session (the shell would crash reading user)", async () => {
+    for (const bad of [{}, { token: "x" }, { token: "x", user: null }, { token: 7, user: {} }]) {
+      vi.resetModules();
+      localStorage.setItem("freestash.session", JSON.stringify(bad));
+      expect((await import("./session")).getSession()).toBeNull();
+    }
+  });
+
+  it("a late 401 for an old token doesn't sign out the session that replaced it", async () => {
+    const s = await import("./session");
+    const { api } = await import("./api");
+    s.setSession({ token: "old", user: { id: "u", email: null, display_name: null } });
+    let answer: (r: Response) => void = () => {};
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((resolve) => { answer = resolve; })));
+    const inFlight = api.collections(); // sent with the old token...
+    s.setSession({ token: "new", user: { id: "u", email: null, display_name: null } }); // ...then the password changed
+    answer(new Response(JSON.stringify({ detail: "revoked" }), { status: 401, headers: { "content-type": "application/json" } }));
+    await expect(inFlight).rejects.toThrow("revoked");
+    expect(s.getToken()).toBe("new");
+    vi.unstubAllGlobals();
+  });
 });

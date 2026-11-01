@@ -50,6 +50,7 @@ public sealed partial class KeyRowViewModel : ObservableObject
     public string StatusText => Removing ? "WILL BE REMOVED" : HasSaved ? (SavedHint is { } h ? $"SET · …{h}" : "SET") : Spec.Optional ? "OPTIONAL" : "NOT SET";
     public bool IsSet => HasSaved && !Removing;
     public bool IsMissing => !HasSaved && !Spec.Optional;
+    public bool ShowsOptional => Spec.Optional && !IsSet; // a saved optional key shows only its green SET badge
     public string Placeholder => SavedHint is { } h && Value.Length == 0 ? $"Saved key ending in {h}. Paste a new one to replace it." : $"Paste your {Spec.Label}";
 
     partial void OnValueChanged(string value) => Refresh();
@@ -59,7 +60,7 @@ public sealed partial class KeyRowViewModel : ObservableObject
 
     private void Refresh()
     {
-        foreach (var p in new[] { nameof(HasSaved), nameof(IsDirty), nameof(StatusText), nameof(IsSet), nameof(IsMissing), nameof(Placeholder) })
+        foreach (var p in new[] { nameof(HasSaved), nameof(IsDirty), nameof(StatusText), nameof(IsSet), nameof(IsMissing), nameof(ShowsOptional), nameof(Placeholder) })
             OnPropertyChanged(p);
     }
 
@@ -370,7 +371,10 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private async Task SignOutEverywhereAsync()
     {
-        try { await _services.Account.Current.SignOutEverywhereAsync(); } catch (Exception) { /* sign out here regardless */ }
+        // Sign out here only once the server confirms (same as the web): if the request failed, other devices are still signed in.
+        try { await _services.Account.Current.SignOutEverywhereAsync(); }
+        catch (FreestashApiException ex) when (ex.Status == 401) { /* the session was already gone */ }
+        catch (Exception ex) { _services.Toasts.Show($"Couldn't sign out everywhere: {ex.Message}"); return; }
         _services.SignOut();
     }
 

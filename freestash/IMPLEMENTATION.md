@@ -59,8 +59,8 @@ Owner steps left:
 3. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
    you can create an account on the site, and the desktop app (default server `https://freesta.sh`) signs into it.
 
-Before 2026-12-01: Railway retires config-as-code (`railway.json`). The service's settings above are set on the
-service itself, so nothing breaks; delete `railway.json` or move to `.railway/railway.ts` (read the playbook's IaC
+Before 2026-12-01: Railway retires config-as-code (`railway.json`); it already refuses a config-file path on new
+services. That's why the healthcheck, restart policy and watch path are set on the service itself, so nothing breaks; delete `railway.json` or move to `.railway/railway.ts` (read the playbook's IaC
 warning first: a whole-project file deletes whatever it omits). Add Alembic before the first change to an existing table.
 ## P3 — CLI/MCP remote mode (team ledger from the terminal)
 

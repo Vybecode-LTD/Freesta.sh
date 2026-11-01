@@ -7,10 +7,17 @@ export interface Session { token: string; user: SessionUser }
 const KEY = "freestash.session";
 const listeners = new Set<() => void>();
 
+/** Only a whole session counts: a stored `{}` or `{"token":"x"}` would let the shell render and then crash on `user`. */
+function isSession(v: unknown): v is Session {
+  const s = v as Session | null;
+  return !!s && typeof s.token === "string" && !!s.token && typeof s.user === "object" && s.user !== null;
+}
+
 function read(): Session | null {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as Session) : null;
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return isSession(parsed) ? parsed : null;
   } catch {
     return null;
   }

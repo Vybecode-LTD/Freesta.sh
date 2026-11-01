@@ -19,14 +19,21 @@ function headers(extra?: HeadersInit): Headers {
   return h;
 }
 
+/** A 401 signs out only the session that made the request: a late answer for an old token (sent just before a
+ *  password change) must not sign out the session that replaced it. */
+function signOutIfStill(sentWith: string | null): void {
+  if (sentWith && getToken() === sentWith) setSession(null);
+}
+
 async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const sentWith = getToken();
   const h = headers(init.headers);
   if (init.body && !h.has("Content-Type")) h.set("Content-Type", "application/json");
   const res = await fetch(`${BASE}${path}`, { ...init, headers: h });
   if (!res.ok) {
     let detail: unknown = res.statusText;
     try { detail = (await res.json()).detail; } catch { /* not JSON */ }
-    if (res.status === 401 && getToken()) setSession(null); // expired or revoked: back to sign-in
+    if (res.status === 401) signOutIfStill(sentWith); // expired or revoked: back to sign-in
     throw new ApiError(res.status, detail);
   }
   if (res.status === 204) return undefined as T;
@@ -47,8 +54,9 @@ export async function searchStream(p: SearchParams, onBatch: (b: StreamBatch) =>
   const qs = new URLSearchParams({ q: p.q, use: p.use, max_tier: p.maxTier, limit: String(p.limit ?? 12), page: String(p.page ?? 1) });
   p.media.forEach((m) => qs.append("media", m));
   p.providers?.forEach((x) => qs.append("providers", x));
+  const sentWith = getToken();
   const res = await fetch(`${BASE}/api/search/stream?${qs}`, { headers: headers({ Accept: "text/event-stream" }), signal });
-  if (res.status === 401 && getToken()) setSession(null);
+  if (res.status === 401) signOutIfStill(sentWith);
   if (!res.ok || !res.body) throw new ApiError(res.status, await res.text());
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
   let buf = "";

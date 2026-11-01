@@ -43,6 +43,7 @@ React: `lib/session.ts` (token in localStorage, `signIn`, `signUp`, `signOut`, `
 pages `SignInPage`, `SettingsPage`; `api.keys/saveKeys/revealKey/keyCatalog/prefs/savePrefs`.
 
 ## 3. Data (SQLAlchemy `create_all`, SQLite locally, Railway Postgres in production)
+
 | Table | Column | Type | Null | Default / FK / index |
 |---|---|---|---|---|
 | users | id | uuid | no | pk |
@@ -55,6 +56,7 @@ pages `SignInPage`, `SettingsPage`; `api.keys/saveKeys/revealKey/keyCatalog/pref
 | user_secrets | ciphertext / hint / updated_at | text / varchar(8) / timestamptz | no | Fernet; last 4 chars |
 | user_prefs | user_id / data / updated_at | uuid / json / timestamptz | no | pk fk users cascade |
 | password_resets | token_hash / user_id / expires_at / used_at | varchar(64) / uuid / timestamptz / timestamptz | used_at yes | pk sha256(token) |
+
 Every user gets a personal team on register (`teams` + `team_members` role owner), so existing
 collection/ledger scoping is unchanged. No RLS: the database is reached only through the API.
 
