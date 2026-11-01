@@ -7,13 +7,16 @@ the website at **freesta.sh** and a Windows desktop app, on **one account**. Git
 Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner, 2026-10-31).
 
 ## Current State
-- `main` holds PR #1 (accounts, synced keys + prefs, key help, the Aperture redesign on both apps, parity gates) and
-  PR #2 (the path-traversal hotfix, live and verified 2026-11-01). PR #3 (ledger paging, CSP, SMTP reset email) is
-  open: `docs/HANDOFF.md`. Decisions: `docs/decisions/0002` (Spacemail SMTP, CSP then cookie, no Cloudflare).
+- `main` holds PRs #1–#3, all live and verified 2026-11-01:
+  - #1: accounts, synced keys + prefs, key help, the Aperture redesign on both apps, parity gates;
+  - #2: the path-traversal hotfix;
+  - #3: ledger paging, the CSP, SMTP reset email.
+  No PRs are open; the next is #4. `docs/HANDOFF.md`. Decisions: `docs/decisions/0002` (Spacemail SMTP, CSP then
+  cookie, no Cloudflare).
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
   valid 2026-11-01) and https://freestash-production.up.railway.app, building from `main`. IDs and steps:
   `freestash/IMPLEMENTATION.md` → P2.
-- Gates 2026-11-01 (PR #3, `main` merged in): pytest 121 · ruff clean · vitest 15 · dotnet 33 · 0 warnings. Rendered-contrast 11 runs /
+- Gates 2026-11-01 (`main` at PR #3): pytest 121 · ruff clean · vitest 15 · dotnet 33 · 0 warnings. Rendered-contrast 11 runs /
   136 states / 0 failing (2026-10-31; not re-run: the one new control reuses `.btn`).
 
 ## The parity rule (binding)

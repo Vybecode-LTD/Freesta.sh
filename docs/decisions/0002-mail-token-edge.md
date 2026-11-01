@@ -10,7 +10,7 @@ Date: 2026-11-01 · Decided by: the owner (answers in session) · Status: accept
 | Extras | **Google sign-in on both apps; `www.freesta.sh` redirects to the root** | A contact email in the User-Agent: not set for now |
 
 Consequences:
-- **Railway allows outbound SMTP only on the Pro plan and above** (docs.railway.com → Outbound Networking → Email
+- **Railway allows outbound SMTP only on the Pro plan and above** (the owner is on Pro, confirmed 2026-11-01) (docs.railway.com → Outbound Networking → Email
   delivery). On Free, Trial or Hobby the sender can't connect, and reset email still doesn't work.
 - The owner creates the mailbox (e.g. `hello@freesta.sh`) and its DNS records (MX, SPF, DKIM) at Spaceship. Then
   the owner sets `FREESTASH_SMTP_USERNAME` and pipes `FREESTASH_SMTP_PASSWORD` in through `railway variable set --stdin`.

@@ -1,44 +1,48 @@
 # Handoff — Freesta.sh (2026-11-01, second session)
 
 ## State
-- `main` = the merge of **PR #2** (3ac162b, on the owner's OK). Railway builds `main`.
-- **PR #2 (critical hotfix), merged and live:** the SPA catch-all served any file the server could read
-  (`GET /..%2f..%2fpyproject.toml`). Found and confirmed on production with a harmless file only. After the deploy,
-  traversal and `%00` paths get the page on both hosts. It also carries two review fixes: the route runs in the
-  threadpool, and a NUL path no longer 500s on Linux.
-- **PR #3, `feat/pr2-followups`:** ledger paging on both apps, a strict CSP, reset email over Spacemail SMTP, and
-  decision 0002. `main` is merged into it. Not merged yet.
-- **https://freesta.sh is live:** the certificate is valid, and `/api/health` reports `auth_mode: accounts`. The domain
-  was re-created in Railway during the session, and its CNAME target is now `cgl6fdva.up.railway.app`
-  (`freestash/IMPLEMENTATION.md` → P2).
+- `main` = the merge of **PR #3** (bfdae9b). PRs #1–#3 are merged (#2 and #3 on the owner's OK), and **all are
+  live**. No PRs are open; the next is #4. Railway builds `main`.
+- Verified on production after the deploys:
+  - https://freesta.sh: the certificate is valid and health reports `auth_mode: accounts`.
+  - Traversal and `%00` paths get the page on both hosts.
+  - The CSP header is served, and in a browser the page shows no violations while an injected script is blocked.
+- Every review thread on PR #1 is resolved.
+- **Railway is on Pro** (the owner, 2026-11-01), so outbound SMTP is allowed. Reset email still waits on the
+  mailbox and its variables (Next 1).
+- **Desktop builds:**
+  - CI publishes a self-contained single-file exe on every push to `main` (artifact `freestash-desktop-win-x64`).
+  - There's a local Release build of `main` at `freestash-desktop/publish/Freestash.exe` (unsigned, ignored by git).
+  - There's no installer, no signing and no GitHub Release yet.
+- This checkout is on `feat/pr4-followups`: these docs, committed locally and not pushed. Fold them into PR #4.
 
 ## Done this session
 - Owner decisions (`docs/decisions/0002`): Spacemail SMTP instead of Resend; a CSP now, then an HttpOnly cookie;
-  no Cloudflare. Google sign-in and `www.freesta.sh` are on the list. No contact email.
-- **Ledger paging:** `GET /api/ledger` takes a keyset cursor (`before`) and `files=true`, and `limit` is capped
-  at 500. Web Downloads and Ledger, and the desktop Ledger, load 100 at a time with "Load more". Checked in a
-  browser with 140 entries: 100, then Load more, then 140, and Downloads 100 → 105.
-- **CSP** (`api/csp.py`): scripts come only from the site, plus the theme script by hash. Checked in a browser:
-  no violations on any page, and an injected script is blocked (the positive control). Provider thumbnails, font
-  previews and https audio all load.
-- **SMTP mailer** (`mailer.py`): `mail.spacemail.com:465` with implicit TLS. Logs carry no address and no link.
-- **Path traversal:** found, and confirmed on production. Fixed in PR #2 with a regression test, merged, and
-  verified live.
-- PR #1's three review threads are answered, but still unresolved: resolving them needs the owner (the permission
-  check blocked it).
+  no Cloudflare. Google sign-in and `www.freesta.sh` are on the list.
+- **PR #2:** found and fixed a path traversal that read the server's files, then two review fixes (the threadpool,
+  and NUL paths on Linux).
+- **PR #3:**
+  - ledger paging on both apps (a keyset cursor, Load more);
+  - a strict CSP (`api/csp.py`);
+  - the SMTP mailer (`mailer.py`, `mail.spacemail.com:465`).
+- Gates: pytest 121 · ruff · export check · vitest 15 · web build · dotnet 33 · 0 warnings.
 
 ## Next
-1. Review and merge PR #3 (owner).
-2. Owner: put Railway on **Pro** (outbound SMTP is blocked below it). Create the Spacemail mailbox and its DNS records.
-   Set `FREESTASH_SMTP_USERNAME`, then pipe in `FREESTASH_SMTP_PASSWORD` with `--stdin`. Then test a real reset.
-3. Owner: sign up on https://freesta.sh and sign the desktop app in.
-4. HttpOnly cookie for the web (decision 0002; the desktop keeps bearer). `www.freesta.sh`: the owner adds the
-   CNAME, then a Railway domain and a redirect to the root. Google sign-in on both apps (Seeq'r's PKCE).
-5. Live on-screen check of the desktop build (computer-use; ask first). Retire `railway.json` before 2026-12-01.
+1. Owner: create the Spacemail mailbox (e.g. `hello@freesta.sh`) and let Spaceship add its DNS. Then:
+   - `railway variable set FREESTASH_SMTP_USERNAME=hello@freesta.sh`;
+   - `railway variable set FREESTASH_SMTP_PASSWORD --stdin`.
+
+   After that, request a reset for the owner's own account and confirm the email arrives (check spam, SPF and DKIM).
+2. Owner: sign up on https://freesta.sh, run `freestash-desktop/publish/Freestash.exe` (default server
+   freesta.sh), and sign in.
+3. PR #4: the HttpOnly cookie for the web (decision 0002; the desktop keeps bearer, and CSRF protection is needed).
+4. `www.freesta.sh`: the owner adds the CNAME; then a Railway domain and a redirect to the root. Then Google sign-in
+   on both apps (Seeq'r's PKCE).
+5. Live on-screen check of the desktop app (computer-use; ask first). An installer, signing and releases
+   (`SOFTWARE_RELEASE.md`). Retire `railway.json` before 2026-12-01.
 
 ## Warnings
-- Until step 2, **password reset doesn't work on production**.
 - Back up `FREESTASH_SECRETS_KEY` (Railway → Variables) in a password manager.
-- The desktop "Load more" is built and its paging logic is tested, but it hasn't been rendered or seen on screen yet.
+- The desktop "Load more" hasn't been seen on screen yet. The rendered-contrast gate wasn't re-run for it (it reuses `.btn`).
 - The rate limiter is in-process: one replica only. Pexels has paused new API keys.
 - The local dev database (`%LOCALAPPDATA%\Freestash\dev`) holds a throwaway test account with 140 ledger entries.

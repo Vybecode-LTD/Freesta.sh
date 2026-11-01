@@ -53,7 +53,7 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
 Owner steps left:
 1. Reset email (decision 0002), **without which password reset doesn't work** (no email goes out; links are never
    logged, since log access would be account takeover):
-   - Railway must be on the **Pro plan**: outbound SMTP is blocked on Free, Trial and Hobby.
+   - Railway must be on the **Pro plan** (outbound SMTP is blocked below it). It is: the owner confirmed it on 2026-11-01.
    - Create the Spacemail mailbox (e.g. `hello@freesta.sh`) and let Spaceship add its MX, SPF and DKIM records.
    - Set `FREESTASH_SMTP_USERNAME` (the full address) and pipe the password in:
      `railway variable set FREESTASH_SMTP_PASSWORD --stdin`. Set `FREESTASH_EMAIL_FROM` if the mailbox isn't `hello@`.
