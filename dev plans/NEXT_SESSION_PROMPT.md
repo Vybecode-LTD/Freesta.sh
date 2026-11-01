@@ -1,47 +1,71 @@
 # Next session — Freesta.sh
 
 ## 1. What and where
-Freesta.sh: open-media search with per-use clearance. One product, two apps on one account: website
-(`freestash/`: Python engine + FastAPI + React, deploys to Railway with Railway Postgres) and Windows desktop
-(`freestash-desktop/`: Avalonia 12). Monorepo at `C:\DEV\Freesta.sh`, GitHub `Vybecode-LTD/Freesta.sh`. Read
-`CLAUDE.md` (root) first, then `docs/HANDOFF.md`.
+Freesta.sh: open-media search with per-use clearance. One product, two apps on one account: the website
+(`freestash/`: Python engine, FastAPI and React, **live on Railway**) and the Windows desktop app
+(`freestash-desktop/`, Avalonia 12). Monorepo at `C:\DEV\Freesta.sh`, GitHub `Vybecode-LTD/Freesta.sh`.
+Read the root `CLAUDE.md`, then `docs/HANDOFF.md`.
 
 ## 2. Rules that override defaults
-- **Parity is binding:** every user-facing change lands in both apps in one PR, with its `shared/parity.json` row.
-  Colours only via `shared/design-tokens.json`, key help only via `freestash/src/freestash/providers/keys.py`, then
-  `python scripts/export_shared.py`. Never hand-edit `tokens.css` or `DesignTokens.g.cs`.
-- **No Supabase.** Never print Railway variables. Never store or log a provider key in plaintext.
-- Owner's OK needed for: merging, deploying, DNS, anything sent to providers, dropping a parity feature.
+- **Parity is binding** (root `CLAUDE.md`): every user-facing change lands in both apps in one PR, with its
+  `shared/parity.json` row.
+- **No Supabase.** Never list or print Railway variables (the playbook's secrets rule). Set a secret only through
+  `railway variable set KEY --stdin`, from a value generated in the shell.
+- Owner's OK is needed for:
+  - merging PR #1, and switching the Railway branch to `main`;
+  - DNS, and anything sent to providers;
+  - creating accounts on production (smoke tests use made-up emails and create nothing);
+  - computer-use.
 
-## 3. State (verified 2026-10-31, end of session)
-- `main` = baseline 95f3cc9. Branch `feat/accounts-sync-aperture` holds all the work (see `git log main..`).
-- Pushed? Check `git ls-remote origin`; at session end the GitHub repo was empty unless the owner said "push" in the
-  closing turn. Open PRs: none unless pushed (first PR number is #1).
-- Not deployed. Gates: pytest 99, ruff clean, vitest 6, dotnet 27 / 0 warnings, contrast gate 0 failing.
+## 3. State (verified 2026-11-01, end of session)
+- `main` = 95f3cc9 (baseline). **PR #1** https://github.com/Vybecode-LTD/Freesta.sh/pull/1 is open, head is the
+  review-fix commit on `feat/accounts-sync-aperture`. Auto-fix is on. Check CI with the ccd_pr tools; don't poll.
+- Railway project **Freesta.sh** (`ba994460-f01e-4a4d-9e83-994f352b6634`): service `freestash` and Postgres.
+  It deploys from the **PR branch**. Live at https://freestash-production.up.railway.app, health reports
+  `auth_mode: accounts`.
+- Live smoke test: search returns 401 without a session; the CF-Connecting-IP forgery fix was re-probed (429).
+  IDs and owner steps: `freestash/IMPLEMENTATION.md` → P2.
+- **freesta.sh doesn't resolve to Railway yet.** The domain is added in Railway; the owner sets DNS at Spaceship.
+  Check with the Railway MCP `domain-status`.
 
 ## 4. First job, then the order
-1. If pushed: open/read PR #1, fix CI with batched pushes. If not: ask the owner to push.
-2. Walk the owner through Railway (`freestash/IMPLEMENTATION.md` → P2); smoke-test `https://freesta.sh/api/health`,
-   sign-up, a search, and the desktop signing into the live site.
-3. Live on-screen check of the desktop build (computer-use; ask first, it was declined last time).
-4. Then: Google sign-in on both apps (copy Seeq'r: `C:\DEV\Seeqr\backend\app\routers\auth.py` `/auth/google`).
+1. Read PR #1's CI (`mcp__ccd_pr__get_status`). Fix any red with one batched push.
+2. If the owner has set DNS, check `domain-status` and then `https://freesta.sh/api/health`. Ask the owner to sign
+   up on the site and sign the desktop app into it.
+3. When the owner says "merge": merge PR #1, then switch the Railway source branch to `main`
+   (`connect-service-source`), and check the new deployment builds from `main`.
+4. Live on-screen check of the desktop build (computer-use; ask first, it was declined before).
+5. Then: Google sign-in on both apps (Seeq'r: `C:\DEV\Seeqr\backend\app\routers\auth.py` `/auth/google`).
+6. Before 2026-12-01: retire `freestash/railway.json` (config-as-code). The service's own settings already hold
+   everything it sets.
 
 ## 5. Open owner decisions (ask, don't decide)
-- Push and open PR #1 now? · Resend for reset email (needs the freesta.sh domain verified)? · Google sign-in?
-- Should the desktop Collections layout match the web's drill-down exactly, or keep list + detail?
+- Merge PR #1 now?
+- Resend for reset email (needs the freesta.sh domain verified there)?
+- `FREESTASH_CONTACT_EMAIL` address?
+- Google sign-in?
+- Put Cloudflare in front? If yes, set `FREESTASH_TRUST_CF_CONNECTING_IP=true`.
 
 ## 6. Environment that worked
-- `cd freestash; .\.venv\Scripts\python.exe -m pytest` (venv exists). Accounts server: `python scripts/dev_accounts.py --port 8790`.
-- NuGet: if restore says a version "can't be found", `dotnet nuget locals http-cache --clear` (stale cache, hit this session).
-- Desktop against local server: env `FREESTASH_DESKTOP_HOME` + settings `RemoteUrl`. Headless renders + sync proof:
-  `dotnet run --project tools/Freestash.Desktop.Snapshots -- http://127.0.0.1:8791 <out> http://127.0.0.1:8790`.
-- Contrast gate: `node C:\DEV\knowledge\skills\verify-real-pass\scripts\rendered_contrast.mjs <url> --click-each "<sel>"`.
+- `cd freestash; .\.venv\Scripts\python.exe -m pytest` (the venv exists). Web: `cd freestash/web; npm test`.
+  Desktop: `dotnet test --project tests/Freestash.Client.Tests`.
+- Railway: the MCP connector, plus the CLI 5.63.1 (browser login, user Vybecode LTD).
+- GitHub: `gh` as color8. Push large branches with `git -c http.postBuffer=524288000 push`: the first push hung up.
+- Traps:
+  - The Bash tool collapses `\\` in commands, so write backslashes with `chr(92)` in Python.
+  - Python `write_text` on Windows writes CRLF; pass `newline="\n"`.
 
 ## 7. Evidence and IDs
-Decisions `docs/decisions/0001` (next 0002). Contract `dev plans/contracts/accounts-sync.md`. Renders `dev plans/renders/`.
+- Decisions: `docs/decisions/0001` (the next one is 0002).
+- Contract: `dev plans/contracts/accounts-sync.md`.
+- Renders: `dev plans/renders/`.
+- The next PR number is #2.
 
 ## 8. Promotion candidates (owner approves)
-- Railway edge: rate limits must key on CF-Connecting-IP/XFF (already in the playbook; this project hit it at design time).
-- NuGet stale http-cache gives false "package not found" (NU1102) → `dotnet nuget locals http-cache --clear`.
+- **Fix the railway-deploy-playbook's client-IP lesson.** It says to resolve CF-Connecting-IP first. That is only
+  safe when Cloudflare fronts the domain; otherwise the client forges it, and that bypassed the login limit on
+  production here. Resolve the leftmost XFF instead (the edge overwrites it; proven) and gate CF behind a setting.
+- Spaceship DNS: a CNAME on `@` acts as an ALIAS, so a root domain can point at Railway without Cloudflare.
+- NuGet NU1102 "package not found" can be a stale HTTP cache: `dotnet nuget locals http-cache --clear`.
 - axe "too short to determine" fails single-digit counters; a two-digit readout passes.
-- Web/desktop parity pattern: one token JSON → CSS + C# generator, one key catalog → API + embedded JSON, parity map test.
+- The web/desktop parity pattern: one token JSON → CSS + C#, one key catalogue → API + embedded JSON, a parity map test.

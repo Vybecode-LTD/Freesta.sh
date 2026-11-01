@@ -95,16 +95,40 @@ public class AccountTests : IDisposable
         var store = new SessionStore(new SecretStore(_dir));
         var changed = 0;
         store.Changed += () => changed++;
-        store.Set(new Session("jwt-xyz", new SessionUser("u1", "ada@example.com", "Ada", null)));
+        store.Set(new Session("jwt-xyz", new SessionUser("u1", "ada@example.com", "Ada", null), "https://freesta.sh"));
 
         Assert.DoesNotContain("jwt-xyz", Encoding.UTF8.GetString(File.ReadAllBytes(Path.Combine(_dir, "secrets.bin"))));
         var again = new SessionStore(new SecretStore(_dir));
-        Assert.Equal("jwt-xyz", again.Token);
+        Assert.Equal("jwt-xyz", again.TokenFor(Hosted));
         Assert.Equal("Ada", again.Current!.User.DisplayName);
 
         again.Set(null);
-        Assert.False(new SessionStore(new SecretStore(_dir)).IsSignedIn);
+        Assert.Null(new SessionStore(new SecretStore(_dir)).Current);
         Assert.Equal(1, changed);
+    }
+
+    private static readonly Uri Hosted = new("https://freesta.sh");
+
+    [Fact]
+    public async Task A_session_remembers_the_server_that_issued_it()
+    {
+        var server = new FakeServer { Respond = _ => (HttpStatusCode.OK, """{"access_token":"jwt-1","token_type":"bearer","user":{"id":"u1","email":"a@b.co","display_name":null,"created_at":null}}""") };
+        using var client = new AccountClient(new Uri("https://Freesta.sh/"), () => null, server);
+
+        Assert.Equal("https://freesta.sh", (await client.LoginAsync("a@b.co", "pw", Ct)).Server);
+    }
+
+    [Fact]
+    public void The_token_is_only_ever_handed_to_the_server_that_issued_it()
+    {
+        var store = new SessionStore(new SecretStore(_dir));
+        store.Set(new Session("freesta-jwt", new SessionUser("u1", "a@b.co", null, null), "https://freesta.sh"));
+
+        Assert.Equal("freesta-jwt", store.TokenFor(new Uri("https://FREESTA.sh/api/")));
+        Assert.Null(store.TokenFor(new Uri("https://other-server.example"))); // pointing the app elsewhere doesn't leak it
+        Assert.Null(store.TokenFor(new Uri("http://freesta.sh")));            // nor over plain http
+        store.Set(new Session("legacy", new SessionUser("u1", "a@b.co", null, null))); // no issuer recorded
+        Assert.Null(store.TokenFor(Hosted));
     }
 
     [Fact]

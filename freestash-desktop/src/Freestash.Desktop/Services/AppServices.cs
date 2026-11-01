@@ -46,12 +46,12 @@ public sealed class AppServices : IAsyncDisposable
     public bool UsesAccounts => Settings.Mode == ConnectionMode.Remote;
 
     /// <summary>True when the app has to show the sign-in screen before anything else.</summary>
-    public bool NeedsSignIn => UsesAccounts && !Session.IsSignedIn;
+    public bool NeedsSignIn => UsesAccounts && Session.CurrentFor(Settings.ApiBaseUri) is null;
 
     public async Task StartAsync()
     {
         await Engine.EnsureRunningAsync();
-        if (UsesAccounts && Session.IsSignedIn) await RefreshAccountAsync();
+        if (UsesAccounts && Session.CurrentFor(Settings.ApiBaseUri) is not null) await RefreshAccountAsync();
     }
 
     /// <summary>On launch and after sign-in: re-check the session (a 401 signs out) and pull the account's preferences.</summary>
@@ -146,7 +146,7 @@ public sealed class ApiHolder(Func<AppSettings> settings, SessionStore session) 
             if (_client is null || _builtFor != uri)
             {
                 _client?.Dispose();
-                _client = new FreestashApiClient(uri, () => settings().Mode == ConnectionMode.Remote ? session.Token : null);
+                _client = new FreestashApiClient(uri, () => settings().Mode == ConnectionMode.Remote ? session.TokenFor(uri) : null);
                 _builtFor = uri;
             }
             return _client;
@@ -175,8 +175,8 @@ public sealed class AccountHolder(Func<AppSettings> settings, SessionStore sessi
             if (_client is null || _builtFor != uri)
             {
                 _client?.Dispose();
-                _client = new AccountClient(uri, () => session.Token, Handler);
-                _client.SessionExpired += () => session.Set(null);
+                _client = new AccountClient(uri, () => session.TokenFor(uri), Handler);
+                _client.SessionExpired += () => { if (session.CurrentFor(uri) is not null) session.Set(null); };
                 _builtFor = uri;
             }
             return _client;

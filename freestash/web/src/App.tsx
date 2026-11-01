@@ -3,6 +3,7 @@ import { useToast } from "./components/bits";
 import { Icon, type IconName } from "./components/Icon";
 import { api } from "./lib/api";
 import { PrefsProvider } from "./lib/prefs";
+import { showsSignIn } from "./lib/gate";
 import { useSession } from "./lib/session";
 import { CollectionsPage, DownloadsPage, LedgerPage, LicenseCheckPage, SourcesPage } from "./pages/OtherPages";
 import { SearchPage } from "./pages/SearchPage";
@@ -31,9 +32,15 @@ function routeFromHash(): Route {
 export default function App() {
   const [health, setHealth] = useState<{ auth_mode: "none" | "accounts"; signup_open: boolean } | null>(null);
   const [offline, setOffline] = useState(false);
+  const [hash, setHash] = useState(window.location.hash);
   const session = useSession();
 
   useEffect(() => { api.health().then(setHealth).catch(() => setOffline(true)); }, []);
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   if (offline) return <div className="boot"><strong>Can't reach the Freesta.sh server.</strong><span className="muted">Check your connection and reload.</span></div>;
   if (!health) return <div className="boot" aria-busy="true" />;
@@ -41,7 +48,7 @@ export default function App() {
   const accountMode = health.auth_mode === "accounts";
   return (
     <PrefsProvider accountMode={accountMode} signedIn={!!session}>
-      {accountMode && !session ? <SignInPage signupOpen={health.signup_open} /> : <Shell accountMode={accountMode} />}
+      {showsSignIn(accountMode, !!session, hash) ? <SignInPage signupOpen={health.signup_open} /> : <Shell accountMode={accountMode} />}
     </PrefsProvider>
   );
 }

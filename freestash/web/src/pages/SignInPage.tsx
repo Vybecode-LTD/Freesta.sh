@@ -36,6 +36,7 @@ export function SignInPage({ signupOpen }: { signupOpen: boolean }) {
       else if (mode === "forgot") { await api.forgot(email); setNote("If that email has an account, a reset link is on its way. It works once, for an hour."); }
       else {
         await api.reset(resetToken() ?? "", password);
+        setSession(null); // the reset revoked every old session, this browser's included
         history.replaceState(null, "", "#/search");
         setMode("signin"); setPassword(""); setNote("Password changed. Sign in with the new one.");
       }

@@ -5,7 +5,8 @@ public sealed record SessionUser(string Id, string? Email, string? DisplayName, 
 
 public sealed record AuthResponse(string AccessToken, SessionUser User);
 
-public sealed record Session(string Token, SessionUser User);
+/// <summary>A signed-in account. <paramref name="Server"/> is the origin that issued the token: it is never sent anywhere else.</summary>
+public sealed record Session(string Token, SessionUser User, string? Server = null);
 
 /// <summary>Mirrors freestash.providers.keys.KeySpec: where to get one provider credential, step by step.</summary>
 public sealed record KeySpec(

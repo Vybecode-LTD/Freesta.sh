@@ -61,7 +61,7 @@ public sealed class AccountClient : IDisposable
     public Task<OpenverseRegistration> RegisterOpenverseAsync(string? email, CancellationToken ct = default) =>
         Send<OpenverseRegistration>(HttpMethod.Post, "/api/keys/openverse/register", new { email }, ct);
 
-    private static Session ToSession(AuthResponse r) => new(r.AccessToken, r.User);
+    private Session ToSession(AuthResponse r) => new(r.AccessToken, r.User, SessionStore.Origin(_http.BaseAddress!));
 
     private async Task<T> Send<T>(HttpMethod method, string path, object? body, CancellationToken ct, bool auth = true)
     {

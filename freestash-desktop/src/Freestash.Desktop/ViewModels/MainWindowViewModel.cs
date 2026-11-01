@@ -125,7 +125,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private void UpdateAccount()
     {
         NeedsSignIn = _services.NeedsSignIn;
-        var user = _services.Session.Current?.User;
+        var user = _services.Session.CurrentFor(_services.Settings.ApiBaseUri)?.User;
         AccountName = user?.DisplayName ?? user?.Email?.Split('@')[0] ?? "This computer";
         AccountSub = _services.UsesAccounts ? "synced · web + desktop" : "local engine";
     }

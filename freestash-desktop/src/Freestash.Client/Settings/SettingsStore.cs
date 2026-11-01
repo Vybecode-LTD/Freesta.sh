@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace Freestash.Client.Settings;
@@ -32,13 +33,26 @@ public sealed class SettingsStore(string directory)
         Converters = { new JsonStringEnumConverter() },
     };
 
+    /// <summary>Enum values renamed by the Aperture redesign. Without this, a file from an older build fails to parse
+    /// and every setting (connection, download folder) falls back to the defaults.</summary>
+    private static readonly Dictionary<string, Dictionary<string, string>> Renamed = new()
+    {
+        [nameof(AppSettings.Theme)] = new() { ["EmberDark"] = nameof(AppTheme.Glass), ["MachinedLight"] = nameof(AppTheme.Frost) },
+        [nameof(AppSettings.Accent)] = new() { ["Ember"] = nameof(AccentColor.Sodium) },
+    };
+
     public string FilePath => Path.Combine(directory, "settings.json");
 
     public AppSettings Load()
     {
+        if (!File.Exists(FilePath)) return new();
         try
         {
-            return File.Exists(FilePath) ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath), Json) ?? new() : new();
+            if (JsonNode.Parse(File.ReadAllText(FilePath)) is not JsonObject json) return new();
+            foreach (var (key, names) in Renamed)
+                if (json[key] is JsonValue v && v.TryGetValue<string>(out var old) && names.TryGetValue(old, out var now))
+                    json[key] = now;
+            return json.Deserialize<AppSettings>(Json) ?? new();
         }
         catch (JsonException)
         {

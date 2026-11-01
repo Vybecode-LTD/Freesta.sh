@@ -190,7 +190,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     private void RefreshAccount()
     {
-        var s = _services.Session.Current;
+        var s = _services.Session.CurrentFor(_services.Settings.ApiBaseUri);
         IsSignedIn = s is not null;
         AccountEmail = s?.User.Email ?? "";
         AccountName = s?.User.DisplayName ?? s?.User.Email?.Split('@')[0] ?? "";
@@ -303,8 +303,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
             }
             else
             {
-                foreach (var k in Keys) { _services.Secrets.Set(k.Name, k.Removing ? null : k.Value); k.LoadLocal(_services.Secrets.Get(k.Name)); }
-                _services.Secrets.Save();
+                LocalKeyWrites.Apply(_services.Secrets, rowsFromAccount: KeysInAccount, Keys.Select(k => new KeyEdit(k.Name, k.Value, k.IsDirty, k.Removing)));
+                foreach (var k in Keys) k.LoadLocal(_services.Secrets.Get(k.Name));
             }
             _services.SaveSettings(s);
             _services.Theme.Apply(s.Theme, s.Accent);

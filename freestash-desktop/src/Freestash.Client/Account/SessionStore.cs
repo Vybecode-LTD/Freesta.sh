@@ -24,9 +24,13 @@ public sealed class SessionStore(SecretStore secrets)
         }
     }
 
-    public string? Token => Current?.Token;
+    /// <summary>The session, but only for the server that issued it: pointing the app elsewhere never leaks the token.</summary>
+    public Session? CurrentFor(Uri server) => Current is { } s && s.Server == Origin(server) ? s : null;
 
-    public bool IsSignedIn => Current is not null;
+    public string? TokenFor(Uri server) => CurrentFor(server)?.Token;
+
+    /// <summary>scheme://host[:port], lower-case: the part of a URL that decides who receives a request.</summary>
+    public static string Origin(Uri server) => server.GetLeftPart(UriPartial.Authority).ToLowerInvariant();
 
     public void Set(Session? session)
     {
