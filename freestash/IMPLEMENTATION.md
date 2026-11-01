@@ -50,10 +50,15 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
   Re-adding the domain in Railway issues a new target: update that record if it ever happens again.
 
 Owner steps left:
-1. Optional variables: `FREESTASH_CONTACT_EMAIL` (sent to providers in the User-Agent), `RESEND_API_KEY` +
-   `FREESTASH_EMAIL_FROM` for reset email. **Without it password reset doesn't work**: no email goes out, and links
-   are never written to the log (log access would be account takeover).
-   `FREESTASH_TRUST_CF_CONNECTING_IP=true` **only** if the domain moves behind Cloudflare's proxy.
+1. Reset email (decision 0002), **without which password reset doesn't work** (no email goes out; links are never
+   logged, since log access would be account takeover):
+   - Railway must be on the **Pro plan**: outbound SMTP is blocked on Free, Trial and Hobby.
+   - Create the Spacemail mailbox (e.g. `hello@freesta.sh`) and let Spaceship add its MX, SPF and DKIM records.
+   - Set `FREESTASH_SMTP_USERNAME` (the full address) and pipe the password in:
+     `railway variable set FREESTASH_SMTP_PASSWORD --stdin`. Set `FREESTASH_EMAIL_FROM` if the mailbox isn't `hello@`.
+   - Host and port default to `mail.spacemail.com:465` (implicit TLS).
+   Optional: `FREESTASH_CONTACT_EMAIL` (sent to providers in the User-Agent; not set, by choice).
+   No Cloudflare (decision 0002), so `FREESTASH_TRUST_CF_CONNECTING_IP` stays false.
 2. **Done when** `https://freesta.sh/api/health` answers `{"ok":true,...,"auth_mode":"accounts","signup_open":true}`,
    you can create an account on the site, and the desktop app (default server `https://freesta.sh`) signs into it.
 

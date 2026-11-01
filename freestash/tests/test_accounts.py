@@ -1,6 +1,7 @@
 """Accounts mode: sign-up, sessions, per-account data, encrypted provider keys, synced preferences."""
 
 import re
+from email.utils import parseaddr
 
 import httpx
 import pytest
@@ -264,11 +265,11 @@ def test_password_hashing_runs_off_the_event_loop(client, monkeypatch):
 
 
 def test_forgot_answers_the_same_when_the_mailer_fails(client, monkeypatch):
-    """A Resend outage must not turn into a 500 that only real accounts get (that would reveal who has one)."""
+    """A mail outage must not turn into a 500 that only real accounts get (that would reveal who has one)."""
     signup(client)
 
     async def broken(*_):
-        raise httpx.ConnectError("resend down")
+        raise ConnectionError("mail server down")
 
     monkeypatch.setattr("freestash.api.auth.send_email", broken)
     r = client.post("/api/auth/forgot", json={"email": "ada@example.com"})
@@ -349,15 +350,85 @@ async def test_dev_server_can_opt_in_to_logging_unsent_email(tmp_path, caplog):
     assert "token=LOCAL" in caplog.text
 
 
-@respx.mock
-async def test_a_rejected_email_logs_no_address(tmp_path, caplog):
+class FakeSMTP:
+    """Stands in for smtplib.SMTP / SMTP_SSL: records what a real server would have seen."""
+
+    sessions: list["FakeSMTP"] = []
+    refuse: Exception | None = None
+
+    def __init__(self, host, port, timeout=None, context=None):
+        self.host, self.port, self.tls_context, self.calls = host, port, context, []
+        FakeSMTP.sessions.append(self)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def starttls(self, context=None):
+        self.calls.append("starttls")
+        self.tls_context = context
+
+    def login(self, user, password):
+        self.calls.append(("login", user, password))
+
+    def send_message(self, msg):
+        if FakeSMTP.refuse:
+            raise FakeSMTP.refuse
+        self.calls.append(("send", msg))
+
+
+@pytest.fixture
+def smtp(monkeypatch):
+    FakeSMTP.sessions, FakeSMTP.refuse = [], None
+    monkeypatch.setattr("freestash.mailer.smtplib.SMTP_SSL", FakeSMTP)
+    monkeypatch.setattr("freestash.mailer.smtplib.SMTP", type("PlainSMTP", (FakeSMTP,), {}))
+    return FakeSMTP
+
+
+def _smtp_settings(tmp_path, **kw):
+    return Settings(data_dir=tmp_path, smtp_username="hello@freesta.sh", smtp_password="mailbox-pw", _env_file=None, **kw)
+
+
+async def test_reset_email_goes_out_over_implicit_tls_to_spacemail(tmp_path, smtp):
     from freestash.mailer import send_email
 
-    respx.post("https://api.resend.com/emails").mock(return_value=httpx.Response(422, json={"message": "bad to: ada@example.com"}))
-    s = Settings(data_dir=tmp_path, resend_api_key="re_test", _env_file=None)
+    assert await send_email(_smtp_settings(tmp_path), "ada@example.com", "Reset your password", "Open https://x/#/reset?token=T")
+    session = smtp.sessions[0]
+    assert (session.host, session.port, type(session).__name__) == ("mail.spacemail.com", 465, "FakeSMTP")
+    assert session.tls_context is not None and session.calls[0] == ("login", "hello@freesta.sh", "mailbox-pw")
+    msg = session.calls[1][1]
+    assert parseaddr(msg["From"]) == ("Freesta.sh", "hello@freesta.sh")  # the header quotes the dotted name
+    assert (msg["To"], msg["Subject"]) == ("ada@example.com", "Reset your password")
+    assert msg["Message-ID"].endswith("@freesta.sh>") and "token=T" in msg.get_content()
+
+
+async def test_port_587_upgrades_with_starttls_before_logging_in(tmp_path, smtp):
+    from freestash.mailer import send_email
+
+    assert await send_email(_smtp_settings(tmp_path, smtp_port=587), "ada@example.com", "Reset", "body")
+    session = smtp.sessions[0]
+    assert type(session).__name__ == "PlainSMTP" and session.calls[:2] == ["starttls", ("login", "hello@freesta.sh", "mailbox-pw")]
+
+
+async def test_a_refused_email_logs_no_address_and_no_link(tmp_path, smtp, caplog):
+    import smtplib
+
+    from freestash.mailer import send_email
+
+    smtp.refuse = smtplib.SMTPRecipientsRefused({"ada@example.com": (550, b"5.1.1 <ada@example.com> no such user")})
     with caplog.at_level("DEBUG", logger="freestash.mail"):
-        assert await send_email(s, "ada@example.com", "Reset your password", "token=SECRET") is False
-    assert "422" in caplog.text and "ada@example.com" not in caplog.text and "SECRET" not in caplog.text
+        assert await send_email(_smtp_settings(tmp_path), "ada@example.com", "Reset your password", "token=SECRET") is False
+    assert "SMTPRecipientsRefused" in caplog.text
+    assert "ada@example.com" not in caplog.text and "SECRET" not in caplog.text and "mailbox-pw" not in caplog.text
+
+
+async def test_an_unreachable_smtp_server_is_a_failed_send_not_a_crash(tmp_path, smtp):
+    from freestash.mailer import send_email
+
+    smtp.refuse = TimeoutError("timed out")  # what Railway's Hobby plan does to outbound SMTP
+    assert await send_email(_smtp_settings(tmp_path), "ada@example.com", "Reset", "body") is False
 
 
 def test_dev_server_always_uses_its_own_throwaway_database(tmp_path):
