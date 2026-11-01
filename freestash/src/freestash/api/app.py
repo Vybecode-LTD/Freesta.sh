@@ -23,6 +23,7 @@ from freestash.accounts import AccountService
 from freestash.api import account as account_routes
 from freestash.api import auth as auth_routes
 from freestash.api.auth import CurrentUser, current_user, optional_user
+from freestash.api.csp import SecurityHeaders, content_security_policy
 from freestash.config import Settings, get_settings
 from freestash.export import attribution_markdown, credits_html, ledger_csv
 from freestash.licenses import (
@@ -64,6 +65,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="Freestash", version=__version__, lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=get_settings().cors_origins, allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
+_INDEX = WEB_DIST / "index.html"
+app.add_middleware(SecurityHeaders, csp=content_security_policy(_INDEX.read_text(encoding="utf-8") if _INDEX.is_file() else ""))
 
 User = Annotated[CurrentUser, Depends(current_user)]
 MaybeUser = Annotated[CurrentUser | None, Depends(optional_user)]
