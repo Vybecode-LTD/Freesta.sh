@@ -86,5 +86,6 @@ def test_spa_never_serves_files_outside_the_web_build(tmp_path):
 
     assert spa_file(dist, "favicon.svg") == (dist / "favicon.svg").resolve()
     for path in ("../package.json", "assets/../../package.json", "../../web/package.json",
-                 str(tmp_path / "web" / "package.json"), "", "settings", "assets"):
+                 str(tmp_path / "web" / "package.json"), "", "settings", "assets",
+                 "favicon.svg\x00", "..\x00/package.json"):  # %00: resolve() raises on Linux (CI), so a 500 before
         assert spa_file(dist, path) == index, path
