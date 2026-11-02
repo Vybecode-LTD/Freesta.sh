@@ -17,7 +17,7 @@
     `Freestash.Client/ResultGroups.cs`, with mirrored tests.
   - **Contract change:** `groupResults` / `ResultGroups.Group` dropped an unused `media` argument; the desktop's jump
     bar sits above its scrolling results; both apps share one example list (three use query words).
-- Gates on the branch: pytest 165 · ruff · export check · vitest 38 · web build · dotnet build 0 warnings · dotnet 54.
+- Gates on the branch: pytest 167 · ruff · export check · vitest 38 · web build · dotnet build 0 warnings · dotnet 54.
   - Mutation pass: 10 of 10 killed (parser and web helpers).
   - Rendered contrast on the grouped search page (chips, jump bar, section heads, Show all, all three verdict tones):
     dark and light, 1440 and 390, hovers, **0 failing**; the positive control fails (1.28:1).

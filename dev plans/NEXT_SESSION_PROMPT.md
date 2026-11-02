@@ -33,7 +33,7 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 - The infrastructure items in `docs/HANDOFF.md` → Next 5.
 
 ## 6. Environment that worked
-- **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (165) · `ruff check src tests scripts` ·
+- **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (167) · `ruff check src tests scripts` ·
   `python scripts/export_shared.py --check`.
 - **Web and desktop:** `cd freestash/web; npm test` (38) · `npm run build`. Desktop: `dotnet test --project
   tests/Freestash.Client.Tests` from `freestash-desktop/` (54).

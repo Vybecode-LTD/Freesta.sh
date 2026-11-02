@@ -21,7 +21,7 @@ Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner,
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
   valid 2026-11-01) and https://freestash-production.up.railway.app, building from `main`. IDs and steps:
   `freestash/IMPLEMENTATION.md` → P2.
-- Gates 2026-11-02 (PR #7 branch): pytest 165 · ruff clean · export check · vitest 38 · web build · dotnet 54 · 0 warnings.
+- Gates 2026-11-02 (PR #7 branch): pytest 167 · ruff clean · export check · vitest 38 · web build · dotnet 54 · 0 warnings.
   Rendered contrast on the grouped search page: both themes, 1440 + 390, hovers, 0 failing, positive control fails.
 
 ## The parity rule (binding)

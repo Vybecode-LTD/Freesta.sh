@@ -28,6 +28,7 @@ admin_app = typer.Typer(help="Site admins of the hosted app. Run it on the serve
                         no_args_is_help=True)
 app.add_typer(admin_app, name="admin")
 console = Console()
+notes = Console(stderr=True)  # notes for the person, kept off stdout so --json output stays one JSON document
 
 TIER_STYLE = {Tier.GREEN: "bold green", Tier.YELLOW: "bold yellow", Tier.RED: "bold red"}
 TIER_DOT = {Tier.GREEN: "[green]●[/]", Tier.YELLOW: "[yellow]●[/]", Tier.RED: "[red]●[/]"}
@@ -60,7 +61,7 @@ def search(
         if parsed.picks:
             labels = {c["id"]: c["label"] for c in CATEGORIES}
             read = ", ".join(f'"{p.word}" as {labels[p.media_type.value]}' for p in parsed.picks)
-            console.print(f'[dim]Read {read} · searching "{parsed.q}" (--literal keeps every word)[/]', soft_wrap=True)
+            notes.print(f'[dim]Read {read} · searching "{parsed.q}" (--literal keeps every word)[/]', soft_wrap=True)
             q, media = parsed.q, parsed.media_types
     query = Q(q=q, media_types=media or [MediaType.IMAGE], use_case=use, max_tier=max_tier,
               providers=provider or None, limit_per_provider=limit, page=page)

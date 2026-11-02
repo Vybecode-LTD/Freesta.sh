@@ -26,7 +26,7 @@ def _norm(token: str) -> str:
 
 def parse_query(text: str, keep: Iterable[str] = ()) -> ParsedQuery:
     """Read category words out of `text`. Words in `keep` (any case) stay in the query. Pure."""
-    kept = {" ".join(k.lower().split()) for k in keep}
+    kept = {" ".join(_norm(t) for t in k.split()) for k in keep}  # a chip's word comes back as typed: "SFX!"
     tokens = text.split()
     norm = [_norm(t) for t in tokens]
     rest: list[str] = []

@@ -1,5 +1,7 @@
 """CLI file output. Regression: Windows' default codepage (cp1252) can't encode most non-Latin titles."""
 
+import json
+
 from typer.testing import CliRunner
 
 from freestash.cli import app
@@ -12,7 +14,7 @@ from .conftest import make_asset
 
 
 def _search_cli(monkeypatch, tmp_path, args):
-    """Run `freestash search` with the engine stubbed out; return (output, the SearchQuery it ran)."""
+    """Run `freestash search` with the engine stubbed out; return (the click Result, the SearchQuery it ran)."""
     from datetime import UTC, datetime
 
     from freestash import search as search_module
@@ -32,21 +34,29 @@ def _search_cli(monkeypatch, tmp_path, args):
     finally:
         get_settings.cache_clear()
     assert result.exit_code == 0, result.output
-    return result.output, seen[0]
+    return result, seen[0]
 
 
 def test_search_reads_query_words_and_says_so(tmp_path, monkeypatch):
-    out, query = _search_cli(monkeypatch, tmp_path, ["rain sfx"])
+    result, query = _search_cli(monkeypatch, tmp_path, ["rain sfx"])
     assert (query.q, [m.value for m in query.media_types]) == ("rain", ["audio"])
-    assert 'Read "sfx" as Audio' in out and 'searching "rain"' in out and "--literal" in out
+    note = result.stderr  # a note for the person, never in the data on stdout
+    assert 'Read "sfx" as Audio' in note and 'searching "rain"' in note and "--literal" in note
+
+
+def test_search_json_stays_one_json_document_when_words_are_read(tmp_path, monkeypatch):
+    # regression (Codex, PR #7): the read-as note went to stdout ahead of --json's document
+    result, _ = _search_cli(monkeypatch, tmp_path, ["rain sfx", "--json"])
+    assert json.loads(result.stdout)["query"]["q"] == "rain"
+    assert 'Read "sfx" as Audio' in result.stderr
 
 
 def test_search_literal_or_explicit_media_keeps_every_word(tmp_path, monkeypatch):
     _, literal = _search_cli(monkeypatch, tmp_path, ["rain sfx", "--literal"])
     assert (literal.q, [m.value for m in literal.media_types]) == ("rain sfx", ["image"])
-    out, explicit = _search_cli(monkeypatch, tmp_path, ["rain sfx", "-m", "video"])
+    result, explicit = _search_cli(monkeypatch, tmp_path, ["rain sfx", "-m", "video"])
     assert (explicit.q, [m.value for m in explicit.media_types]) == ("rain sfx", ["video"])
-    assert "Read " not in out
+    assert "Read " not in result.output
 
 
 def test_ledger_export_writes_utf8(tmp_path, monkeypatch):

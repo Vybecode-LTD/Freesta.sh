@@ -54,6 +54,15 @@ def test_keep_leaves_a_word_in_the_query():
     assert picks("door creak sound effects", keep=["sound effects"])[1] == []
 
 
+def test_keep_matches_the_word_as_the_chip_shows_it_punctuation_and_all():
+    # the apps send back the pick's word exactly as typed ("SFX!"); it must still stop the pick (Codex, PR #7)
+    word = parse_query("Rain, SFX!").picks[0].word
+    assert word == "SFX!"
+    assert picks("Rain, SFX!", keep=[word]) == ("Rain, SFX!", [], [])
+    phrase = parse_query("door creak (sound effects)").picks[0].word
+    assert picks("door creak (sound effects)", keep=[phrase])[1] == []
+
+
 def test_kept_phrase_still_lets_a_shorter_word_inside_it_stay_literal():
     # keeping "sound effects" means the user wants those words searched, not "sound" picked on its own
     assert picks("sound effects", keep=["sound effects"]) == ("sound effects", [], [])
