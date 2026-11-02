@@ -17,7 +17,7 @@ Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner,
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
   valid 2026-11-01) and https://freestash-production.up.railway.app, building from `main`. IDs and steps:
   `freestash/IMPLEMENTATION.md` → P2.
-- Gates 2026-11-01 (PR #5 branch): pytest 128 · ruff clean · export check · vitest 18 · web build. dotnet 33 · 0 warnings (at PR #3; the desktop is unchanged since). Rendered-contrast 11 runs /
+- Gates 2026-11-01 (PR #5 branch): pytest 128 · ruff clean · export check · vitest 19 · web build. dotnet 33 · 0 warnings (at PR #3; the desktop is unchanged since). Rendered-contrast 11 runs /
   136 states / 0 failing (2026-10-31; not re-run: the one new control reuses `.btn`).
 
 ## The parity rule (binding)

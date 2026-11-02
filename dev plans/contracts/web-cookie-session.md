@@ -70,6 +70,8 @@ key) · skill `jwt-session-revocation` (`token_version` stays the revocation pat
 None.
 
 ## Changes after approval
+- 2026-11-02, PR #5 review (Codex): the stored session also carries a random, non-secret `gen`, so a
+  replacement for the same user (a password change) still fires `storage` in other tabs and bumps their epoch.
 - 2026-11-01, during the build: an old-format saved session is deleted rather than kept without its token (a shell
   with no cookie behind it would only bounce to sign-in on the first request). `credentials` is `include`, not
   `same-origin`, so a cross-origin `VITE_API_BASE` still works.

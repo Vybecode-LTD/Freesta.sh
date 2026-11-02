@@ -38,11 +38,18 @@ export function getSession(): Session | null { return current; }
 /** Bumped on every sign-in, sign-out and account change, so a late 401 can tell whether it's about this session. */
 export function sessionEpoch(): number { return epoch; }
 
+/** A non-secret id for each session written. After a password change the user is identical, and an identical
+ *  value fires no `storage` event: other tabs would keep their epoch, and a late 401 there (sent with the revoked
+ *  cookie) would sign every tab out (PR #5 review). */
+function generation(): string {
+  return `${Date.now().toString(36)}.${Math.random().toString(36).slice(2)}`;
+}
+
 export function setSession(next: Session | null): void {
   current = next ? { user: next.user } : null;
   epoch += 1;
   try {
-    if (current) localStorage.setItem(KEY, JSON.stringify(current)); else localStorage.removeItem(KEY);
+    if (current) localStorage.setItem(KEY, JSON.stringify({ ...current, gen: generation() })); else localStorage.removeItem(KEY);
   } catch { /* storage unavailable: the session lasts for this tab */ }
   listeners.forEach((fn) => fn());
 }

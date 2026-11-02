@@ -13,7 +13,7 @@
   - Web localStorage holds only the user. An old saved token is deleted on load, so web users sign in once after the deploy.
   - Verified live on the dev server (:8790): sign-up, script can't read the token, reads, a write and the search
     stream all work on the cookie alone, and Sign out leaves `/api/auth/me` at 401.
-- Gates on the branch: pytest 128 · ruff · export check · vitest 18 · web build. The desktop is untouched (dotnet 33 at PR #3).
+- Gates on the branch: pytest 128 · ruff · export check · vitest 19 · web build. The desktop is untouched (dotnet 33 at PR #3).
 - **Decision 0003 (owner, 2026-11-01):**
   - Admin-held provider keys shared with every member, with caps of 60 searches an hour and 20 web searches a day.
   - Admin screen on the web only; web finds are always CHECK.

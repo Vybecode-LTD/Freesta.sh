@@ -12,11 +12,26 @@ describe("session", () => {
     const s = await import("./session");
     expect(s.getSession()).toBeNull();
     s.setSession({ user: ADA });
-    expect(JSON.parse(localStorage.getItem("freestash.session")!)).toEqual({ user: ADA });
+    const stored = JSON.parse(localStorage.getItem("freestash.session")!);
+    expect(stored.user).toEqual(ADA);
+    expect(Object.keys(stored).sort()).toEqual(["gen", "user"]);
     s.updateSessionUser({ ...ADA, display_name: "Ada" });
     expect(s.getSession()?.user.display_name).toBe("Ada");
     s.setSession(null);
     expect(localStorage.getItem("freestash.session")).toBeNull();
+  });
+
+  it("a replacement session changes what's stored even for the same user, so other tabs hear about it", async () => {
+    // PR #5 review: after a password change the user is identical; an identical value fires no `storage` event,
+    // and another tab's late 401 (sent with the revoked cookie) would sign every tab out.
+    const s = await import("./session");
+    s.setSession({ user: ADA });
+    const before = localStorage.getItem("freestash.session");
+    s.setSession({ user: ADA });
+    const after = localStorage.getItem("freestash.session");
+    expect(after).not.toBe(before);
+    expect(after).not.toMatch(/token/);
+    expect(JSON.parse(after!).user).toEqual(ADA);
   });
 
   it("restores a saved session on load and survives corrupt storage", async () => {
