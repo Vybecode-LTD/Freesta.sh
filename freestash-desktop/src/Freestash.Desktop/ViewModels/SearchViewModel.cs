@@ -20,6 +20,12 @@ public sealed class Option<T>(T value, string label, string hint = "") : OptionB
     public T Value { get; } = value;
 }
 
+/// <summary>A one-click media selection ("Game assets"): on while its media and packs are (web: PRESETS pills).</summary>
+public sealed class PresetOption(Preset preset) : OptionBase(preset.Label, preset.Hint)
+{
+    public Preset Preset { get; } = preset;
+}
+
 /// <summary>One column of the source spectrum under the lens: how long a source took, relative to the slowest.</summary>
 public sealed partial class SourceStatusViewModel(ProviderStatus? status, string provider) : ObservableObject
 {
@@ -65,6 +71,9 @@ public sealed class AssetCardViewModel(ScoredAsset scored)
         MediaType.Font => "IconType", MediaType.Texture or MediaType.Hdri => "IconSparkle", _ => "IconImage",
     };
     public string TopReason => Scored.Verdict.Reasons.FirstOrDefault() ?? "";
+    public bool IsPack => Asset.IsPack;
+    /// <summary>"PACK · 24 FILES" (the web uppercases the same words in CSS).</summary>
+    public string PackBadge => PackText.Badge(Asset).ToUpperInvariant();
 }
 
 /// <summary>One category's results (web: components/ResultSections.tsx). With one medium selected there's a single
@@ -84,11 +93,11 @@ public sealed partial class ResultSectionViewModel(MediaType id, string label, b
     partial void OnIsExpandedChanged(bool value) => OnPropertyChanged(nameof(ToggleText));
 }
 
-/// <summary>A query word read as a category, shown as a removable chip (web: components/QueryChips.tsx, same words).</summary>
+/// <summary>A query word read as a category or as packs, shown as a removable chip (web: components/QueryChips.tsx, same words).</summary>
 public sealed class QueryPickViewModel(QueryPick pick)
 {
     public QueryPick Pick { get; } = pick;
-    private string Category => Categories.All.FirstOrDefault(c => c.Id == Pick.MediaType)?.Label ?? Pick.MediaType.Wire();
+    private string Category => Pick.MediaType is { } m ? Categories.All.FirstOrDefault(c => c.Id == m)?.Label ?? m.Wire() : "Packs";
     public string Text => $"“{Pick.Word}” → {Category}";
     public string Tip => $"Search “{Pick.Word}” as a word, not as {Category}";
 }
@@ -103,7 +112,8 @@ public sealed partial class SearchViewModel : ViewModelBase
     private List<MediaType> _searchedMedia = [];
     private QueryReading? _reading;
     private string _current = ""; // the query of the search last started
-    private bool _applying; // media being set from a read query, not by hand
+    private bool _applying; // media being set from a read query or a preset, not by hand
+    private bool _syncingPresets; // presets' pills being lit from the media and packs, not clicked
     private int _intent; // bumped per search or chip removal: only the latest one's read is applied (web: intentRef)
 
     public SearchViewModel(AppServices services)
@@ -121,10 +131,16 @@ public sealed partial class SearchViewModel : ViewModelBase
         ];
         Tiers = [new(Tier.Green, "Clear", "Only results that are clear for this use"), new(Tier.Yellow, "+ Check", "Also results to check before you use them"),
                  new(Tier.Red, "All", "Everything, including blocked results")];
+        // the Packs switch, per search (contract packs-and-new-kinds; web: PACKS_OPTIONS, same words)
+        PacksOptions = [new(false, "Off", "Single files only"), new(true, "On", "Also look for packs: icon sets, sound packs, archives")];
+        PacksOptions[0].IsSelected = true;
+        Presets = new(Categories.Presets.Select(p => new PresetOption(p)));
+        foreach (var p in Presets)
+            p.PropertyChanged += (_, e) => { if (e.PropertyName == "IsSelected" && !_syncingPresets) ApplyPreset(p.Preset); };
 
         ApplyDefaults(s);
         services.PrefsChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => { if (!HasSearched) ApplyDefaults(_services.Settings); });
-        foreach (var o in UseCases.Cast<ObservableObject>().Concat(Tiers).Concat(Media))
+        foreach (var o in UseCases.Cast<ObservableObject>().Concat(Tiers).Concat(Media).Concat(PacksOptions))
             o.PropertyChanged += (sender, e) =>
             {
                 if (e.PropertyName != "IsSelected") return;
@@ -132,8 +148,10 @@ public sealed partial class SearchViewModel : ViewModelBase
                 OnPropertyChanged(nameof(SelectedUseCase));
                 OnPropertyChanged(nameof(ResultsHeading));
                 if (_applying) return;
-                if (sender is Option<MediaType>) SetReading(QueryReading.WithoutPicks(_reading)); // by hand: the chips go
-                if (HasSearched && sender is Option<UseCase> { IsSelected: true } or Option<Tier> { IsSelected: true } or Option<MediaType>)
+                SyncPresets();
+                if (sender is Option<MediaType> or Option<bool>) SetReading(QueryReading.WithoutPicks(_reading)); // by hand: the chips go
+                if (HasSearched && sender is Option<UseCase> { IsSelected: true } or Option<Tier> { IsSelected: true } or Option<bool> { IsSelected: true }
+                        or Option<MediaType>)
                     _ = RunAsync(_current);
             };
         Project = s.LastProject;
@@ -153,6 +171,8 @@ public sealed partial class SearchViewModel : ViewModelBase
     public ObservableCollection<Option<MediaType>> Media { get; }
     public ObservableCollection<Option<UseCase>> UseCases { get; }
     public ObservableCollection<Option<Tier>> Tiers { get; }
+    public ObservableCollection<Option<bool>> PacksOptions { get; }
+    public ObservableCollection<PresetOption> Presets { get; }
     /// <summary>Every result in display order (the sections show them; the snapshot tool reads this).</summary>
     public IReadOnlyList<AssetCardViewModel> Results { get; private set; } = [];
     public ObservableCollection<ResultSectionViewModel> Sections { get; } = [];
@@ -201,6 +221,8 @@ public sealed partial class SearchViewModel : ViewModelBase
     partial void OnElapsedSecondsChanged(double value) => OnPropertyChanged(nameof(LensMeta));
 
     private List<MediaType> SelectedMedia => Media.Where(m => m.IsSelected).Select(m => m.Value).ToList();
+    /// <summary>Also look for packs: the Packs switch.</summary>
+    public bool Packs => PacksOptions.FirstOrDefault(o => o.IsSelected)?.Value ?? false;
 
     /// <summary>Search what's typed. Category words in it ("sfx", "font") pick the media and show as chips; the same
     /// text isn't read twice, so Search after removing a chip keeps the word as a word (web: SearchPage's submit).</summary>
@@ -218,8 +240,8 @@ public sealed partial class SearchViewModel : ViewModelBase
             if (intent != _intent) return; // a newer search or chip removal started meanwhile
             if (parsed is not null)
             {
-                var (reading, media) = QueryReading.Read(parsed, SelectedMedia, _reading);
-                Apply(reading, media);
+                var (reading, media, packs) = QueryReading.Read(parsed, SelectedMedia, _reading, Packs);
+                Apply(reading, media, packs);
                 text = reading.Q;
             }
         }
@@ -236,19 +258,51 @@ public sealed partial class SearchViewModel : ViewModelBase
         try { parsed = await _services.Api.Current.ParseQueryAsync(_reading.Original, keep); }
         catch (Exception ex) { _services.Toasts.Show(ex.Message); return; }
         if (intent != _intent || _reading is null) return; // a newer search or chip removal started meanwhile
-        var (reading, media) = QueryReading.Drop(parsed, _reading, keep);
-        Apply(reading, media);
+        var (reading, media, packs) = QueryReading.Drop(parsed, _reading, keep);
+        Apply(reading, media, packs);
         await RunAsync(reading.Q);
     }
 
-    /// <summary>Take a read query: its text, its chips, and its media (without re-running the search per pill).</summary>
-    private void Apply(QueryReading reading, IReadOnlyList<MediaType> media)
+    /// <summary>Take a read query: its text, its chips, its media and packs (without re-running the search per pill).</summary>
+    private void Apply(QueryReading reading, IReadOnlyList<MediaType> media, bool packs)
     {
-        _applying = true;
-        try { foreach (var m in Media) m.IsSelected = media.Contains(m.Value); }
-        finally { _applying = false; }
+        SetFilters(media, packs);
         Query = reading.Q;
         SetReading(reading);
+    }
+
+    /// <summary>Set the media and the Packs switch together, without a search per pill.</summary>
+    private void SetFilters(IReadOnlyList<MediaType> media, bool packs)
+    {
+        _applying = true;
+        try
+        {
+            foreach (var m in Media) m.IsSelected = media.Contains(m.Value);
+            foreach (var o in PacksOptions) o.IsSelected = o.Value == packs;
+        }
+        finally { _applying = false; }
+        SyncPresets();
+    }
+
+    /// <summary>A preset's media and packs in one go, then one search (web: applyPreset). The chips go, as by hand.</summary>
+    private void ApplyPreset(Preset preset)
+    {
+        SetFilters(preset.Media, preset.Packs);
+        SetReading(QueryReading.WithoutPicks(_reading));
+        if (HasSearched) _ = RunAsync(_current);
+    }
+
+    /// <summary>Light each preset's pill while the media and packs are exactly its own.</summary>
+    private void SyncPresets()
+    {
+        _syncingPresets = true;
+        try
+        {
+            var media = SelectedMedia;
+            foreach (var p in Presets)
+                p.IsSelected = p.Preset.Packs == Packs && media.Count == p.Preset.Media.Count && p.Preset.Media.All(media.Contains);
+        }
+        finally { _syncingPresets = false; }
     }
 
     private void SetReading(QueryReading? reading)
@@ -304,7 +358,7 @@ public sealed partial class SearchViewModel : ViewModelBase
         Detail = null;
         try
         {
-            var req = new SearchRequest(q, media, SelectedUseCase, SelectedMaxTier, Limit: _services.Settings.ResultsPerSource);
+            var req = new SearchRequest(q, media, SelectedUseCase, SelectedMaxTier, Limit: _services.Settings.ResultsPerSource, Packs: Packs);
             await foreach (var batch in _services.Api.Current.SearchStreamAsync(req, cts.Token))
             {
                 if (cts.IsCancellationRequested) break;
@@ -341,11 +395,11 @@ public sealed partial class SearchViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Interleave the sources (clear first), then lay the results out as sections (one, headless, for a
-    /// single medium). Append-only where possible so visible cards don't jump around while streaming.</summary>
+    /// <summary>Interleave the sources (clear first, packs leading), then lay the results out as sections (one, headless,
+    /// for a single medium). Append-only where possible so visible cards don't jump around while streaming.</summary>
     private void Rebuild()
     {
-        var ordered = ResultGroups.Interleave(_byProvider.Values);
+        var ordered = ResultGroups.LeadPacks(ResultGroups.Interleave(_byProvider.Values));
         Results = ordered.Select(Card).ToList();
         var grouped = ResultGroups.IsGrouped(_searchedMedia);
         var sections = grouped

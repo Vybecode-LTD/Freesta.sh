@@ -14,7 +14,7 @@ vi.mock("../lib/prefs", () => ({ usePrefs: () => ({ prefs: DEFAULT_PREFS }) }));
 import { SearchPage } from "./SearchPage";
 
 const read = (original: string, q: string, media: ParsedQuery["media_types"], word: string): ParsedQuery =>
-  ({ original, q, media_types: media, picks: [{ word, media_type: media[0] }] });
+  ({ original, q, media_types: media, packs: false, picks: [{ word, media_type: media[0], packs: false }] });
 
 let root: Root;
 let host: HTMLDivElement;
@@ -61,5 +61,34 @@ describe("SearchPage", () => {
     expect(host.querySelector(".read-as")!.textContent).toContain("“font” → Fonts");
     expect(searchStream).toHaveBeenCalledTimes(1);
     expect(searchStream.mock.calls[0][0]).toMatchObject({ q: "anchor", media: ["font"] });
+  });
+
+  // contract packs-and-new-kinds
+  it("a pack word turns Packs on, searching once with packs", async () => {
+    api.parseQuery.mockResolvedValueOnce({
+      original: "sword sfx pack", q: "sword", media_types: ["audio"], packs: true,
+      picks: [{ word: "sfx", media_type: "audio", packs: false }, { word: "pack", media_type: null, packs: true }],
+    } satisfies ParsedQuery);
+    await act(async () => root.render(<SearchPage onToast={() => undefined} />));
+    await submit("sword sfx pack");
+
+    expect(searchStream).toHaveBeenCalledTimes(1);
+    expect(searchStream.mock.calls[0][0]).toMatchObject({ q: "sword", media: ["audio"], packs: true });
+    expect(host.querySelector('[aria-label="Packs"] [aria-pressed="true"]')!.textContent).toBe("On");
+    expect(host.querySelector(".read-as")!.textContent).toContain("“pack” → Packs");
+  });
+
+  it("Game assets picks its media and packs, and searches again once", async () => {
+    api.parseQuery.mockResolvedValueOnce({ original: "knight", q: "knight", media_types: [], packs: false, picks: [] } satisfies ParsedQuery);
+    await act(async () => root.render(<SearchPage onToast={() => undefined} />));
+    await submit("knight");
+    const preset = [...host.querySelectorAll<HTMLButtonElement>("button.pill")].find((b) => b.textContent === "Game assets")!;
+    await act(async () => { preset.click(); });
+
+    expect(searchStream).toHaveBeenCalledTimes(2);
+    expect(searchStream.mock.calls[1][0]).toMatchObject({
+      q: "knight", media: ["audio", "texture", "model", "font", "icon", "sprite"], packs: true,
+    });
+    expect(preset.getAttribute("aria-pressed")).toBe("true");
   });
 });

@@ -3,6 +3,9 @@ namespace Freestash.Client;
 
 public sealed record Category(MediaType Id, string Label);
 
+/// <summary>A one-click media selection ("Game assets"); <c>Packs</c> turns the Packs switch on too.</summary>
+public sealed record Preset(string Id, string Label, string Hint, IReadOnlyList<MediaType> Media, bool Packs);
+
 /// <summary>The result categories in display order, shared with the web app (shared/categories.json).</summary>
 public static class Categories
 {
@@ -16,5 +19,14 @@ public static class Categories
         new(MediaType.Model, "3D"),
         new(MediaType.Font, "Fonts"),
         new(MediaType.Icon, "Icons"),
+        new(MediaType.Brush, "Brushes"),
+        new(MediaType.Shape, "Shapes"),
+        new(MediaType.Sprite, "Sprites"),
+    ];
+
+    public static readonly IReadOnlyList<Preset> Presets =
+    [
+        new("game-assets", "Game assets", "Sprites, 3D, textures, audio, icons and fonts, with packs",
+            [MediaType.Audio, MediaType.Texture, MediaType.Model, MediaType.Font, MediaType.Icon, MediaType.Sprite], true),
     ];
 }

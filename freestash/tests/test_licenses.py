@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from freestash.licenses import evaluate, evaluate_all, lookup, normalize_license, us_public_domain_cutoff
-from freestash.models import MediaType, Tier, Trust, UseCase
+from freestash.models import Asset, MediaType, Tier, Trust, UseCase
 
 from .conftest import make_asset
 
@@ -53,7 +53,7 @@ def test_versioned_label_and_url():
 GREEN, YELLOW, RED = Tier.GREEN, Tier.YELLOW, Tier.RED
 
 
-@pytest.mark.parametrize("lic,trust,expected", [
+_MATRIX = [
     #                                       reference demo   client  bundled merch
     ("CC0-1.0", Trust.INSTITUTION, (GREEN, GREEN, GREEN, GREEN, GREEN)),
     ("CC0-1.0", Trust.UPLOADER, (GREEN, GREEN, YELLOW, YELLOW, YELLOW)),
@@ -71,9 +71,24 @@ GREEN, YELLOW, RED = Tier.GREEN, Tier.YELLOW, Tier.RED
     ("RIGHTS-UNKNOWN", Trust.UNKNOWN, (YELLOW, RED, RED, RED, RED)),
     ("PD-US-GOV", Trust.GOVERNMENT, (GREEN, GREEN, GREEN, GREEN, GREEN)),
     ("NKC", Trust.INSTITUTION, (GREEN, GREEN, YELLOW, YELLOW, YELLOW)),
-])
-def test_policy_matrix(lic, trust, expected):
-    verdicts = evaluate_all(make_asset(lic, trust=trust))
+    ("PIXABAY", Trust.COMMUNITY, (GREEN, GREEN, GREEN, RED, YELLOW)),
+]
+
+# A brush: client and merch judge the artwork made with it, bundled judges the brush file (contract packs-and-new-kinds).
+_BRUSH_MATRIX = [
+    #                                       reference demo   client  bundled merch
+    ("PIXABAY", Trust.COMMUNITY, (GREEN, GREEN, GREEN, RED, GREEN)),  # painted artwork is never an unaltered copy
+    ("CC-BY-ND-4.0", Trust.COMMUNITY, (GREEN, YELLOW, YELLOW, RED, RED)),  # brushes loosen nothing else
+    ("CC-BY-SA-4.0", Trust.COMMUNITY, (GREEN, GREEN, YELLOW, YELLOW, YELLOW)),
+    ("CC-BY-NC-4.0", Trust.COMMUNITY, (YELLOW, RED, RED, RED, RED)),
+    ("CC0-1.0", Trust.UPLOADER, (GREEN, GREEN, YELLOW, YELLOW, YELLOW)),
+]
+
+
+@pytest.mark.parametrize("lic,trust,expected,media", [(*r, MediaType.IMAGE) for r in _MATRIX]
+                         + [(*r, MediaType.BRUSH) for r in _BRUSH_MATRIX])
+def test_policy_matrix(lic, trust, expected, media):
+    verdicts = evaluate_all(make_asset(lic, trust=trust, media=media))
     got = tuple(verdicts[u].tier for u in (UseCase.REFERENCE, UseCase.DEMO, UseCase.CLIENT, UseCase.BUNDLED, UseCase.MERCH))
     assert got == expected, {u.value: (v.tier.value, v.reasons) for u, v in verdicts.items()}
 
@@ -93,6 +108,53 @@ def test_with_notice_licenses_require_license_file_when_bundled():
     v = evaluate(make_asset("MIT"), UseCase.BUNDLED)
     assert any("license text" in o for o in v.obligations)
 
+
+
+def test_brush_says_what_client_and_merch_judge():
+    note = "This covers artwork you make with the brush; shipping the brush file is judged under Bundled."
+    verdicts = evaluate_all(make_asset("CC0-1.0", trust=Trust.CURATED, media=MediaType.BRUSH))
+    assert [u for u, v in verdicts.items() if note in v.reasons] == [UseCase.CLIENT, UseCase.MERCH]
+    assert all(v.tier == GREEN for v in verdicts.values())
+
+
+# ----------------------------------------------------------------------------- packs
+
+def make_pack(members: list[str], *, trust: Trust = Trust.UPLOADER, checked: int | None = None,
+              count: int | None = None) -> Asset:
+    """A pack whose files are licensed one by one (`checked` of `count` read); `members` empty = one pack-wide licence."""
+    lics = [normalize_license(m) for m in members]
+    # `license` is the laxest member here on purpose: the verdict must come from every member, not from `license`
+    asset = make_asset(members[0] if members else "CC0-1.0", trust=trust, media=MediaType.AUDIO)
+    return asset.model_copy(update={"is_pack": True, "item_count": count, "member_licenses": lics,
+                                    "members_checked": checked if checked is not None else (len(lics) if lics else None)})
+
+
+@pytest.mark.parametrize("members,trust,checked,count,expected", [
+    #                                                            reference demo   client  bundled merch
+    (["CC0-1.0", "CC-BY-NC-4.0"], Trust.UPLOADER, 2, 2, (YELLOW, RED, RED, RED, RED)),  # the strictest file wins
+    (["CC0-1.0", "CC-BY-4.0"], Trust.COMMUNITY, 2, 2, (GREEN, GREEN, GREEN, GREEN, GREEN)),
+    (["CC0-1.0", "CC-BY-4.0"], Trust.UPLOADER, 2, 2, (GREEN, GREEN, YELLOW, YELLOW, YELLOW)),
+    (["CC-BY-SA-4.0", "CC-BY-ND-4.0"], Trust.COMMUNITY, 2, 2, (GREEN, YELLOW, YELLOW, RED, RED)),
+    (["CC0-1.0"], Trust.INSTITUTION, 1, 24, (YELLOW, YELLOW, YELLOW, YELLOW, YELLOW)),  # 23 files unread: check at best
+    (["CC0-1.0"], Trust.INSTITUTION, 3, None, (YELLOW, YELLOW, YELLOW, YELLOW, YELLOW)),  # count unknown: the same
+    ([], Trust.CURATED, None, 40, (GREEN, GREEN, GREEN, GREEN, GREEN)),  # one licence for the pack, its publisher's
+])
+def test_pack_policy_matrix(members, trust, checked, count, expected):
+    verdicts = evaluate_all(make_pack(members, trust=trust, checked=checked, count=count))
+    got = tuple(verdicts[u].tier for u in (UseCase.REFERENCE, UseCase.DEMO, UseCase.CLIENT, UseCase.BUNDLED, UseCase.MERCH))
+    assert got == expected, {u.value: (v.tier.value, v.reasons) for u, v in verdicts.items()}
+
+
+def test_pack_merges_every_files_obligations():
+    v = evaluate(make_pack(["CC0-1.0", "CC-BY-4.0"], trust=Trust.COMMUNITY), UseCase.BUNDLED)
+    assert any("Credit required" in o for o in v.obligations)
+
+
+def test_incomplete_pack_says_how_much_was_read():
+    v = evaluate(make_pack(["CC0-1.0"], trust=Trust.INSTITUTION, checked=1, count=24), UseCase.DEMO)
+    assert "Licenses were read for 1 of 24 files in this pack: check the rest on its page." in v.reasons
+    v = evaluate(make_pack(["CC0-1.0"], trust=Trust.INSTITUTION, checked=3), UseCase.DEMO)
+    assert "Licenses were read for 3 files in this pack, which may hold more: check the rest on its page." in v.reasons
 
 # ----------------------------------------------------------------------------- public-domain date heuristic
 

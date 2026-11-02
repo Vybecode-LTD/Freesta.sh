@@ -57,6 +57,7 @@ def _compact(s: ScoredAsset) -> dict[str, Any]:
         "attribution": v.attribution, "preview_url": a.preview_url or a.thumbnail_url, "landing_url": a.landing_url,
         "size": f"{a.width}x{a.height}" if a.width and a.height else None,
         "needs_detail": a.detail_required,
+        "pack": {"files": a.item_count, "formats": a.formats} if a.is_pack else None,
     }
 
 
@@ -70,23 +71,27 @@ async def search_assets(
     limit_per_provider: int = 6,
     page: int = 1,
     literal: bool = False,
+    packs: bool = False,
 ) -> dict[str, Any]:
-    """Search every enabled source at once. media_types: image, audio, video, texture, hdri, model, font, icon.
-    Without media_types, words like "sfx", "font" or "3d model" pick the media and leave the query (read_as says
-    which); pass literal=true to search every word. Results come back interleaved across sources, GREEN first, each
-    with its license verdict for use_case."""
+    """Search every enabled source at once. media_types: image, audio, video, texture, hdri, model, font, icon,
+    brush, shape, sprite. packs=true also looks for packs (icon sets, sound packs, archives): one result, many files.
+    Without media_types, words like "sfx", "font" or "3d model" pick the media and leave the query, and "pack" turns
+    packs on (read_as says which); pass literal=true to search every word. Results come back interleaved across
+    sources, GREEN first, each with its license verdict for use_case."""
     engine = _get_engine()
     parsed = parse_query(query) if media_types is None and not literal else None
     if parsed and parsed.picks:
-        query, media_types = parsed.q, parsed.media_types
+        query, media_types, packs = parsed.q, parsed.media_types, packs or parsed.packs
     resp = await engine.search(SearchQuery(q=query, media_types=media_types or [MediaType.IMAGE], use_case=use_case,
                                            max_tier=max_tier, providers=providers,
-                                           limit_per_provider=max(1, min(limit_per_provider, 25)), page=page))
+                                           limit_per_provider=max(1, min(limit_per_provider, 25)), page=page,
+                                           packs=packs))
     engine.recent.flush()
     return {
         "use_case": use_case.value,
         "searched_for": query,
-        "read_as": [{"word": p.word, "media_type": p.media_type.value} for p in parsed.picks] if parsed else [],
+        "read_as": [{"word": p.word, "media_type": p.media_type.value if p.media_type else None, "packs": p.packs}
+                    for p in parsed.picks] if parsed else [],
         "results": [_compact(s) for s in resp.results],
         "hidden_by_tier": resp.hidden_by_tier,
         "sources": [{"provider": p.provider, "ok": p.ok, "count": p.count, "error": p.error} for p in resp.providers],

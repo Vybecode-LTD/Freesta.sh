@@ -1,0 +1,400 @@
+{
+ "_recorded": "2026-11-02 from archive.org/advancedsearch.php (rows=6, descriptions cut to 200 chars)",
+ "brush": {
+  "query": "(grunge) AND (title:(brush OR brushes OR abr) OR subject:(brush OR brushes OR abr OR \"photoshop brushes\")) AND mediatype:(image OR data)",
+  "response": {
+   "numFound": 7,
+   "start": 0,
+   "docs": [
+    {
+     "collection": [
+      "opensource_media",
+      "community",
+      "fav-queenphantom"
+     ],
+     "creator": "Fahad Ali",
+     "date": "2020-01-01T00:00:00Z",
+     "description": "Download Free Photoshop Brushes",
+     "files_count": 5,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "grunge_architecture_6832432",
+     "item_size": 2590889,
+     "mediatype": "data",
+     "title": "grunge_architecture_6832432"
+    },
+    {
+     "collection": [
+      "opensource_media",
+      "community",
+      "fav-queenphantom"
+     ],
+     "creator": "Fahad Ali",
+     "date": "2020-01-01T00:00:00Z",
+     "description": "Download Free Photoshop Brushes",
+     "files_count": 5,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "grunge_cityscape_6832435",
+     "item_size": 2692799,
+     "mediatype": "data",
+     "title": "grunge_cityscape_6832435"
+    },
+    {
+     "collection": [
+      "opensource_media",
+      "community",
+      "fav-queenphantom"
+     ],
+     "creator": "Fahad Ali",
+     "date": "2020-01-01T00:00:00Z",
+     "description": "Download Free Photoshop Brushes",
+     "files_count": 5,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "grunge_attic_2_6832441",
+     "item_size": 2462327,
+     "mediatype": "data",
+     "title": "grunge_attic_2_6832441"
+    },
+    {
+     "collection": [
+      "opensource_media",
+      "community",
+      "fav-queenphantom"
+     ],
+     "creator": "Fahad Ali",
+     "date": "2020-01-01T00:00:00Z",
+     "description": "Download Free Photoshop Brushes",
+     "files_count": 5,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "grunge_patterns_2_6832518",
+     "item_size": 16544400,
+     "mediatype": "data",
+     "title": "grunge_patterns_2_6832518"
+    },
+    {
+     "collection": [
+      "opensource_media",
+      "community",
+      "fav-queenphantom"
+     ],
+     "creator": "Fahad Ali",
+     "date": "2020-01-01T00:00:00Z",
+     "description": "Download Free Photoshop Brushes",
+     "files_count": 5,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "grunge_misc_6832547",
+     "item_size": 7712894,
+     "mediatype": "data",
+     "title": "grunge_misc_6832547"
+    },
+    {
+     "collection": [
+      "freevectors",
+      "fav-aleya_vi"
+     ],
+     "description": "Butterfly Grunge Brushes",
+     "files_count": 5,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "butterflygrungebygojol23.abr",
+     "item_size": 264256,
+     "mediatype": "data",
+     "title": "Butterfly Grunge By Gojol 23.abr"
+    }
+   ]
+  }
+ },
+ "sprite": {
+  "query": "(knight) AND (title:(sprite OR sprites OR spritesheet OR tileset OR tilesets) OR subject:(sprite OR sprites OR spritesheet OR \"sprite sheet\" OR tileset OR \"pixel art\")) AND mediatype:(image OR data)",
+  "response": {
+   "numFound": 16,
+   "start": 0,
+   "docs": [
+    {
+     "collection": [
+      "opensource_image",
+      "community",
+      "fav-user_48307"
+     ],
+     "creator": "Square Enix Co., LTD. / DeNA Co., LTD.",
+     "date": "2018-01-01T00:00:00Z",
+     "description": "Final Fantasy Record Keeper (FFRK) Fan Kit - FFRK Core Classes 2 Character Sprites",
+     "files_count": 5,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "core_classes_2",
+     "item_size": 155916,
+     "mediatype": "image",
+     "title": "FFRK Core Classes 2 Character Sprites"
+    },
+    {
+     "collection": [
+      "opensource_image"
+     ],
+     "description": "THATS NOT MINE, EVERY FILE IS FROM HOLLOW KNIGHT: SILKSONG",
+     "files_count": 5,
+     "format": [
+      "7z",
+      "Archive BitTorrent",
+      "Metadata"
+     ],
+     "identifier": "hollow-knight-silksong-every-2d-texture.-7z",
+     "item_size": 1718055382,
+     "mediatype": "image",
+     "title": "Hollow Knight Silksong Every 2d Texture. 7z"
+    },
+    {
+     "collection": [
+      "opensource_image"
+     ],
+     "creator": "TEAM CHERRY",
+     "description": "THATS NOT MINE, EVERY FILE IS FROM HOLLOW KNIGHT: SILKSONG",
+     "files_count": 5,
+     "format": [
+      "7z",
+      "Archive BitTorrent",
+      "Metadata"
+     ],
+     "identifier": "hollow-knight-silksong-every-sprite.-7z",
+     "item_size": 1193402525,
+     "mediatype": "image",
+     "title": "Hollow Knight Silksong Every Sprite. 7z"
+    },
+    {
+     "collection": [
+      "smackjeeves-web-comics",
+      "comics",
+      "folkscanomy",
+      "fav-kailyn_hoffman_the_rainbow_of_love"
+     ],
+     "creator": "Pokemon Fun and Craziness",
+     "date": "2019-06-13T00:00:00Z",
+     "description": "Light (Knight in-training) and Dark (ex-evil Knight from another dimension learning how to be good) find themselves trapped in a strange realm without their mentor, Meta Knight. Using all of his power",
+     "files_count": 13,
+     "format": [
+      "Archive BitTorrent",
+      "HTML",
+      "Item Tile",
+      "JSON",
+      "Metadata",
+      "PNG",
+      "Unknown"
+     ],
+     "identifier": "smackjeeves-194733",
+     "item_size": 704693,
+     "mediatype": "image",
+     "title": "Kirby: The Search for Meta Kight (194733)"
+    },
+    {
+     "collection": [
+      "opensource_image"
+     ],
+     "creator": "bacon_knight222",
+     "description": "Dess Knight pixel art",
+     "files_count": 7,
+     "format": [
+      "Archive BitTorrent",
+      "Item Tile",
+      "JPEG",
+      "JPEG Thumb",
+      "Metadata"
+     ],
+     "identifier": "dess-knight-pixel-art",
+     "item_size": 150245,
+     "mediatype": "image",
+     "title": "Dess Knight Pixel Art"
+    },
+    {
+     "collection": [
+      "opensource_image"
+     ],
+     "creator": "ChaosKres",
+     "date": "2026-01-13T00:00:00Z",
+     "description": "An Erotic Monster Girl variant of the Moss Mother from Hollow Knight: Silksong",
+     "files_count": 7,
+     "format": [
+      "Archive BitTorrent",
+      "Item Tile",
+      "JPEG Thumb",
+      "Metadata",
+      "PNG"
+     ],
+     "identifier": "moss-mother-nips-out",
+     "item_size": 62133,
+     "licenseurl": "https://creativecommons.org/licenses/by-nc/4.0/",
+     "mediatype": "image",
+     "title": "Moss Mother Nips Out"
+    }
+   ]
+  }
+ },
+ "audio_packs": {
+  "query": "(rain) AND mediatype:(audio) AND format:(ZIP OR RAR OR 7z)",
+  "response": {
+   "numFound": 3169,
+   "start": 0,
+   "docs": [
+    {
+     "collection": [
+      "opensource_audio"
+     ],
+     "description": "rain",
+     "files_count": 6,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "lena-raine-celeste-original-soundtrack",
+     "item_size": 1525742198,
+     "mediatype": "audio",
+     "title": "Lena Reign"
+    },
+    {
+     "collection": [
+      "discography-archive",
+      "folksoundomy"
+     ],
+     "creator": "SMALL SONGS",
+     "description": "Blogger Contained Releases 1984 12 1 Ran Blake Georgetown University 1988 Muhal Richard Abrams and Marian McPartland - NPR Piano Jazz 04478 Jimmy Scott Umbria Jazz, Perugia, Teatro Pavone (Italy) 2001",
+     "files_count": 101,
+     "format": [
+      "Archive BitTorrent",
+      "Columbia Peaks",
+      "Derivation Rules",
+      "Item Tile",
+      "JPEG Thumb",
+      "Metadata",
+      "PNG",
+      "RAR",
+      "Spectrogram",
+      "VBR MP3",
+      "ZIP"
+     ],
+     "identifier": "small-songs-full-archive",
+     "item_size": 29071099983,
+     "mediatype": "audio",
+     "title": "(Blogger) SMALL SONGS Full Archive"
+    },
+    {
+     "collection": [
+      "folksoundomy_japaneserock",
+      "folksoundomy"
+     ],
+     "creator": "SULFURIC ACID",
+     "date": "2006-10-11T00:00:00Z",
+     "description": "SULFURIC ACID was a visual kei band in Aichi. They were part of the art kei and kote kei subgenres. They were active from 2002 to 2006 and are now disbanded. (mini-album) Sulfur Drug (2005.03.15) 01. ",
+     "files_count": 10,
+     "format": [
+      "Archive BitTorrent",
+      "Metadata",
+      "RAR"
+     ],
+     "identifier": "06-kyousei-inyou-03-06-ongeshu",
+     "item_size": 244358175,
+     "mediatype": "audio",
+     "title": "SULFURIC ACID Discography"
+    },
+    {
+     "collection": [
+      "opensource_audio",
+      "community"
+     ],
+     "creator": "drill records [132]",
+     "description": "01 EXIT project-Two Naguahls 02 EXIT project-S.R 03 EXIT project-Zoheanum 04 EXIT project-Sad Dance 05 EXIT project-Space Rain 06 EXIT project-Happy cry 07 EXIT project-No Words 08 EXIT project-Off th",
+     "files_count": 7,
+     "format": [
+      "Archive BitTorrent",
+      "Item Tile",
+      "JPEG",
+      "JPEG Thumb",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "ExitProject-exclusiveCollection",
+     "item_size": 76622340,
+     "licenseurl": "http://creativecommons.org/publicdomain/zero/1.0/",
+     "mediatype": "audio",
+     "title": "EXIT project-Exclusive collection"
+    },
+    {
+     "collection": [
+      "ourmedia",
+      "community"
+     ],
+     "creator": "max",
+     "description": "rain stick sounds",
+     "files_count": 16,
+     "format": [
+      "64Kbps M3U",
+      "64Kbps MP3",
+      "64Kbps MP3 ZIP",
+      "AIFF",
+      "Archive BitTorrent",
+      "Item Tile",
+      "Metadata",
+      "Ogg Vorbis",
+      "PNG",
+      "VBR M3U",
+      "VBR MP3",
+      "VBR ZIP"
+     ],
+     "identifier": "maxrainstick",
+     "item_size": 549363,
+     "licenseurl": "http://creativecommons.org/licenses/by/2.5/",
+     "mediatype": "audio",
+     "title": "rain stick"
+    },
+    {
+     "collection": [
+      "discographyrecords",
+      "netlabels",
+      "fav-qool",
+      "fav-vadim_s_sabinich"
+     ],
+     "creator": "The Ungoo Rain",
+     "date": "2016-01-01T00:00:00Z",
+     "description": "2009 - T.U.R 2010 - Music from the outlet 2011 - Vera 2012 - Part IV 2013 - Asura 2014 - Raw Crazy Metal 2015 - d.u.m.p (improvisation) 2016 - Peresofinikacia 2016 - Phoque them All-Silence the Voices",
+     "files_count": 8,
+     "format": [
+      "Archive BitTorrent",
+      "Item Tile",
+      "JPEG",
+      "JPEG Thumb",
+      "Metadata",
+      "ZIP"
+     ],
+     "identifier": "The_Ungoo_Rain",
+     "item_size": 753001088,
+     "mediatype": "audio",
+     "title": "The Ungoo Rain - Discography (2009-2016)"
+    }
+   ]
+  }
+ }
+}

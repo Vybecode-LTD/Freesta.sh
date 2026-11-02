@@ -9,14 +9,16 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from freestash.categories_data import CATEGORIES
+from freestash.categories_data import CATEGORIES, PACK_WORDS
 from freestash.models import MediaType, ParsedQuery, QueryPick
 
 FILLER = frozenset({"a", "an", "the", "of", "for", "with", "and", "or"})
 MAX_PHRASE = 3
 _PUNCT = ".,;:!?\"'()[]{}"
 
-WORDS: dict[str, MediaType] = {w: MediaType(c["id"]) for c in CATEGORIES for w in c["words"]}
+# A word picks a category, or (None) turns packs on: "sfx pack" (contract packs-and-new-kinds)
+WORDS: dict[str, MediaType | None] = {**{w: MediaType(c["id"]) for c in CATEGORIES for w in c["words"]},
+                                      **dict.fromkeys(PACK_WORDS)}
 ORDER: dict[MediaType, int] = {MediaType(c["id"]): i for i, c in enumerate(CATEGORIES)}
 
 
@@ -25,7 +27,7 @@ def _norm(token: str) -> str:
 
 
 def parse_query(text: str, keep: Iterable[str] = ()) -> ParsedQuery:
-    """Read category words out of `text`. Words in `keep` (any case) stay in the query. Pure."""
+    """Read category and pack words out of `text`. Words in `keep` (any case) stay in the query. Pure."""
     kept = {" ".join(_norm(t) for t in k.split()) for k in keep}  # a chip's word comes back as typed: "SFX!"
     tokens = text.split()
     norm = [_norm(t) for t in tokens]
@@ -39,7 +41,8 @@ def parse_query(text: str, keep: Iterable[str] = ()) -> ParsedQuery:
                 if phrase in kept:
                     rest += tokens[i:i + n]
                 else:
-                    picks.append(QueryPick(word=" ".join(tokens[i:i + n]), media_type=WORDS[phrase]))
+                    kind = WORDS[phrase]
+                    picks.append(QueryPick(word=" ".join(tokens[i:i + n]), media_type=kind, packs=kind is None))
                 i += n
                 break
         else:
@@ -52,5 +55,6 @@ def parse_query(text: str, keep: Iterable[str] = ()) -> ParsedQuery:
             rest.pop()
     if not picks or not rest:  # nothing left to search for: read every word as a word
         return ParsedQuery(original=text, q=" ".join(tokens))
-    media = sorted({p.media_type for p in picks}, key=ORDER.__getitem__)
-    return ParsedQuery(original=text, q=" ".join(rest), media_types=media, picks=picks)
+    media = sorted({p.media_type for p in picks if p.media_type}, key=ORDER.__getitem__)
+    return ParsedQuery(original=text, q=" ".join(rest), media_types=media, packs=any(p.packs for p in picks),
+                       picks=picks)

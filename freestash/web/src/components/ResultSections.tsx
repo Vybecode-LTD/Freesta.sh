@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { groupResults, isGrouped, SECTION_SIZE } from "../lib/results";
+import { groupResults, isGrouped, leadPacks, SECTION_SIZE } from "../lib/results";
 import type { MediaType, ScoredAsset } from "../lib/types";
 import { AssetCard } from "./AssetCard";
 
-/** Results in one grid for one medium, or one section per category with a jump bar for several
+/** Results in one grid for one medium, or one section per category with a jump bar for several, packs first in each
  *  (desktop: the sections in SearchView.axaml; same words). `searchKey` changes per search: it closes every section. */
 export function ResultSections({ results, media, searchKey, onOpen }: {
   results: ScoredAsset[]; media: MediaType[]; searchKey: string; onOpen: (item: ScoredAsset) => void;
@@ -11,7 +11,7 @@ export function ResultSections({ results, media, searchKey, onOpen }: {
   const [expanded, setExpanded] = useState<ReadonlySet<MediaType>>(new Set());
   useEffect(() => setExpanded(new Set()), [searchKey]);
 
-  if (!isGrouped(media)) return <div className="grid">{results.map((r) => <AssetCard key={r.uid} item={r} onOpen={onOpen} />)}</div>;
+  if (!isGrouped(media)) return <div className="grid">{leadPacks(results).map((r) => <AssetCard key={r.uid} item={r} onOpen={onOpen} />)}</div>;
 
   const sections = groupResults(results, expanded);
   const toggle = (id: MediaType) => setExpanded((prev) => {

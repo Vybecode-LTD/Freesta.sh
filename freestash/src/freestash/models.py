@@ -18,6 +18,9 @@ class MediaType(StrEnum):
     MODEL = "model"  # 3D models
     FONT = "font"
     ICON = "icon"
+    BRUSH = "brush"  # Photoshop .abr, Procreate .brushset, Krita .bundle, GIMP .gbr
+    SHAPE = "shape"  # Photoshop .csh custom shapes, SVG shape sets
+    SPRITE = "sprite"  # 2D sprites, tilesets, UI kits
 
 
 class Trust(StrEnum):
@@ -102,6 +105,14 @@ class Asset(BaseModel):
     notes: list[str] = Field(default_factory=list)  # usage/legal caveats; surfaced as obligations
     tips: list[str] = Field(default_factory=list)  # practical, non-legal hints (file sizes, install commands)
     detail_required: bool = False  # True when renditions need a follow-up `get_asset` call
+    # A pack is one result holding many files (an icon set, a sound pack, an archive). Contract packs-and-new-kinds.
+    is_pack: bool = False
+    item_count: int | None = None  # files in the pack, when known
+    formats: list[str] = Field(default_factory=list)  # lowercase extensions inside: ["wav", "mp3"]
+    # When the source licenses each file: their distinct licenses and how many files were read. None = `license`
+    # covers the whole pack, stated by its publisher. For a per-file pack `license` is the strictest member's.
+    member_licenses: list[LicenseInfo] = Field(default_factory=list)
+    members_checked: int | None = None
     extra: dict[str, Any] = Field(default_factory=dict)  # small provider-specific values that must survive JSON
     raw: dict[str, Any] | None = Field(default=None, exclude=True)
 
@@ -134,21 +145,24 @@ class SearchQuery(BaseModel):
     providers: list[str] | None = None  # None = every enabled provider that covers the media types
     limit_per_provider: int = Field(default=12, ge=1, le=50)
     page: int = Field(default=1, ge=1)
+    packs: bool = False  # also look for packs (sets, sound packs, archive bundles); not a filter
 
 
 class QueryPick(BaseModel):
-    """A query word read as a category ("sfx" -> audio). `word` is exactly as typed, punctuation and all."""
+    """A query word read as a category ("sfx" -> audio) or as packs ("pack"). `word` is exactly as typed."""
 
     word: str
-    media_type: MediaType
+    media_type: MediaType | None = None
+    packs: bool = False
 
 
 class ParsedQuery(BaseModel):
-    """What `query_words.parse_query` made of the text: search `q` in `media_types` (empty = no pick)."""
+    """What `query_words.parse_query` made of the text: search `q` in `media_types` (empty = no pick), with `packs`."""
 
     original: str
     q: str
     media_types: list[MediaType] = Field(default_factory=list)
+    packs: bool = False
     picks: list[QueryPick] = Field(default_factory=list)
 
 

@@ -11,7 +11,10 @@ having use-case tiers.
 
 from __future__ import annotations
 
-from freestash.licenses import normalize_license
+import asyncio
+import re
+
+from freestash.licenses import normalize_license, strictest_license
 from freestash.models import Asset, LicenseInfo, MediaType, Rendition, Trust
 from freestash.providers.base import Provider, ProviderInfo, ProviderPage, SearchHints, extract_year
 
@@ -25,13 +28,20 @@ def _platform(lic_id: str, label: str, url: str) -> LicenseInfo:
 # ===================================================================== Freesound
 FREESOUND = "https://freesound.org/apiv2"
 _FS_FIELDS = "id,name,username,license,previews,duration,tags,url,type,samplerate,channels,filesize,created,description"
+_FS_PACK = re.compile(r"/packs/(\d+)/?$")
+MAX_PACKS = 6  # pack lookups per search: every member shares the site's daily Freesound quota
+
+
+def _fs_license(raw: str | None) -> LicenseInfo:
+    raw = raw or ""
+    return normalize_license(None, raw) if raw.startswith("http") else normalize_license(raw)
 
 
 def parse_freesound(s: dict) -> Asset:
     previews = s.get("previews") or {}
     return Asset(
         provider="freesound", source_id=str(s["id"]), title=s.get("name") or str(s["id"]), media_type=MediaType.AUDIO,
-        license=normalize_license(None, s.get("license")) if s.get("license", "").startswith("http") else normalize_license(s.get("license")),
+        license=_fs_license(s.get("license")),
         trust=Trust.UPLOADER, landing_url=s.get("url"), creator=s.get("username"),
         creator_url=f"https://freesound.org/people/{s.get('username')}/" if s.get("username") else None,
         preview_url=previews.get("preview-hq-mp3"),
@@ -41,6 +51,31 @@ def parse_freesound(s: dict) -> Asset:
         tags=(s.get("tags") or [])[:20], description=(s.get("description") or "")[:500] or None,
         tips=["Freesound previews are lossy; the original file needs a logged-in OAuth2 download from the sound page."],
         raw=s,
+    )
+
+
+def parse_freesound_pack(p: dict, sounds: list[dict], *, detail: bool = False) -> Asset:
+    """A Freesound pack. Each sound has its own license, so the pack is cleared by the sounds read: from a search,
+    the one that matched; from the detail, up to 150 (contract packs-and-new-kinds)."""
+    lics: list[LicenseInfo] = []
+    for s in sounds:
+        lic = _fs_license(s.get("license"))
+        if all(lic.id != seen.id for seen in lics):
+            lics.append(lic)
+    user = p.get("username")
+    return Asset(
+        provider="freesound", source_id=f"pack:{p['id']}", title=p.get("name") or f"Pack {p['id']}",
+        media_type=MediaType.AUDIO,
+        license=strictest_license(lics, Trust.UPLOADER, MediaType.AUDIO) if lics else
+        LicenseInfo(id="RIGHTS-UNKNOWN", label="No license read yet"),
+        trust=Trust.UPLOADER, landing_url=p.get("url"), creator=user,
+        creator_url=f"https://freesound.org/people/{user}/" if user else None,
+        preview_url=next(((s.get("previews") or {}).get("preview-hq-mp3") for s in sounds if s.get("previews")), None),
+        date=p.get("created"), description=(p.get("description") or "")[:500] or None,
+        tips=["Downloading the whole pack needs a Freesound login: open the pack's page."],
+        detail_required=not detail, is_pack=True, item_count=p.get("num_sounds"),
+        formats=list(dict.fromkeys(str(s["type"]).lower() for s in sounds if s.get("type"))),
+        member_licenses=lics, members_checked=len(sounds), raw=p,
     )
 
 
@@ -58,12 +93,36 @@ class FreesoundProvider(Provider):
                                         "page_size": min(limit, 150), "page": page}
         if hints.commercial_only:
             params["filter"] = 'license:("Creative Commons 0" OR "Attribution")'
+        if hints.packs:  # one sound per pack comes back, carrying its pack's URI
+            params["fields"] = f"{_FS_FIELDS},pack"
+            params["group_by_pack"] = 1
         data = await self.http.get_json(f"{FREESOUND}/search/text/", params=params)
-        return ProviderPage(assets=[parse_freesound(s) for s in data.get("results", [])], total=data.get("count"))
+        results = data.get("results", [])
+        packs = await self._packs(results) if hints.packs else []
+        return ProviderPage(assets=packs + [parse_freesound(s) for s in results], total=data.get("count"))
+
+    async def _packs(self, results: list[dict]) -> list[Asset]:
+        """The packs the matching sounds belong to; a pack whose lookup fails is left out (its sound stays)."""
+        firsts: dict[str, dict] = {}
+        for s in results:
+            if (m := _FS_PACK.search(s.get("pack") or "")) and m.group(1) not in firsts:
+                firsts[m.group(1)] = s
+        ids = list(firsts)[:MAX_PACKS]
+        got = await asyncio.gather(*(self.http.get_json(f"{FREESOUND}/packs/{i}/", params={"token": self.key() or ""},
+                                                        cache_ttl=DAY) for i in ids), return_exceptions=True)
+        return [parse_freesound_pack(p, [firsts[i]]) for i, p in zip(ids, got, strict=True) if isinstance(p, dict)]
 
     async def get(self, source_id: str) -> Asset:
+        kind, _, pack_id = source_id.partition(":")
+        token = {"token": self.key() or ""}
+        if kind == "pack":
+            pack, sounds = await asyncio.gather(
+                self.http.get_json(f"{FREESOUND}/packs/{pack_id}/", params=token, cache_ttl=DAY),
+                self.http.get_json(f"{FREESOUND}/packs/{pack_id}/sounds/", cache_ttl=DAY,
+                                   params={**token, "fields": "id,license,type,previews", "page_size": 150}))
+            return parse_freesound_pack(pack, sounds.get("results") or [], detail=True)
         return parse_freesound(await self.http.get_json(f"{FREESOUND}/sounds/{source_id}/",
-                                                        params={"token": self.key() or "", "fields": _FS_FIELDS}))
+                                                        params={**token, "fields": _FS_FIELDS}))
 
 
 # ===================================================================== Pexels

@@ -46,10 +46,26 @@ def test_search_and_stream(client):
 def test_parse_reads_category_words_and_keeps_what_it_is_told(client):
     r = client.get("/api/search/parse", params={"q": "sound of rain sfx"})
     assert r.status_code == 200
-    assert r.json() == {"original": "sound of rain sfx", "q": "rain", "media_types": ["audio"],
-                        "picks": [{"word": "sound", "media_type": "audio"}, {"word": "sfx", "media_type": "audio"}]}
+    assert r.json() == {"original": "sound of rain sfx", "q": "rain", "media_types": ["audio"], "packs": False,
+                        "picks": [{"word": "sound", "media_type": "audio", "packs": False},
+                                  {"word": "sfx", "media_type": "audio", "packs": False}]}
     kept = client.get("/api/search/parse", params={"q": "sound of rain sfx", "keep": ["sound"]}).json()
     assert kept["q"] == "sound of rain" and [p["word"] for p in kept["picks"]] == ["sfx"]
+    pack = client.get("/api/search/parse", params={"q": "rain sfx pack"}).json()
+    assert pack["packs"] is True and pack["picks"][-1] == {"word": "pack", "media_type": None, "packs": True}
+
+
+@respx.mock
+def test_packs_reach_the_providers_from_both_search_routes(client):
+    respx.get("https://api.iconify.design/collections").mock(return_value=httpx.Response(200, json=load("iconify_collections")))
+    respx.get("https://api.iconify.design/search").mock(return_value=httpx.Response(200, json=load("iconify_search")))
+    body = {"q": "game", "media_types": ["icon"], "providers": ["iconify"]}
+    assert not any(r["asset"]["is_pack"] for r in client.post("/api/search", json=body).json()["results"])
+    results = client.post("/api/search", json={**body, "packs": True}).json()["results"]
+    assert results[0]["asset"]["is_pack"] and results[0]["asset"]["item_count"] == 4133
+    params = {"q": "game", "media": ["icon"], "providers": ["iconify"], "packs": "true"}
+    with client.stream("GET", "/api/search/stream", params=params) as s:
+        assert '"source_id":"set:game-icons"' in "".join(s.iter_text()).replace(" ", "")
 
 
 def test_parse_refuses_oversized_input(client):

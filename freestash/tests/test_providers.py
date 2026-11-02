@@ -1,13 +1,25 @@
 """Every adapter's parser against a real (or clearly marked synthetic) recorded response."""
 
-from freestash.models import MediaType, Trust
-from freestash.providers.archives import loc_license, parse_europeana, parse_ia_doc, parse_loc, parse_nasa
+from freestash.licenses import evaluate, normalize_license, strictest_license
+from freestash.models import MediaType, Tier, Trust, UseCase
+from freestash.providers.archives import (
+    InternetArchiveProvider,
+    loc_license,
+    parse_europeana,
+    parse_ia_doc,
+    parse_loc,
+    parse_nasa,
+)
+from freestash.providers.base import SearchHints
 from freestash.providers.design import (
+    IconifyProvider,
     flatten_polyhaven_files,
     parse_ambientcg,
     parse_font,
+    parse_icon_set,
     parse_icons,
     parse_polyhaven,
+    rank_sets,
 )
 from freestash.providers.museums import (
     parse_aic,
@@ -18,7 +30,13 @@ from freestash.providers.museums import (
     parse_vam,
 )
 from freestash.providers.openverse import parse_result, trust_for_source
-from freestash.providers.stock import parse_freesound, parse_pexels_photo, parse_pixabay_image, parse_unsplash
+from freestash.providers.stock import (
+    FreesoundProvider,
+    parse_freesound,
+    parse_pexels_photo,
+    parse_pixabay_image,
+    parse_unsplash,
+)
 from freestash.providers.wikimedia import parse_page
 
 
@@ -148,3 +166,137 @@ def test_stock_synthetic(fixture):
     assert pb.license.id == "PIXABAY" and pb.tags[0] == "lighthouse"
     us = parse_unsplash(fixture("unsplash_search")["results"][0])
     assert us.license.id == "UNSPLASH" and us.extra["download_location"].startswith("https://api.unsplash.com/")
+
+
+# ----------------------------------------------------------------------------- packs (contract packs-and-new-kinds)
+
+class FakeHttp:
+    """Answers get_json from fixtures by URL fragment (first match); an Exception answer is raised. Records each call."""
+
+    def __init__(self, routes: list[tuple[str, object]]):
+        self.routes = routes
+        self.calls: list[tuple[str, object]] = []
+
+    async def get_json(self, url, params=None, headers=None, *, cache_ttl=None):
+        self.calls.append((url, params))
+        for fragment, answer in self.routes:
+            if fragment in url:
+                if isinstance(answer, Exception):
+                    raise answer
+                return answer
+        raise AssertionError(f"unexpected request {url}")
+
+
+def test_iconify_set_is_a_pack_with_one_license(fixture):
+    colls = fixture("iconify_collections")
+    s = parse_icon_set("game-icons", colls["game-icons"])
+    assert (s.source_id, s.title, s.is_pack, s.item_count, s.formats) == ("set:game-icons", "Game Icons", True, 4133,
+                                                                          ["svg", "json"])
+    assert s.license.id == "CC-BY-3.0" and s.members_checked is None and s.trust == Trust.COMMUNITY
+    assert s.renditions[0].url == "https://cdn.jsdelivr.net/npm/@iconify-json/game-icons/icons.json"
+    assert s.landing_url == "https://icon-sets.iconify.design/game-icons/"
+    assert s.thumbnail_url.endswith("/game-icons/diamond-trophy.svg")
+    assert parse_icon_set("gridicons", colls["gridicons"]).license.id.startswith("GPL")
+
+
+def test_iconify_sets_rank_by_the_query_and_skip_hidden_sets(fixture):
+    colls = fixture("iconify_collections")
+    assert [p for p, _ in rank_sets(colls, "game")][:1] == ["game-icons"]
+    assert "whh" not in [p for p, _ in rank_sets(colls, "icons")]  # hidden: archived by Iconify
+    assert rank_sets(colls, "zzzz") == []
+
+
+async def test_iconify_looks_for_sets_only_with_packs(fixture, settings):
+    http = FakeHttp([("/collections", fixture("iconify_collections")), ("/search", fixture("iconify_search"))])
+    p = IconifyProvider(http, settings)
+    plain = await p.search("game", {MediaType.ICON}, 12, 1, SearchHints())
+    assert not any(a.is_pack for a in plain.assets) and all("/collections" not in u for u, _ in http.calls)
+    packs = await p.search("game", {MediaType.ICON}, 12, 1, SearchHints(packs=True))
+    assert packs.assets[0].source_id == "set:game-icons" and not packs.assets[-1].is_pack
+    assert (await p.get("set:tabler")).item_count == 6257
+
+
+async def test_freesound_groups_by_pack_and_adds_the_packs(fixture, settings):
+    fx = fixture("freesound_packs_synthetic")
+    http = FakeHttp([("/packs/9876/", fx["pack"]), ("/packs/4321/", RuntimeError("gone")), ("/search/text/", fx["search"])])
+    settings.freesound_api_key = "k"
+    page = await FreesoundProvider(http, settings).search("sword", {MediaType.AUDIO}, 12, 1, SearchHints(packs=True))
+    search_params = next(params for url, params in http.calls if "/search/text/" in url)
+    assert search_params["group_by_pack"] == 1 and "pack" in search_params["fields"].split(",")
+    packs = [a for a in page.assets if a.is_pack]
+    assert [a.source_id for a in packs] == ["pack:9876"]  # 4321's lookup failed: its pack is left out, its sound stays
+    pack = packs[0]
+    assert (pack.title, pack.item_count, pack.members_checked, pack.formats) == ("Medieval Swords", 4, 1, ["wav"])
+    assert pack.detail_required and pack.preview_url.endswith("512001_1-hq.mp3") and not pack.renditions
+    assert pack.landing_url == "https://freesound.org/people/ArmouryFoley/packs/9876/"
+    assert len([a for a in page.assets if not a.is_pack]) == 3
+    assert evaluate(pack, UseCase.DEMO).tier == Tier.YELLOW  # 1 of 4 files read
+
+    http.calls.clear()
+    await FreesoundProvider(http, settings).search("sword", {MediaType.AUDIO}, 12, 1, SearchHints())
+    assert [u for u, _ in http.calls if "/packs/" in u] == [] and "group_by_pack" not in http.calls[0][1]
+
+
+async def test_freesound_pack_detail_reads_every_files_license(fixture, settings):
+    fx = fixture("freesound_packs_synthetic")
+    http = FakeHttp([("/packs/9876/sounds/", fx["pack_sounds"]), ("/packs/9876/", fx["pack"])])
+    pack = await FreesoundProvider(http, settings).get("pack:9876")
+    assert (pack.members_checked, pack.item_count, pack.formats, pack.detail_required) == (4, 4, ["wav", "mp3"], False)
+    assert sorted(lic.id for lic in pack.member_licenses) == ["CC-BY-4.0", "CC0-1.0"]
+    assert pack.license.id == "CC-BY-4.0"  # the strictest member, for the card and the ledger
+    v = evaluate(pack, UseCase.BUNDLED)
+    assert v.tier == Tier.YELLOW and any("Credit required" in o for o in v.obligations)  # uploader trust; CC BY credit
+    sounds_params = next(params for url, params in http.calls if url.endswith("/sounds/"))
+    assert sounds_params["page_size"] == 150
+
+
+def test_internet_archive_items_holding_an_archive_are_packs(fixture):
+    docs = {d["identifier"]: parse_ia_doc(d) for d in fixture("ia_packs")["audio_packs"]["response"]["docs"]}
+    celeste = docs["lena-raine-celeste-original-soundtrack"]
+    assert celeste.is_pack and celeste.formats == ["zip"] and celeste.item_count is None
+    assert docs["06-kyousei-inyou-03-06-ongeshu"].formats == ["rar"]
+    assert set(docs["small-songs-full-archive"].formats) >= {"zip", "rar", "mp3"}
+    rainstick = docs["maxrainstick"]  # only IA's own derived zips ("VBR ZIP"): an album, not a pack
+    assert not rainstick.is_pack and {"mp3", "ogg", "aiff"} <= set(rainstick.formats) and "zip" not in rainstick.formats
+
+
+async def test_internet_archive_searches_each_new_kind_and_packs(fixture, settings):
+    fx = fixture("ia_packs")
+
+    class Http(FakeHttp):
+        async def get_json(self, url, params=None, headers=None, *, cache_ttl=None):
+            self.calls.append((url, params))
+            q = dict(params)["q"]
+            key = ("brush" if "brushes" in q else "sprite" if "spritesheet" in q
+                   else "audio_packs" if "format:" in q else None)
+            return {"response": fx[key]["response"]} if key else {"response": {"docs": [], "numFound": 0}}
+
+    http = Http([])
+    page = await InternetArchiveProvider(http, settings).search(
+        "grunge", {MediaType.AUDIO, MediaType.BRUSH, MediaType.SPRITE}, 6, 1, SearchHints(packs=True))
+    queries = [dict(p)["q"] for _, p in http.calls]
+    assert len(queries) == 4  # audio, audio packs, brushes, sprites
+    assert all("mediatype:(image OR data)" in q for q in queries if "brushes" in q or "spritesheet" in q)
+    brushes = [a for a in page.assets if a.media_type == MediaType.BRUSH]
+    assert brushes and all(a.source_id.startswith("brush:") and a.is_pack for a in brushes)
+    assert any(a.media_type == MediaType.SPRITE for a in page.assets)
+    assert len({a.uid for a in page.assets}) == len(page.assets)
+
+    http.calls.clear()
+    await InternetArchiveProvider(http, settings).search("grunge", {MediaType.AUDIO}, 6, 1, SearchHints())
+    assert len(http.calls) == 1 and "format:" not in dict(http.calls[0][1])["q"]
+
+
+async def test_internet_archive_detail_keeps_the_kind(fixture, settings):
+    http = FakeHttp([("/metadata/", fixture("ia_metadata"))])
+    a = await InternetArchiveProvider(http, settings).get("sprite:lighthouse-keeping-1932")
+    assert (a.media_type, a.source_id, a.landing_url) == (
+        MediaType.SPRITE, "sprite:lighthouse-keeping-1932", "https://archive.org/details/lighthouse-keeping-1932")
+    assert http.calls[0][0].endswith("/metadata/lighthouse-keeping-1932")
+    assert a.renditions and not a.is_pack and "mp4" in a.formats
+
+
+def test_strictest_license_picks_the_member_that_clears_least():
+    lics = [normalize_license("CC0-1.0"), normalize_license("CC-BY-NC-4.0"), normalize_license("CC-BY-4.0")]
+    assert strictest_license(lics, Trust.UPLOADER).id == "CC-BY-NC-4.0"
+    assert strictest_license(lics[::2], Trust.UPLOADER).id == "CC-BY-4.0"  # same tiers: the one with obligations

@@ -80,7 +80,7 @@
 
         <!-- facts -->
         <Border Classes="inset" Padding="14,12">
-          <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+          <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
             <TextBlock Text="LICENSE" Classes="caption" Margin="0,3" />
             <Button Grid.Column="1" Classes="link" HorizontalAlignment="Left" Content="{Binding LicenseLabel}"
                     Command="{Binding OpenUrlCommand}" CommandParameter="{Binding LicenseUrl}" />
@@ -88,10 +88,17 @@
             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TrustText}" Margin="0,4,0,0" />
             <TextBlock Grid.Row="2" Text="SOURCE" Classes="caption" Margin="0,6,0,3" />
             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SourceText}" Margin="0,4,0,0" />
-            <TextBlock Grid.Row="3" Text="SIZE" Classes="caption" Margin="0,6,0,3" IsVisible="{Binding HasSize}" />
-            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SizeText}" Classes="mono" Margin="0,5,0,0" IsVisible="{Binding HasSize}" />
-            <TextBlock Grid.Row="4" Text="AS STATED" Classes="caption" Margin="0,6,0,3" IsVisible="{Binding HasRawLicense}" />
-            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding RawLicense}" Classes="mono faint" TextWrapping="Wrap" Margin="0,5,0,0" IsVisible="{Binding HasRawLicense}" />
+            <!-- a pack: the web drawer's Pack / Formats / Licenses inside rows -->
+            <TextBlock Grid.Row="3" Text="PACK" Classes="caption" Margin="0,6,0,3" IsVisible="{Binding IsPack}" />
+            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding PackFilesText}" Margin="0,4,0,0" IsVisible="{Binding IsPack}" />
+            <TextBlock Grid.Row="4" Text="FORMATS" Classes="caption" Margin="0,6,0,3" IsVisible="{Binding HasFormats}" />
+            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding FormatsText}" Classes="mono" Margin="0,5,0,0" IsVisible="{Binding HasFormats}" />
+            <TextBlock Grid.Row="5" Text="LICENSES INSIDE" Classes="caption" TextWrapping="Wrap" Margin="0,6,8,3" IsVisible="{Binding HasLicensesInside}" />
+            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding LicensesInside}" TextWrapping="Wrap" Margin="0,4,0,0" IsVisible="{Binding HasLicensesInside}" />
+            <TextBlock Grid.Row="6" Text="SIZE" Classes="caption" Margin="0,6,0,3" IsVisible="{Binding HasSize}" />
+            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SizeText}" Classes="mono" Margin="0,5,0,0" IsVisible="{Binding HasSize}" />
+            <TextBlock Grid.Row="7" Text="AS STATED" Classes="caption" Margin="0,6,0,3" IsVisible="{Binding HasRawLicense}" />
+            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding RawLicense}" Classes="mono faint" TextWrapping="Wrap" Margin="0,5,0,0" IsVisible="{Binding HasRawLicense}" />
           </Grid>
         </Border>
 

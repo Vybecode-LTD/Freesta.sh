@@ -8,7 +8,7 @@ from freestash.query_words import parse_query
 
 def picks(text, keep=()):
     p = parse_query(text, keep)
-    return p.q, [(k.word, k.media_type.value) for k in p.picks], [m.value for m in p.media_types]
+    return p.q, [(k.word, k.media_type.value if k.media_type else "packs") for k in p.picks], [m.value for m in p.media_types]
 
 
 def test_a_category_word_becomes_a_pick_and_leaves_the_query():
@@ -77,6 +77,36 @@ def test_words_inside_other_words_never_match():
     assert picks("iconography soundscape fontaine")[1] == []
 
 
+# ----------------------------------------------------------------------------- pack words (contract packs-and-new-kinds)
+
+def test_a_pack_word_turns_packs_on_and_leaves_the_media_alone():
+    p = parse_query("medieval sword sfx pack")
+    assert (p.q, [m.value for m in p.media_types], p.packs) == ("medieval sword", ["audio"], True)
+    assert [(k.word, k.media_type, k.packs) for k in p.picks] == [("sfx", MediaType.AUDIO, False), ("pack", None, True)]
+    p = parse_query("pack of wolves")
+    assert (p.q, p.media_types, p.packs) == ("wolves", [], True)
+
+
+def test_without_a_pack_word_packs_stay_off():
+    assert parse_query("rain sfx").packs is False
+
+
+def test_a_kept_pack_word_stays_a_word():
+    p = parse_query("pack of wolves", keep=["pack"])
+    assert (p.q, p.picks, p.packs) == ("pack of wolves", [], False)
+
+
+def test_only_pack_and_category_words_means_no_pick():
+    p = parse_query("icon pack")
+    assert (p.q, p.picks, p.packs) == ("icon pack", [], False)
+
+
+def test_the_new_kinds_have_words():
+    assert picks("grunge photoshop brushes")[1:] == ([("photoshop brushes", "brush")], ["brush"])
+    assert picks("knight sprite sheet pack")[1:] == ([("sprite sheet", "sprite"), ("pack", "packs")], ["sprite"])
+    assert picks("arrow custom shapes")[1:] == ([("custom shapes", "shape")], ["shape"])
+
+
 async def test_mcp_search_reads_words_only_when_no_media_is_given(monkeypatch):
     from datetime import UTC, datetime
 
@@ -97,8 +127,12 @@ async def test_mcp_search_reads_words_only_when_no_media_is_given(monkeypatch):
 
     monkeypatch.setattr(mcp_server, "_engine", Engine())
     read = await mcp_server.search_assets("rain sfx")
-    assert (read["searched_for"], read["read_as"]) == ("rain", [{"word": "sfx", "media_type": "audio"}])
-    assert [m.value for m in seen[-1].media_types] == ["audio"]
+    assert (read["searched_for"], read["read_as"]) == ("rain", [{"word": "sfx", "media_type": "audio", "packs": False}])
+    assert [m.value for m in seen[-1].media_types] == ["audio"] and seen[-1].packs is False
+    packed = await mcp_server.search_assets("rain sfx pack")
+    assert packed["read_as"][-1] == {"word": "pack", "media_type": None, "packs": True} and seen[-1].packs is True
+    await mcp_server.search_assets("rain", packs=True)
+    assert seen[-1].packs is True
     for kwargs in ({"media_types": [MediaType.VIDEO]}, {"literal": True}):
         out = await mcp_server.search_assets("rain sfx", **kwargs)
         assert (out["searched_for"], out["read_as"], seen[-1].q) == ("rain sfx", [], "rain sfx")

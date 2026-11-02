@@ -84,6 +84,25 @@
               <DataTemplate DataType="vm:OptionBase"><ToggleButton Classes="chip" Content="{Binding Label}" IsChecked="{Binding IsSelected}" /></DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+          <ItemsControl ItemsSource="{Binding Presets}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:OptionBase">
+                <ToggleButton Classes="chip" Content="{Binding Label}" ToolTip.Tip="{Binding Hint}" IsChecked="{Binding IsSelected}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="PACKS" Classes="caption" VerticalAlignment="Center" Margin="0,0,6,0" />
+          <ItemsControl x:Name="PacksItems" ItemsSource="{Binding PacksOptions}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:OptionBase">
+                <RadioButton GroupName="search-packs" IsChecked="{Binding IsSelected}" ToolTip.Tip="{Binding Hint}" Theme="{StaticResource PillRadioTheme}" Content="{Binding Label}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Spacing="6">
           <TextBlock Text="USE" Classes="caption" VerticalAlignment="Center" Margin="0,0,6,0" />

@@ -1,7 +1,7 @@
 // Mirrors src/freestash/models.py. Keep in sync when the Python models change.
 import { CATEGORIES } from "./categories";
 
-export type MediaType = "image" | "audio" | "video" | "texture" | "hdri" | "model" | "font" | "icon";
+export type MediaType = "image" | "audio" | "video" | "texture" | "hdri" | "model" | "font" | "icon" | "brush" | "shape" | "sprite";
 export type UseCase = "reference" | "demo" | "client" | "bundled" | "merch";
 export type Tier = "green" | "yellow" | "red";
 export type Trust = "institution" | "government" | "curated" | "community" | "uploader" | "unknown";
@@ -35,6 +35,13 @@ export interface Asset {
   tips: string[];
   detail_required: boolean;
   extra: Record<string, unknown>;
+  /** One result holding many files (contract packs-and-new-kinds). */
+  is_pack: boolean;
+  item_count: number | null;
+  formats: string[];
+  /** When the source licenses each file: their distinct licenses and how many files were read (null: `license` covers it all). */
+  member_licenses: LicenseInfo[];
+  members_checked: number | null;
 }
 
 export interface Verdict { use_case: UseCase; tier: Tier; reasons: string[]; obligations: string[]; attribution?: string | null }
@@ -104,10 +111,11 @@ export const SHOW_OPTIONS: { id: Tier; label: string; hint: string }[] = [
 /** The Media filter: one pill per category, labelled and ordered by shared/categories.json (as on the desktop). */
 export const MEDIA_TYPES: readonly { id: MediaType; label: string }[] = CATEGORIES;
 
-/** A query word read as a category ("sfx" → audio); `word` is exactly as typed. Mirrors models.QueryPick. */
-export interface QueryPick { word: string; media_type: MediaType }
-/** What the engine made of a query (`GET /api/search/parse`). Empty `media_types` means nothing was picked. */
-export interface ParsedQuery { original: string; q: string; media_types: MediaType[]; picks: QueryPick[] }
+/** A query word read as a category ("sfx" → audio) or as packs ("pack": no media_type); `word` is exactly as typed.
+ *  Mirrors models.QueryPick. */
+export interface QueryPick { word: string; media_type: MediaType | null; packs: boolean }
+/** What the engine made of a query (`GET /api/search/parse`). Empty `media_types` means no medium was picked. */
+export interface ParsedQuery { original: string; q: string; media_types: MediaType[]; packs: boolean; picks: QueryPick[] }
 
 export const USE_CASES: { id: UseCase; label: string; hint: string }[] = [
   { id: "reference", label: "Reference", hint: "Mood boards and internal reference. Never shipped or shown." },

@@ -33,6 +33,21 @@ def test_categories_are_the_media_types_and_no_word_picks_two():
     assert all(c["label"].strip() for c in cats)
 
 
+def test_pack_words_and_presets_are_well_formed():
+    from freestash.models import MediaType
+
+    data = json.loads((REPO / "shared" / "categories.json").read_text(encoding="utf-8"))
+    category_words = {w for c in data["categories"] for w in c["words"]}
+    pack_words = data["pack_words"]
+    assert pack_words and not category_words & set(pack_words), "a pack word is also a category word"
+    assert all(w == " ".join(w.lower().split()) and len(w.split()) <= 3 for w in pack_words), pack_words
+    media = {m.value for m in MediaType}
+    assert data["presets"], "the Game assets preset is missing"
+    for p in data["presets"]:
+        assert p["id"] and p["label"].strip() and isinstance(p["packs"], bool), p
+        assert p["media"] and set(p["media"]) <= media and len(set(p["media"])) == len(p["media"]), p
+
+
 def test_both_apps_list_the_same_screens_in_the_same_order():
     web = (REPO / "freestash/web/src/App.tsx").read_text(encoding="utf-8")
     desktop = (REPO / "freestash-desktop/src/Freestash.Desktop/ViewModels/MainWindowViewModel.cs").read_text(encoding="utf-8")

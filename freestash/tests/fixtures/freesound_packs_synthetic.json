@@ -1,0 +1,56 @@
+{
+  "_synthetic": "Hand-built from the documented APIv2 shapes (text search with group_by_pack=1, Pack instance, Pack sounds); re-record with a real key (IMPLEMENTATION.md P1).",
+  "search": {
+    "count": 3,
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "id": 512001, "name": "sword_clash_03.wav", "username": "ArmouryFoley",
+        "license": "http://creativecommons.org/publicdomain/zero/1.0/", "duration": 1.2,
+        "tags": ["sword", "clash", "medieval"], "url": "https://freesound.org/people/ArmouryFoley/sounds/512001/",
+        "type": "wav", "samplerate": 48000, "channels": 2, "filesize": 230400, "created": "2020-05-01T09:00:00",
+        "description": "Two longswords striking.",
+        "previews": {"preview-hq-mp3": "https://cdn.freesound.org/previews/512/512001_1-hq.mp3",
+                     "preview-hq-ogg": "https://cdn.freesound.org/previews/512/512001_1-hq.ogg"},
+        "pack": "https://freesound.org/apiv2/packs/9876/",
+        "n_from_same_pack": 3, "more_from_same_pack": "https://freesound.org/apiv2/search/text/?query=sword&filter=grouping_pack:%229876_Medieval%20Swords%22"
+      },
+      {
+        "id": 498877, "name": "blade_draw.flac", "username": "Kestrel",
+        "license": "https://creativecommons.org/licenses/by/4.0/", "duration": 0.8,
+        "tags": ["sword", "draw"], "url": "https://freesound.org/people/Kestrel/sounds/498877/",
+        "type": "flac", "samplerate": 44100, "channels": 1, "filesize": 70560, "created": "2019-11-12T18:30:00",
+        "description": "Drawing a blade from a leather scabbard.",
+        "previews": {"preview-hq-mp3": "https://cdn.freesound.org/previews/498/498877_2-hq.mp3"},
+        "pack": null, "n_from_same_pack": 0, "more_from_same_pack": null
+      },
+      {
+        "id": 455002, "name": "anvil_hit.wav", "username": "SmithyRecords",
+        "license": "http://creativecommons.org/licenses/by-nc/3.0/", "duration": 2.4,
+        "tags": ["anvil", "metal", "medieval"], "url": "https://freesound.org/people/SmithyRecords/sounds/455002/",
+        "type": "wav", "samplerate": 44100, "channels": 2, "filesize": 423360, "created": "2018-03-03T12:00:00",
+        "description": "",
+        "previews": {"preview-hq-mp3": "https://cdn.freesound.org/previews/455/455002_3-hq.mp3"},
+        "pack": "https://freesound.org/apiv2/packs/4321/", "n_from_same_pack": 0, "more_from_same_pack": null
+      }
+    ]
+  },
+  "pack": {
+    "id": 9876, "url": "https://freesound.org/people/ArmouryFoley/packs/9876/",
+    "description": "Sword hits, clashes and draws recorded with replica longswords.",
+    "created": "2020-05-01T08:55:00", "name": "Medieval Swords", "username": "ArmouryFoley", "num_sounds": 4,
+    "sounds": "https://freesound.org/apiv2/packs/9876/sounds/", "num_downloads": 1520
+  },
+  "pack_sounds": {
+    "count": 4,
+    "next": null,
+    "previous": null,
+    "results": [
+      {"id": 512001, "license": "http://creativecommons.org/publicdomain/zero/1.0/", "type": "wav"},
+      {"id": 512002, "license": "http://creativecommons.org/publicdomain/zero/1.0/", "type": "wav"},
+      {"id": 512003, "license": "https://creativecommons.org/licenses/by/4.0/", "type": "wav"},
+      {"id": 512004, "license": "http://creativecommons.org/publicdomain/zero/1.0/", "type": "mp3"}
+    ]
+  }
+}

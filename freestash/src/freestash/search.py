@@ -103,7 +103,7 @@ class Freestash:
     async def _run(self, cls: type[Provider], query: SearchQuery, settings: Settings,
                    http: HttpClient | None = None) -> tuple[ProviderStatus, list[Asset]]:
         media = set(query.media_types)
-        hints = SearchHints(commercial_only=query.use_case != UseCase.REFERENCE)
+        hints = SearchHints(commercial_only=query.use_case != UseCase.REFERENCE, packs=query.packs)
         provider = cls(http or self.http, settings)
         started = time.perf_counter()
         try:

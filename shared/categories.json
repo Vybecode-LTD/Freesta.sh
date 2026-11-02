@@ -1,5 +1,5 @@
 {
-  "$comment": "The result categories both apps group by, in display order, and the query words that select each one (contract dev plans/contracts/grouped-results.md). Edit here, then run `python scripts/export_shared.py` in freestash/: it writes the engine's categories_data.py, the web's lib/categories.ts and the desktop's Categories.g.cs. Words are lowercase; a phrase has spaces. Pick words that name a format, not a subject: a wrong pick shows as a chip the user removes.",
+  "$comment": "The result categories both apps group by, in display order, and the query words that select each one (contract dev plans/contracts/grouped-results.md); the words that turn packs on, and the media presets (contract packs-and-new-kinds.md). Edit here, then run `python scripts/export_shared.py` in freestash/: it writes the engine's categories_data.py, the web's lib/categories.ts and the desktop's Categories.g.cs. Words are lowercase; a phrase has spaces. Pick words that name a format, not a subject: a wrong pick shows as a chip the user removes.",
   "categories": [
     { "id": "image", "label": "Images",
       "words": ["image", "images", "photo", "photos", "photograph", "photographs", "picture", "pictures"] },
@@ -17,6 +17,19 @@
     { "id": "font", "label": "Fonts",
       "words": ["font", "fonts", "typeface", "typefaces"] },
     { "id": "icon", "label": "Icons",
-      "words": ["icon", "icons", "glyph", "glyphs", "pictogram", "pictograms"] }
+      "words": ["icon", "icons", "glyph", "glyphs", "pictogram", "pictograms"] },
+    { "id": "brush", "label": "Brushes",
+      "words": ["brush", "brushes", "abr", "brushset", "brushsets", "photoshop brush", "photoshop brushes",
+                "procreate brush", "procreate brushes", "krita brush", "krita brushes"] },
+    { "id": "shape", "label": "Shapes",
+      "words": ["shape", "shapes", "csh", "custom shape", "custom shapes", "vector shape", "vector shapes"] },
+    { "id": "sprite", "label": "Sprites",
+      "words": ["sprite", "sprites", "spritesheet", "spritesheets", "sprite sheet", "sprite sheets", "tileset",
+                "tilesets", "tile set", "tile sets", "pixel art", "ui kit", "ui kits"] }
+  ],
+  "pack_words": ["pack", "packs", "bundle", "bundles", "asset pack", "asset packs"],
+  "presets": [
+    { "id": "game-assets", "label": "Game assets", "hint": "Sprites, 3D, textures, audio, icons and fonts, with packs",
+      "media": ["audio", "texture", "model", "font", "icon", "sprite"], "packs": true }
   ]
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { fileCount, formatList, licensesInside } from "../lib/results";
 import { sidecarJson, sidecarName } from "../lib/sidecar";
 import type { AssetDetail, Collection, ScoredAsset, UseCase } from "../lib/types";
 import { USE_CASES } from "../lib/types";
@@ -43,6 +44,7 @@ export function AssetDrawer({ item, useCase, collections, onClose, onToast, onCo
   const renditions = asset.renditions;
   const best = renditions[0];
   const blocked = verdict.tier === "red";
+  const inside = licensesInside(asset);
 
   async function take(fileUrl?: string) {
     const url = fileUrl ?? best?.url;
@@ -92,6 +94,9 @@ export function AssetDrawer({ item, useCase, collections, onClose, onToast, onCo
             <dt>Trust</dt><dd>{asset.trust}</dd>
             <dt>Source</dt>
             <dd>{asset.landing_url ? <a href={asset.landing_url} target="_blank" rel="noreferrer">{asset.source_name || asset.provider} ↗</a> : asset.provider}</dd>
+            {asset.is_pack ? (<><dt>Pack</dt><dd>{asset.item_count != null ? fileCount(asset.item_count) : "Not counted"}</dd></>) : null}
+            {asset.formats.length ? (<><dt>Formats</dt><dd className="mono">{formatList(asset)}</dd></>) : null}
+            {inside ? (<><dt>Licenses inside</dt><dd>{inside}</dd></>) : null}
             {asset.width && asset.height ? (<><dt>Size</dt><dd className="mono">{asset.width} × {asset.height}</dd></>) : null}
             {asset.license.raw ? (<><dt>As stated</dt><dd className="mono faint">{asset.license.raw}</dd></>) : null}
           </dl>

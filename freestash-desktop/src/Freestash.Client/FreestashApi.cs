@@ -120,6 +120,7 @@ public sealed class FreestashApiClient : IFreestashApi, IDisposable
         var sb = new StringBuilder($"/api/search/stream?q={Q(r.Query)}&use={r.Use.Wire()}&max_tier={r.MaxTier.Wire()}&limit={r.Limit}&page={r.Page}");
         foreach (var m in r.Media) sb.Append("&media=").Append(m.Wire());
         foreach (var p in r.Providers ?? []) sb.Append("&providers=").Append(Q(p));
+        if (r.Packs) sb.Append("&packs=true");
         return sb.ToString();
     }
 

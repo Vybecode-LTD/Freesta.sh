@@ -16,9 +16,11 @@ from datetime import date
 
 from freestash.licenses.attribution import build_attribution
 from freestash.licenses.catalog import LicenseDef, lookup
-from freestash.models import Asset, MediaType, Tier, Trust, UseCase, Verdict
+from freestash.models import Asset, LicenseInfo, MediaType, Tier, Trust, UseCase, Verdict
 
 SHIPPED = {UseCase.CLIENT, UseCase.BUNDLED, UseCase.MERCH}  # uses where a mistake costs real money
+ARTWORK = {UseCase.CLIENT, UseCase.MERCH}  # for a brush these judge what you paint with it; BUNDLED judges the file
+BRUSH_NOTE = "This covers artwork you make with the brush; shipping the brush file is judged under Bundled."
 
 
 def us_public_domain_cutoff(media_type: MediaType, today: date | None = None) -> int:
@@ -51,7 +53,7 @@ class _Acc:
             self.obligations.append(text)
 
 
-def _license_rules(acc: _Acc, lic: LicenseDef, use: UseCase, label: str) -> None:
+def _license_rules(acc: _Acc, lic: LicenseDef, use: UseCase, label: str, brush: bool = False) -> None:
     if lic.id in ("RIGHTS-UNKNOWN", "IN-COPYRIGHT"):
         if use == UseCase.REFERENCE:
             acc.bump(Tier.YELLOW, f"{label}: fine to look at internally, but it can't go into anything you ship or show.")
@@ -85,7 +87,7 @@ def _license_rules(acc: _Acc, lic: LicenseDef, use: UseCase, label: str) -> None
     if use == UseCase.MERCH:
         if lic.merch == "no":
             acc.bump(Tier.RED, f"{label} doesn't allow use on goods for sale.")
-        elif lic.merch == "modified_only":
+        elif lic.merch == "modified_only" and not brush:  # painted artwork is never an unaltered copy of the brush
             acc.bump(Tier.YELLOW, f"{label} only allows merch if the image is substantially modified, not a straight print.")
 
     if lic.share_alike:
@@ -133,20 +135,38 @@ def _trust_rules(acc: _Acc, asset: Asset, lic: LicenseDef, use: UseCase, today: 
         acc.oblige("Recordings have two copyrights: the recording and the composition. Both must be public domain.")
 
 
+def _pack_rules(acc: _Acc, asset: Asset) -> None:
+    """A pack licensed file by file is cleared only as far as its files' licenses were read."""
+    checked, count = asset.members_checked or 0, asset.item_count
+    if count is None:
+        acc.bump(Tier.YELLOW, f"Licenses were read for {checked} files in this pack, which may hold more: "
+                              "check the rest on its page.")
+    elif checked < count:
+        acc.bump(Tier.YELLOW, f"Licenses were read for {checked} of {count} files in this pack: check the rest on its page.")
+
+
 def evaluate(asset: Asset, use: UseCase, today: date | None = None) -> Verdict:
-    lic = lookup(asset.license.id)
-    label = asset.license.label
+    """A per-file pack (`members_checked` set) is judged against every member license: the strictest wins."""
+    per_file = asset.is_pack and asset.members_checked is not None
+    infos: list[LicenseInfo] = (asset.member_licenses or [asset.license]) if per_file else [asset.license]
+    brush = asset.media_type == MediaType.BRUSH
     acc = _Acc()
 
-    _license_rules(acc, lic, use, label)
-    _trust_rules(acc, asset, lic, use, today)
+    lics = [lookup(info.id) for info in infos]
+    for info, lic in zip(infos, lics, strict=True):
+        _license_rules(acc, lic, use, info.label, brush)
+        _trust_rules(acc, asset, lic, use, today)
+    if per_file:
+        _pack_rules(acc, asset)
 
     if use != UseCase.REFERENCE and acc.tier != Tier.RED:
-        for note in (*lic.notes, *asset.notes):
+        for note in (*(n for lic in lics for n in lic.notes), *asset.notes):
             acc.oblige(note)
 
     if acc.tier == Tier.GREEN and not acc.reasons:
-        acc.reasons.append(_green_summary(lic, asset))
+        acc.reasons.append(_green_summary(lics[0], asset))
+    if brush and use in ARTWORK:
+        acc.reasons.append(BRUSH_NOTE)
 
     return Verdict(use_case=use, tier=acc.tier, reasons=acc.reasons, obligations=acc.obligations,
                    attribution=build_attribution(asset))
@@ -154,6 +174,16 @@ def evaluate(asset: Asset, use: UseCase, today: date | None = None) -> Verdict:
 
 def evaluate_all(asset: Asset, today: date | None = None) -> dict[UseCase, Verdict]:
     return {u: evaluate(asset, u, today) for u in UseCase}
+
+
+def strictest_license(licenses: list[LicenseInfo], trust: Trust, media: MediaType = MediaType.IMAGE) -> LicenseInfo:
+    """The license that clears least across the uses (then: carries most obligations). A per-file pack shows it as its
+    `license`; its verdict still comes from every member (`evaluate`)."""
+    def weight(info: LicenseInfo) -> tuple[int, int]:
+        probe = Asset(provider="pack", source_id="-", title="-", media_type=media, license=info, trust=trust)
+        verdicts = evaluate_all(probe).values()
+        return sum(v.tier.rank for v in verdicts), sum(len(v.obligations) for v in verdicts)
+    return max(licenses, key=weight)
 
 
 def _green_summary(lic: LicenseDef, asset: Asset) -> str:

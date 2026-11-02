@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace Freestash.Client;
 
-public enum MediaType { Image, Audio, Video, Texture, Hdri, Model, Font, Icon }
+public enum MediaType { Image, Audio, Video, Texture, Hdri, Model, Font, Icon, Brush, Shape, Sprite }
 
 public enum UseCase { Reference, Demo, Client, Bundled, Merch }
 
@@ -49,6 +49,14 @@ public sealed record Asset
     public List<string> Tips { get; init; } = [];
     public bool DetailRequired { get; init; }
     public Dictionary<string, object?> Extra { get; init; } = [];
+    /// <summary>One result holding many files (contract packs-and-new-kinds).</summary>
+    public bool IsPack { get; init; }
+    public int? ItemCount { get; init; }
+    public List<string> Formats { get; init; } = [];
+    /// <summary>When the source licenses each file: their distinct licenses and how many files were read
+    /// (null: <see cref="License"/> covers the whole pack).</summary>
+    public List<LicenseInfo> MemberLicenses { get; init; } = [];
+    public int? MembersChecked { get; init; }
 
     [JsonIgnore] public string Uid => $"{Provider}:{SourceId}";
 }
@@ -83,13 +91,15 @@ public sealed record HealthInfo(bool Ok, string Version, string AuthMode);
 public sealed record PdCutoff(int Works, int SoundRecordings);
 
 public sealed record SearchRequest(string Query, IReadOnlyList<MediaType> Media, UseCase Use, Tier MaxTier,
-                                   IReadOnlyList<string>? Providers = null, int Limit = 12, int Page = 1);
+                                   IReadOnlyList<string>? Providers = null, int Limit = 12, int Page = 1, bool Packs = false);
 
-/// <summary>A query word read as a category ("sfx" → audio); <see cref="Word"/> is exactly as typed.</summary>
-public sealed record QueryPick(string Word, MediaType MediaType);
+/// <summary>A query word read as a category ("sfx" → audio) or as packs ("pack": no media type); <see cref="Word"/> is
+/// exactly as typed.</summary>
+public sealed record QueryPick(string Word, MediaType? MediaType, bool Packs = false);
 
-/// <summary>What the engine made of a query (<c>GET /api/search/parse</c>). Empty <see cref="MediaTypes"/> means no pick.</summary>
-public sealed record ParsedQuery(string Original, string Q, List<MediaType> MediaTypes, List<QueryPick> Picks);
+/// <summary>What the engine made of a query (<c>GET /api/search/parse</c>). Empty <see cref="MediaTypes"/> means no
+/// medium was picked; <see cref="Packs"/> that a pack word was.</summary>
+public sealed record ParsedQuery(string Original, string Q, List<MediaType> MediaTypes, List<QueryPick> Picks, bool Packs = false);
 
 public static class Formatting
 {

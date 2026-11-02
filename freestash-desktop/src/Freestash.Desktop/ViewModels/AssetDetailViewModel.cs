@@ -82,6 +82,13 @@ public sealed partial class AssetDetailViewModel : ObservableObject
     public bool HasRawLicense => !string.IsNullOrWhiteSpace(RawLicense);
     public string SizeText => Asset.Width is > 0 && Asset.Height is > 0 ? $"{Asset.Width} × {Asset.Height}" : "";
     public bool HasSize => SizeText.Length > 0;
+    // a pack's rows, the web drawer's words (PackText)
+    public bool IsPack => Asset.IsPack;
+    public string PackFilesText => Asset.ItemCount is { } n ? PackText.FileCount(n) : "Not counted";
+    public string FormatsText => PackText.Formats(Asset);
+    public bool HasFormats => Asset.Formats.Count > 0;
+    public string? LicensesInside => PackText.LicensesInside(Asset);
+    public bool HasLicensesInside => LicensesInside is not null;
     public IReadOnlyList<string> Tips => Asset.Tips;
     public bool HasTips => Asset.Tips.Count > 0;
     public string? Description => Asset.Description;
