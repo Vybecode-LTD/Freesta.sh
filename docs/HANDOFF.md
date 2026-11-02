@@ -1,10 +1,19 @@
 # Handoff — Freesta.sh (2026-11-02, third session)
 
 ## State
-- `main` = the merge of **PR #5** (485cece), merged 2026-11-02 on the owner's OK. PRs #1–#5 are **live**: deploy
-  5303ef57. The repository now allows auto-merge (the owner, 2026-11-02). The checkout is on `feat/pr6-admin` (PR #6).
+- `main` = the merge of **PR #6** (2cfc414), merged 2026-11-02 on the owner's OK. PRs #1–#6 are **live**. The
+  repository allows auto-merge (the owner, 2026-11-02). The checkout is on `feat/pr7-grouped-results` (PR #7); its only
+  commit so far is this docs update.
 - **PR #6: site administration and shared keys** (decision 0003; contract `dev plans/contracts/admin-shared-keys.md`).
-  Built and green locally; not merged:
+  Merged and live. Verified on https://freesta.sh on 2026-11-02, without creating an account:
+  - `/api/admin/keys` answered 404 before the deploy and 401 after;
+  - search without a session gets 401;
+  - the served bundle has the admin page;
+  - the five new tables exist on production Postgres;
+  - production has 1 account.
+
+  Five review findings were fixed before the merge (Codex P1, the email-based admin; P2, the cached key test; three
+  from CodeRabbit). What it holds:
   - `#/admin` (web only, reached from Settings → Account): site keys (stored encrypted, never returned, Test), the
     per-member hourly cap (60), sign-up open, sources on or off, the shared-quota meter, users (admin, disable) and an
     audit log that never holds a key value;
@@ -54,8 +63,9 @@
 ## Next
 1. **Owner:** sign up again on https://freesta.sh (earlier accounts are gone). That is also the last PR #5 check: a
    search works, and Sign out returns to the sign-in page.
-2. **PR #6: merge, then (owner's OK) make the owner the first admin:** once the owner has signed up on freesta.sh,
-   run `railway ssh -s freestash -- python -m freestash admin grant <owner's email>`. Then the owner signs in, opens
+2. **Owner's OK: make the owner the first admin** (nobody is an admin on production yet). Once the owner confirms
+   the address they signed up with, run `railway ssh --project ba994460-f01e-4a4d-9e83-994f352b6634 --environment
+   production --service freestash -- python -m freestash admin grant <email>` (this folder isn't `railway link`ed). Then the owner signs in, opens
    Settings → Site administration, stores the provider keys and presses Test on each. Any provider keys already in Railway's env are shared with every member
    from the deploy onwards (decision 0003); the meter shows their use.
 3. Then grouped results, packs and new kinds, GitHub and curated packs, and web or AI search (the owner chooses first).

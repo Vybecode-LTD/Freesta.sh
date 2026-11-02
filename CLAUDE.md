@@ -7,18 +7,19 @@ the website at **freesta.sh** and a Windows desktop app, on **one account**. Git
 Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner, 2026-10-31).
 
 ## Current State
-- `main` holds PRs #1–#5, all live and verified 2026-11-01/02 (#4: accounts mode needs a database URL; #5: cookie session):
+- `main` holds PRs #1–#6, all live and verified 2026-11-01/02 (#4: accounts mode needs a database URL; #5: cookie
+  session; #6: admin screen and shared keys):
   - #1: accounts, synced keys + prefs, key help, the Aperture redesign on both apps, parity gates;
   - #2: the path-traversal hotfix;
   - #3: ledger paging, the CSP, SMTP reset email.
-  PR #5 (the website's HttpOnly cookie session) merged 2026-11-02 and is live, verified on production. **PR #6**
-  (site administration + shared keys, branch `feat/pr6-admin`) is built and green locally. `docs/HANDOFF.md`.
+  PRs #5 (the website's HttpOnly cookie session) and #6 (site administration + shared keys) merged 2026-11-02 and are
+  live, verified on production. No admin is granted on production yet. The next is PR #7 (grouped results). `docs/HANDOFF.md`.
   Decisions: `docs/decisions/0002` (Spacemail SMTP, CSP then cookie, no Cloudflare); `0003` (admin-held keys, then
   grouped results, packs, brush/shape/sprite, web search; plan `dev plans/2026-11-01-packs-web-admin-plan.md`).
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
   valid 2026-11-01) and https://freestash-production.up.railway.app, building from `main`. IDs and steps:
   `freestash/IMPLEMENTATION.md` → P2.
-- Gates 2026-11-02 (`main` at PR #5): pytest 128 · ruff clean · export check · vitest 19 · web build. dotnet 33 · 0 warnings (at PR #3; the desktop is unchanged since). Rendered-contrast 11 runs /
+- Gates 2026-11-02 (`main` at PR #6): pytest 140 · ruff clean · export check · vitest 27 · web build · dotnet 41 · 0 warnings. Rendered-contrast 11 runs /
   136 states / 0 failing (2026-10-31; not re-run: the one new control reuses `.btn`).
 
 ## The parity rule (binding)
