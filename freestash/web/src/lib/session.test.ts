@@ -1,58 +1,96 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const ADA = { id: "u", email: "ada@example.com", display_name: null };
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
 describe("session", () => {
   beforeEach(() => { localStorage.clear(); vi.resetModules(); });
+  afterEach(() => { vi.unstubAllGlobals(); });
 
-  it("persists, notifies, and clears", async () => {
+  it("persists who is signed in, never a token, and clears", async () => {
     const s = await import("./session");
     expect(s.getSession()).toBeNull();
-    s.setSession({ token: "t1", user: { id: "u", email: "ada@example.com", display_name: null } });
-    expect(s.getToken()).toBe("t1");
-    expect(JSON.parse(localStorage.getItem("freestash.session")!).token).toBe("t1");
-    s.updateSessionUser({ id: "u", email: "ada@example.com", display_name: "Ada" });
+    s.setSession({ user: ADA });
+    expect(JSON.parse(localStorage.getItem("freestash.session")!)).toEqual({ user: ADA });
+    s.updateSessionUser({ ...ADA, display_name: "Ada" });
     expect(s.getSession()?.user.display_name).toBe("Ada");
     s.setSession(null);
     expect(localStorage.getItem("freestash.session")).toBeNull();
   });
 
   it("restores a saved session on load and survives corrupt storage", async () => {
-    localStorage.setItem("freestash.session", JSON.stringify({ token: "saved", user: { id: "u", email: null, display_name: null } }));
-    expect((await import("./session")).getToken()).toBe("saved");
+    localStorage.setItem("freestash.session", JSON.stringify({ user: ADA }));
+    expect((await import("./session")).getSession()?.user.email).toBe("ada@example.com");
     vi.resetModules();
     localStorage.setItem("freestash.session", "{not json");
     expect((await import("./session")).getSession()).toBeNull();
   });
 
-  it("an expired session (401) signs the user out", async () => {
-    const s = await import("./session");
-    const { api } = await import("./api");
-    s.setSession({ token: "stale", user: { id: "u", email: null, display_name: null } });
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ detail: "expired" }), { status: 401, headers: { "content-type": "application/json" } })));
-    await expect(api.collections()).rejects.toThrow("expired");
-    expect(s.getSession()).toBeNull();
-    vi.unstubAllGlobals();
+  it("forgets a session saved with a readable token (before the cookie)", async () => {
+    localStorage.setItem("freestash.session", JSON.stringify({ token: "eyJ.old.token", user: ADA }));
+    expect((await import("./session")).getSession()).toBeNull();
+    expect(localStorage.getItem("freestash.session")).toBeNull();
   });
 
   it("ignores a saved value that isn't a whole session (the shell would crash reading user)", async () => {
-    for (const bad of [{}, { token: "x" }, { token: "x", user: null }, { token: 7, user: {} }]) {
+    for (const bad of [{}, { user: null }, { user: {} }, { user: { id: 7 } }, "x"]) {
       vi.resetModules();
       localStorage.setItem("freestash.session", JSON.stringify(bad));
       expect((await import("./session")).getSession()).toBeNull();
     }
   });
 
-  it("a late 401 for an old token doesn't sign out the session that replaced it", async () => {
+  it("an expired session (401) signs the user out", async () => {
     const s = await import("./session");
     const { api } = await import("./api");
-    s.setSession({ token: "old", user: { id: "u", email: null, display_name: null } });
+    s.setSession({ user: ADA });
+    vi.stubGlobal("fetch", vi.fn(async () => json({ detail: "expired" }, 401)));
+    await expect(api.collections()).rejects.toThrow("expired");
+    expect(s.getSession()).toBeNull();
+  });
+
+  it("a late 401 for an old session doesn't sign out the session that replaced it", async () => {
+    const s = await import("./session");
+    const { api } = await import("./api");
+    s.setSession({ user: ADA });
     let answer: (r: Response) => void = () => {};
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((resolve) => { answer = resolve; })));
-    const inFlight = api.collections(); // sent with the old token...
-    s.setSession({ token: "new", user: { id: "u", email: null, display_name: null } }); // ...then the password changed
-    answer(new Response(JSON.stringify({ detail: "revoked" }), { status: 401, headers: { "content-type": "application/json" } }));
+    const inFlight = api.collections(); // sent with the old cookie...
+    s.setSession({ user: { ...ADA, display_name: "after the password change" } }); // ...then the password changed
+    answer(json({ detail: "revoked" }, 401));
     await expect(inFlight).rejects.toThrow("revoked");
-    expect(s.getToken()).toBe("new");
-    vi.unstubAllGlobals();
+    expect(s.getSession()?.user.display_name).toBe("after the password change");
+  });
+
+  it("sends the cookie, asks for one at sign-in, and sends no Authorization header", async () => {
+    const s = await import("./session");
+    const { api } = await import("./api");
+    const fetchMock = vi.fn(async () => json({ token_type: "cookie", user: ADA }));
+    vi.stubGlobal("fetch", fetchMock);
+    s.setSession(await api.signIn("ada@example.com", "correct horse battery"));
+    expect(s.getSession()).toEqual({ user: ADA });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const headers = new Headers(init.headers);
+    expect(url).toBe("/api/auth/login");
+    expect(init.credentials).toBe("include");
+    expect(headers.get("X-Freestash-Session")).toBe("cookie");
+    expect(headers.has("Authorization")).toBe(false);
+  });
+
+  it("sign out clears the cookie on the server, and signs out here even if that fails", async () => {
+    const s = await import("./session");
+    const { api } = await import("./api");
+    s.setSession({ user: ADA });
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await api.signOut();
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/logout");
+    expect(s.getSession()).toBeNull();
+
+    s.setSession({ user: ADA });
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("offline"); }));
+    await api.signOut();
+    expect(s.getSession()).toBeNull();
   });
 });

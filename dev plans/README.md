@@ -7,6 +7,8 @@
 | `renders/direction-01…06.png` | The board's frames: 01/02 = A (screen, key row), 03/04 = B, 05/06 = C | — |
 | `renders/web/` | Rendered web screens after the build (dark, Frost, phone) + `desktop-account-on-web.png` (sync proof) | — |
 | `contracts/accounts-sync.md` | The approved contract for accounts, synced keys and prefs | — |
+| `2026-11-01-packs-web-admin-plan.md` | Proposal for the owner's five asks: bulk packs, web search, admin-held keys, grouped results, brushes and game assets. Accepted 2026-11-01 (decision 0003) | local only |
+| `contracts/web-cookie-session.md` | Contract for PR #5: the website signs in with an HttpOnly cookie, plus the CSRF Origin check (done) | — |
 | `NEXT_SESSION_PROMPT.md` | The starting prompt for the next session | — |
 
 Desktop screenshots live with the app: `../freestash-desktop/docs/screenshots/`.

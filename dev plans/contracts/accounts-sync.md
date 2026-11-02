@@ -39,7 +39,8 @@ in `SecretStore` under `FREESTASH_SESSION`. View-models: `SignInViewModel` (Emai
 IsRegister, Error, IsBusy; SubmitCommand, ToggleModeCommand, ForgotCommand); `SettingsViewModel` gains
 `Account` + key rows bound to the catalog.
 
-React: `lib/session.ts` (token in localStorage, `signIn`, `signUp`, `signOut`, `useSession`);
+React: `lib/session.ts` (the signed-in user only; the token is an HttpOnly cookie since PR #5, contract
+`web-cookie-session.md`), `useSession`;
 pages `SignInPage`, `SettingsPage`; `api.keys/saveKeys/revealKey/keyCatalog/prefs/savePrefs`.
 
 ## 3. Data (SQLAlchemy `create_all`, SQLite locally, Railway Postgres in production)

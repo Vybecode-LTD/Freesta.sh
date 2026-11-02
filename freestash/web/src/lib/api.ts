@@ -1,5 +1,5 @@
 import { ledgerPath, type LedgerQuery } from "./ledgerPages";
-import { getToken, setSession, type Session, type SessionUser } from "./session";
+import { getSession, sessionEpoch, setSession, type Session, type SessionUser } from "./session";
 import type {
   Asset, AssetDetail, Collection, KeySpec, KeyState, LedgerEntry, MediaType, Prefs, ProviderInfo, ProviderStatus,
   ScoredAsset, Tier, UseCase, Verdict,
@@ -13,28 +13,27 @@ export class ApiError extends Error {
   }
 }
 
-function headers(extra?: HeadersInit): Headers {
-  const h = new Headers(extra);
-  const token = getToken();
-  if (token) h.set("Authorization", `Bearer ${token}`);
-  return h;
-}
+/** The session cookie is HttpOnly: the browser attaches it, script never touches it. `include` also covers a
+ *  VITE_API_BASE on another origin (the server's CORS allows credentials for its listed origins). */
+const CREDENTIALS: RequestCredentials = "include";
+/** Asks the auth routes for the cookie instead of a token in the body (the desktop leaves it out). */
+const COOKIE_SESSION = { "X-Freestash-Session": "cookie" };
 
-/** A 401 signs out only the session that made the request: a late answer for an old token (sent just before a
+/** A 401 signs out only the session that made the request: a late answer for an old session (sent just before a
  *  password change) must not sign out the session that replaced it. */
-function signOutIfStill(sentWith: string | null): void {
-  if (sentWith && getToken() === sentWith) setSession(null);
+function signOutIfStill(sentAt: number): void {
+  if (getSession() && sessionEpoch() === sentAt) setSession(null);
 }
 
 async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const sentWith = getToken();
-  const h = headers(init.headers);
+  const sentAt = sessionEpoch();
+  const h = new Headers(init.headers);
   if (init.body && !h.has("Content-Type")) h.set("Content-Type", "application/json");
-  const res = await fetch(`${BASE}${path}`, { ...init, headers: h });
+  const res = await fetch(`${BASE}${path}`, { ...init, headers: h, credentials: CREDENTIALS });
   if (!res.ok) {
     let detail: unknown = res.statusText;
     try { detail = (await res.json()).detail; } catch { /* not JSON */ }
-    if (res.status === 401) signOutIfStill(sentWith); // expired or revoked: back to sign-in
+    if (res.status === 401) signOutIfStill(sentAt); // expired or revoked: back to sign-in
     throw new ApiError(res.status, detail);
   }
   if (res.status === 204) return undefined as T;
@@ -50,14 +49,14 @@ export interface SearchParams {
 
 export interface StreamBatch { status: ProviderStatus; hidden: number; results: ScoredAsset[] }
 
-/** Server-sent events over fetch (EventSource can't send an Authorization header). */
+/** Server-sent events over fetch, so an aborted search can be cancelled mid-stream. */
 export async function searchStream(p: SearchParams, onBatch: (b: StreamBatch) => void, signal: AbortSignal): Promise<void> {
   const qs = new URLSearchParams({ q: p.q, use: p.use, max_tier: p.maxTier, limit: String(p.limit ?? 12), page: String(p.page ?? 1) });
   p.media.forEach((m) => qs.append("media", m));
   p.providers?.forEach((x) => qs.append("providers", x));
-  const sentWith = getToken();
-  const res = await fetch(`${BASE}/api/search/stream?${qs}`, { headers: headers({ Accept: "text/event-stream" }), signal });
-  if (res.status === 401) signOutIfStill(sentWith);
+  const sentAt = sessionEpoch();
+  const res = await fetch(`${BASE}/api/search/stream?${qs}`, { headers: { Accept: "text/event-stream" }, credentials: CREDENTIALS, signal });
+  if (res.status === 401) signOutIfStill(sentAt);
   if (!res.ok || !res.body) throw new ApiError(res.status, await res.text());
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
   let buf = "";
@@ -77,21 +76,23 @@ export async function searchStream(p: SearchParams, onBatch: (b: StreamBatch) =>
   }
 }
 
-interface AuthResponse { access_token: string; user: SessionUser }
-const toSession = (r: AuthResponse): Session => ({ token: r.access_token, user: r.user });
+interface AuthResponse { token_type: "cookie"; user: SessionUser }
+const toSession = (r: AuthResponse): Session => ({ user: r.user });
 
 export const api = {
   health: () => req<{ ok: boolean; version: string; auth_mode: "none" | "accounts"; signup_open: boolean }>("/api/health"),
 
   // ---- account
   signIn: (email: string, password: string) =>
-    req<AuthResponse>("/api/auth/login", { method: "POST", body: json({ email, password }) }).then(toSession),
+    req<AuthResponse>("/api/auth/login", { method: "POST", headers: COOKIE_SESSION, body: json({ email, password }) }).then(toSession),
   signUp: (email: string, password: string, display_name?: string) =>
-    req<AuthResponse>("/api/auth/register", { method: "POST", body: json({ email, password, display_name }) }).then(toSession),
+    req<AuthResponse>("/api/auth/register", { method: "POST", headers: COOKIE_SESSION, body: json({ email, password, display_name }) }).then(toSession),
   me: () => req<SessionUser>("/api/auth/me"),
   updateProfile: (display_name: string) => req<SessionUser>("/api/auth/me", { method: "PATCH", body: json({ display_name }) }),
   changePassword: (current_password: string, new_password: string) =>
-    req<AuthResponse>("/api/auth/change-password", { method: "POST", body: json({ current_password, new_password }) }).then(toSession),
+    req<AuthResponse>("/api/auth/change-password", { method: "POST", headers: COOKIE_SESSION, body: json({ current_password, new_password }) }).then(toSession),
+  /** Clears this browser's cookie, then the local session, even if the server couldn't be reached. */
+  signOut: () => req<void>("/api/auth/logout", { method: "POST" }).catch(() => undefined).finally(() => setSession(null)),
   signOutEverywhere: () => req<void>("/api/auth/logout-all", { method: "POST" }),
   forgot: (email: string) => req<{ ok: boolean }>("/api/auth/forgot", { method: "POST", body: json({ email }) }),
   reset: (token: string, new_password: string) => req<void>("/api/auth/reset", { method: "POST", body: json({ token, new_password }) }),

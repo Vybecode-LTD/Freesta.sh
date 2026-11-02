@@ -9,11 +9,13 @@ cd web && npm install && npm run dev     # UI :5173 (proxies /api)
 
 Or build once (`npm run build`) and the API serves `web/dist` at http://127.0.0.1:8787.
 
-## Team mode
+## Accounts mode (the hosted app)
 
-`VITE_AUTH_MODE=supabase` + `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` at build time;
-`FREESTASH_AUTH_MODE=supabase` + `SUPABASE_URL` (+ `SUPABASE_JWT_SECRET` for legacy projects) on the API.
-Users sign in by magic link; the API resolves their team from `team_members`. See IMPLEMENTATION.md P2.
+`FREESTASH_AUTH_MODE=accounts` on the API (`scripts/dev_accounts.py` runs it locally on a throwaway database). The
+website signs in with an **HttpOnly cookie**: its auth calls send `X-Freestash-Session: cookie`, the server sets
+`freestash_session` (`SameSite=Lax`, `Path=/api`, `Secure` except on loopback) and the body carries no token.
+`lib/session.ts` keeps only the signed-in user in localStorage. Cookie-signed writes need the site's own `Origin`.
+The desktop keeps `Authorization: Bearer`. Contract: `../../dev plans/contracts/web-cookie-session.md`.
 
 ## Views
 
@@ -32,4 +34,4 @@ surfaces. Class names are stable.
 
 - Some hosts block hotlinked previews (AIC's IIIF host from some networks, SMK occasionally). Cards
   show "preview blocked" instead of a broken image. The source page link always works.
-- SSE is parsed over `fetch` because `EventSource` can't send the Authorization header.
+- SSE is parsed over `fetch` (with the session cookie), so an aborted search cancels its stream.
