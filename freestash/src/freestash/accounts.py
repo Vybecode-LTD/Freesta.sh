@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import re
 import secrets
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
@@ -20,7 +21,7 @@ import bcrypt
 import jwt
 from cryptography.fernet import Fernet, InvalidToken
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, select
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, or_, select
 from sqlalchemy.orm import Mapped, mapped_column
 
 from freestash.config import Settings
@@ -41,6 +42,20 @@ class UserRow(Base):
     display_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     token_version: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class UserStatusRow(Base):
+    """Admin and moderation state, kept off `users` so adding it needed no migration (contract admin-shared-keys)."""
+
+    __tablename__ = "user_status"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    disabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+SEEN_EVERY = timedelta(minutes=10)  # last_seen_at is written at most this often per user
 
 
 class UserSecretRow(Base):
@@ -114,9 +129,11 @@ def check_password_rules(password: str) -> None:
 
 
 class AccountService:
-    def __init__(self, store: Store, settings: Settings) -> None:
+    def __init__(self, store: Store, settings: Settings, signup_open: Callable[[], bool] | None = None) -> None:
         self.store = store
         self.settings = settings
+        self._signup_open = signup_open or (lambda: settings.signup_open)  # the admin's switch (admin.py)
+        self._seen: dict[str, datetime] = {}
         if settings.auth_mode == "accounts" and (not settings.secret_key or len(settings.secret_key) < 32):
             raise RuntimeError("FREESTASH_SECRET_KEY must be set (32+ characters) when FREESTASH_AUTH_MODE=accounts")
         if settings.auth_mode == "accounts" and not settings.database_configured:
@@ -139,6 +156,7 @@ class AccountService:
         user = self.get(str(claims["sub"]))
         if user is None or user.token_version != claims["ver"]:
             raise AccountError(401, "Your session has expired. Sign in again.")
+        self._check_active(user.id)
         return user
 
     def get(self, user_id: str) -> UserRow | None:
@@ -146,7 +164,7 @@ class AccountService:
             return s.get(UserRow, user_id)
 
     def register(self, email: str, password: str, display_name: str | None = None) -> UserRow:
-        if not self.settings.signup_open:
+        if not self._signup_open():
             raise AccountError(403, "Sign-up is closed on this server.")
         email = normalize_email(email)
         if len(email) > 320 or not _EMAIL.match(email):
@@ -172,7 +190,70 @@ class AccountService:
         ok = bcrypt.checkpw(password.encode()[:72], stored.encode())
         if user is None or not ok:
             raise AccountError(401, "That email and password don't match an account.")
+        self._check_active(user.id)  # only after the password: a wrong one mustn't learn the account is disabled
         return user
+
+    # ------------------------------------------------------------------ admin + moderation state
+    def _check_active(self, user_id: str) -> None:
+        with self.store.session() as s:
+            status = s.get(UserStatusRow, user_id)
+        if status and status.disabled:
+            raise AccountError(403, "This account is disabled.")
+
+    def is_admin(self, user_id: str, email: str | None) -> bool:
+        if email and email.strip().lower() in self.settings.admin_email_set:
+            return True
+        with self.store.session() as s:
+            status = s.get(UserStatusRow, user_id)
+        return bool(status and status.is_admin)
+
+    def is_bootstrap_admin(self, email: str | None) -> bool:
+        return bool(email) and email.strip().lower() in self.settings.admin_email_set
+
+    def set_flags(self, user_id: str, *, is_admin: bool | None = None, disabled: bool | None = None) -> None:
+        with self.store.session() as s, s.begin():
+            status = s.get(UserStatusRow, user_id) or UserStatusRow(user_id=user_id, is_admin=False, disabled=False)
+            s.add(status)
+            if is_admin is not None:
+                status.is_admin = is_admin
+            if disabled is not None:
+                status.disabled = disabled
+            status.updated_at = _now()
+
+    def touch_seen(self, user_id: str) -> None:
+        """Record activity for the admin's user list, at most once per SEEN_EVERY per user."""
+        now = _now()
+        if (last := self._seen.get(user_id)) and now - last < SEEN_EVERY:
+            return
+        self._seen[user_id] = now
+        with self.store.session() as s, s.begin():
+            status = s.get(UserStatusRow, user_id) or UserStatusRow(user_id=user_id, is_admin=False, disabled=False)
+            s.add(status)
+            status.last_seen_at = now
+
+    def list_users(self, q: str | None = None, limit: int = 200) -> list[dict[str, Any]]:
+        stmt = (select(UserRow, UserStatusRow).outerjoin(UserStatusRow, UserStatusRow.user_id == UserRow.id)
+                .order_by(UserRow.created_at.desc()).limit(limit))
+        if q and q.strip():
+            like = f"%{q.strip().lower()}%"
+            stmt = stmt.where(or_(UserRow.email.like(like), UserRow.display_name.ilike(like)))
+        with self.store.session() as s:
+            rows = s.execute(stmt).all()
+        return [self.user_admin_view(u, st) for u, st in rows]
+
+    def user_admin_view(self, u: UserRow, st: UserStatusRow | None) -> dict[str, Any]:
+        bootstrap = self.is_bootstrap_admin(u.email)
+        return {"id": u.id, "email": u.email, "display_name": u.display_name,
+                "created_at": _as_utc(u.created_at).isoformat() if u.created_at else None,
+                "last_seen_at": _as_utc(st.last_seen_at).isoformat() if st and st.last_seen_at else None,
+                "is_admin": bootstrap or bool(st and st.is_admin), "bootstrap": bootstrap,
+                "disabled": bool(st and st.disabled)}
+
+    def user_admin_row(self, user_id: str) -> dict[str, Any] | None:
+        with self.store.session() as s:
+            user = s.get(UserRow, user_id)
+            status = s.get(UserStatusRow, user_id)
+        return self.user_admin_view(user, status) if user else None
 
     def update_profile(self, user_id: str, display_name: str | None) -> UserRow:
         with self.store.session() as s, s.begin():

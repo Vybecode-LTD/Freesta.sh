@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 /** The signed-in account. One account works here and in the desktop app. The website's sign-in token lives in an
  *  HttpOnly cookie the server sets, so no script here can read it (contract web-cookie-session). What's kept in
  *  localStorage is only who is signed in: it draws the shell at once and lets other tabs follow a sign-out. */
-export interface SessionUser { id: string; email: string | null; display_name: string | null; created_at?: string | null }
+export interface SessionUser { id: string; email: string | null; display_name: string | null; created_at?: string | null; is_admin?: boolean }
 export interface Session { user: SessionUser }
 
 const KEY = "freestash.session";

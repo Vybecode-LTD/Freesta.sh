@@ -37,6 +37,7 @@ def prepare_environment(port: str, base: Path, environ: MutableMapping[str, str]
         "FREESTASH_PUBLIC_URL": f"http://127.0.0.1:{port}", "FREESTASH_LOG_EMAILS": "true",  # reset links in the console
     })
     environ.setdefault("FREESTASH_CONTACT_EMAIL", "dev@freesta.sh")
+    environ.setdefault("FREESTASH_ADMIN_EMAILS", "admin@example.test")  # sign up as this to reach #/admin locally
 
 
 def main() -> None:

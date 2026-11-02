@@ -17,6 +17,13 @@ website signs in with an **HttpOnly cookie**: its auth calls send `X-Freestash-S
 `lib/session.ts` keeps only the signed-in user in localStorage. Cookie-signed writes need the site's own `Origin`.
 The desktop keeps `Authorization: Bearer`. Contract: `../../dev plans/contracts/web-cookie-session.md`.
 
+**Site administration** (`#/admin`, web only; contract `../../dev plans/contracts/admin-shared-keys.md`): an account
+in `FREESTASH_ADMIN_EMAILS`, or one an admin promoted, sees "Site administration" in Settings → Account. It holds the
+site's provider keys (every member searches on them unless they add their own), the per-member hourly search cap,
+sign-up open or closed, sources on or off, the shared-quota meter, users (make admin, disable) and the audit log.
+It isn't in the nav, so the web and desktop navs stay the same. `scripts/dev_accounts.py` makes `admin@example.test`
+an admin on the dev server.
+
 ## Views
 
 Search (streaming, media chips, use-case selector, tier filter, source health strip) · asset drawer

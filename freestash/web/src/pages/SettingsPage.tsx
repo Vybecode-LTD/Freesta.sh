@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
+import { memberKeyStatus } from "../lib/admin";
 import { api } from "../lib/api";
 import { usePrefs } from "../lib/prefs";
 import { setSession, updateSessionUser, useSession } from "../lib/session";
@@ -9,7 +10,7 @@ import { ACCENTS, MEDIA_TYPES, SHOW_OPTIONS, USE_CASES } from "../lib/types";
 type Toast = { onToast: (m: string) => void };
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-function Section({ id, icon, title, sub, children }: { id: string; icon: Parameters<typeof Icon>[0]["name"]; title: string; sub: React.ReactNode; children: React.ReactNode }) {
+export function Section({ id, icon, title, sub, children }: { id: string; icon: Parameters<typeof Icon>[0]["name"]; title: string; sub: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="panel settings-section" id={id}>
       <div className="settings-intro">
@@ -77,6 +78,7 @@ export function SettingsPage({ onToast, accountMode }: Toast & { accountMode: bo
   }
 
   const setCount = catalog.filter((k) => keyStates[k.name]?.set).length;
+  const siteCount = catalog.filter((k) => keyStates[k.name]?.site).length;
 
   return (
     <div className="page page-settings">
@@ -90,21 +92,23 @@ export function SettingsPage({ onToast, accountMode }: Toast & { accountMode: bo
         </Section>
       )}
 
-      <Section id="keys" icon="key" title="API keys" sub={<>All free. Sources without a key stay off; everything else works without any.
-        {accountMode && <div className="mono faint keys-count">{setCount} of {catalog.length} set · encrypted in your account</div>}</>}>
+      <Section id="keys" icon="key" title="API keys" sub={accountMode
+        ? <>Optional. Searches use Freesta.sh's own keys; add yours only to raise your limits.
+          <div className="mono faint keys-count">{siteCount} of {catalog.length} covered by Freesta.sh · {setCount} of your own, encrypted in your account</div></>
+        : <>All free. Sources without a key stay off; everything else works without any.</>}>
         <div className="key-list">
           {catalog.map((spec) => {
             const st = keyStates[spec.name];
             const edit = edits[spec.name];
             const shown = revealed[spec.name];
             const value = edit ?? shown ?? "";
-            const status = edit === null ? "removing" : st?.set ? "set" : spec.optional ? "optional" : "missing";
+            const status = memberKeyStatus(spec, st, edit);
             return (
               <div key={spec.name} className="key-row">
                 <div className="key-top">
                   <span className="key-provider">{spec.provider_name}</span>
                   <span className="key-label mono">{spec.label}</span>
-                  <span className={`status s-${status}`}>{status === "set" ? `Set · …${st?.hint}` : status === "removing" ? "Will be removed" : status === "optional" ? "Optional" : "Not set"}</span>
+                  <span className={`status s-${status.tone}`}>{status.label}</span>
                 </div>
                 <div className="key-input">
                   <input className="input mono" type={shown !== undefined && edit === undefined ? "text" : "password"} autoComplete="off" spellCheck={false}
@@ -231,6 +235,7 @@ function AccountSection({ onToast }: Toast) {
       <div className="row wrap">
         <button className="btn" onClick={() => void api.signOut()}><Icon name="signOut" size={16} />Sign out</button>
         <button className="btn btn-ghost" onClick={everywhere}>Sign out everywhere</button>
+        {session?.user.is_admin && <a className="btn btn-ghost" href="#/admin"><Icon name="shield" size={16} />Site administration</a>}
       </div>
     </Section>
   );

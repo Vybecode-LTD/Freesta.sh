@@ -371,3 +371,12 @@ select.input { padding-right: 8px; } /* native arrow: it follows color-scheme, a
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ---- site administration and shared keys (contract admin-shared-keys) ---- */
+.status.s-site { color: var(--accent-text); }
+.status.s-error { color: var(--red); }
+.small { font-size: 12px; }
+.pad { padding: 14px; }
+.page-admin .key-row > .small { margin: 6px 0 0; }
+.page-admin .table td .row { gap: 4px; }
+.page-admin .nowrap { white-space: nowrap; }

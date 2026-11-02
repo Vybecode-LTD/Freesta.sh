@@ -14,6 +14,8 @@
     { "id": "settings", "name": "Settings: account, API keys with where-to-get help, search defaults, appearance (synced)", "web": "freestash/web/src/pages/SettingsPage.tsx", "desktop": "freestash-desktop/src/Freestash.Desktop/Views/SettingsView.axaml" },
     { "id": "key-help", "name": "Where to get each key (one catalog)", "web": "freestash/src/freestash/providers/keys.py", "desktop": "shared/provider-keys.json" },
     { "id": "design-tokens", "name": "Aperture colours, both themes, four accents (one source)", "web": "freestash/web/src/tokens.css", "desktop": "freestash-desktop/src/Freestash.Desktop/Services/DesignTokens.g.cs" },
+    { "id": "admin", "name": "Site administration: site keys, limits and sources, shared-quota meter, users, audit log", "web": "freestash/web/src/pages/AdminPage.tsx", "desktop": null,
+      "why": "An operator console the owner runs from the website (decision 0003); the desktop is a member client. Members on both apps see which keys the site covers in Settings → API keys." },
     { "id": "local-engine", "name": "Run the Python engine on this computer", "web": null, "desktop": "freestash-desktop/src/Freestash.Client/Engine/EngineHost.cs",
       "why": "A browser can't start processes; the website always uses the hosted engine." },
     { "id": "download-queue", "name": "Parallel download queue: folders, resume, SHA-256, clipboard watch, drag-out", "web": null, "desktop": "freestash-desktop/src/Freestash.Client/Downloads/DownloadEngine.cs",

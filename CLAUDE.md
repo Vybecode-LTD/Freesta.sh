@@ -11,8 +11,8 @@ Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner,
   - #1: accounts, synced keys + prefs, key help, the Aperture redesign on both apps, parity gates;
   - #2: the path-traversal hotfix;
   - #3: ledger paging, the CSP, SMTP reset email.
-  PR #5 (the website's HttpOnly cookie session) merged 2026-11-02 and is live, verified on production. Next is PR #6
-  (admin + shared keys, branch `feat/pr6-admin`). `docs/HANDOFF.md`.
+  PR #5 (the website's HttpOnly cookie session) merged 2026-11-02 and is live, verified on production. **PR #6**
+  (site administration + shared keys, branch `feat/pr6-admin`) is built and green locally. `docs/HANDOFF.md`.
   Decisions: `docs/decisions/0002` (Spacemail SMTP, CSP then cookie, no Cloudflare); `0003` (admin-held keys, then
   grouped results, packs, brush/shape/sprite, web search; plan `dev plans/2026-11-01-packs-web-admin-plan.md`).
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
@@ -55,6 +55,9 @@ client of the same API (`Freestash.Client/Account/*`), hosted engine by default,
   `FREESTASH_TRUST_CF_CONNECTING_IP=true` (forged rotation got past the login limit on production, 2026-11-01).
 - The SPA catch-all serves only files inside `web/dist` (`api/app.py::spa_file`): route paths arrive percent-decoded,
   so `/..%2f..%2fpyproject.toml` read the server's own files on production until PR #2 (2026-11-01).
+- Admins: `FREESTASH_ADMIN_EMAILS` (always admins) or promoted on `#/admin`. Members search on the site's keys (admin-stored,
+  then env) unless they add their own; caps and the meter are in-process / per UTC day (one replica). Admin routes take
+  `api/admin.py::Admin`; every admin write goes to `admin_audit`, never with a key value.
 - The website signs in with an HttpOnly cookie (`freestash_session`, Path `/api`); the desktop uses bearer. The CSRF
   Origin check lives in `api/auth.py::current_user`, so a new route must take `User`/`MaybeUser` and never read the cookie itself.
 - `FREESTASH_SECRETS_KEY` encrypts users' keys: rotating it makes saved keys unreadable (users re-save). Back it up.

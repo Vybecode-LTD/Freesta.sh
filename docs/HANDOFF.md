@@ -1,9 +1,24 @@
-# Handoff — Freesta.sh (2026-11-01, third session)
+# Handoff — Freesta.sh (2026-11-02, third session)
 
 ## State
 - `main` = the merge of **PR #5** (485cece), merged 2026-11-02 on the owner's OK. PRs #1–#5 are **live**: deploy
-  5303ef57. The repository now allows auto-merge (the owner, 2026-11-02). The checkout is on `feat/pr6-admin`; its
-  only commit so far is this docs update.
+  5303ef57. The repository now allows auto-merge (the owner, 2026-11-02). The checkout is on `feat/pr6-admin` (PR #6).
+- **PR #6: site administration and shared keys** (decision 0003; contract `dev plans/contracts/admin-shared-keys.md`).
+  Built and green locally; not merged:
+  - `#/admin` (web only, reached from Settings → Account): site keys (stored encrypted, never returned, Test), the
+    per-member hourly cap (60), sign-up open, sources on or off, the shared-quota meter, users (admin, disable) and an
+    audit log that never holds a key value;
+  - members search on the admin's key, then env, unless they add their own;
+  - `FREESTASH_SHARE_SERVER_KEYS` is retired and `FREESTASH_ADMIN_EMAILS` is new;
+  - new tables only (`user_status`, `server_secrets`, `site_settings`, `provider_usage`, `admin_audit`), so no Alembic;
+  - both apps' key rows say "Freesta.sh's key".
+  - Verified on the dev server:
+    - the admin sees the link and the page;
+    - a stored key never comes back, and the audit log holds only its name;
+    - a member sees "Freesta.sh's key" and gets "Admins only." on `#/admin`;
+    - the cap gave 200, 200, then 429, with readable words in the search toast.
+  - The rendered-contrast gate passed on the admin page and Settings, in both themes at 1440 and 390 (every status
+    tone), with a positive control that failed as it should.
 - **PR #5: the website signs in with an HttpOnly cookie**, per decision 0002 and the contract
   `dev plans/contracts/web-cookie-session.md`:
   - The auth calls send `X-Freestash-Session: cookie`. The server sets `freestash_session` (`SameSite=Lax`,
@@ -20,8 +35,8 @@
     - a web login and a cookie write from another site get 403, and from the site itself 401 (made-up account, bad cookie);
     - the served bundle asks for the cookie.
   - A real sign-in on production hasn't been checked: no production account exists yet.
-- Gates at the merge: pytest 128 · ruff · export check · vitest 19 · web build · CI engine/web/desktop green. The desktop
-  is untouched (dotnet 33 at PR #3).
+- Gates at the PR #5 merge: pytest 128 · ruff · export check · vitest 19 · web build · CI green. On the PR #6 branch:
+  pytest 137 · ruff · export check · vitest 26 · web build · dotnet 34, 0 warnings.
 - **Decision 0003 (owner, 2026-11-01):**
   - Admin-held provider keys shared with every member, with caps of 60 searches an hour and 20 web searches a day.
   - Admin screen on the web only; web finds are always CHECK.
@@ -38,13 +53,10 @@
 ## Next
 1. **Owner:** sign up again on https://freesta.sh (earlier accounts are gone). That is also the last PR #5 check: a
    search works, and Sign out returns to the sign-in page.
-2. **PR #6: admin + shared keys** (plan §3·3). Contract first. Its pieces:
-   - `users.is_admin`, with the first admin set by `FREESTASH_ADMIN_EMAILS`;
-   - a `server_keys` table, Fernet-encrypted;
-   - per-user caps and a usage meter;
-   - 24 h caching (Pixabay requires it);
-   - a web-only admin screen (`parity.json` row) and an audit log;
-   - the member key list made optional.
+2. **PR #6: merge, then the owner's OK for one production variable:** `FREESTASH_ADMIN_EMAILS` = the owner's address,
+   set with `railway variable set --stdin`. Then the owner signs in, opens Settings → Site administration, stores the
+   provider keys and presses Test on each. Any provider keys already in Railway's env are shared with every member
+   from the deploy onwards (decision 0003); the meter shows their use.
 3. Then grouped results, packs and new kinds, GitHub and curated packs, and web or AI search (the owner chooses first).
 4. Still open from before: the owner re-registers on production; test reset email; Postgres volume backups; delete the
    spare volume `postgres-volume-EFLf`; `www.freesta.sh`; Google sign-in; the desktop installer; retire `railway.json`

@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from freestash.accounts import AccountService, UserSecretRow
 from freestash.config import Settings, get_settings
-from freestash.providers.keys import KEY_CATALOG, settings_with_keys
+from freestash.providers.keys import KEY_CATALOG
 
 from .conftest import load
 
@@ -187,7 +187,8 @@ def test_keys_are_encrypted_masked_and_only_revealed_to_their_owner(client):
     ada, bob = signup(client), signup(client, "bob@example.com")
     r = client.put("/api/me/keys", headers=ada, json={"values": {"PEXELS_API_KEY": "  pexels-secret-1234  "}})
     pexels = next(k for k in r.json()["keys"] if k["name"] == "PEXELS_API_KEY")
-    assert pexels == {"name": "PEXELS_API_KEY", "set": True, "hint": "1234", "updated_at": pexels["updated_at"]}
+    assert pexels == {"name": "PEXELS_API_KEY", "set": True, "hint": "1234", "updated_at": pexels["updated_at"],
+                      "site": False}
     assert all(not k["set"] for k in client.get("/api/me/keys", headers=bob).json()["keys"])
 
     with client.app.state.store.session() as s:
@@ -234,13 +235,6 @@ def test_openverse_register_saves_the_pair_to_the_account(client):
 
     route.mock(return_value=httpx.Response(400, json={"name": ["taken"]}))
     assert client.post("/api/keys/openverse/register", headers=ada, json={}).status_code == 502
-
-
-def test_server_keys_are_not_handed_to_users_unless_shared():
-    base = Settings(pexels_api_key="owner-key", _env_file=None)
-    assert settings_with_keys(base, {}, share_server_keys=False).pexels_api_key is None
-    assert settings_with_keys(base, {}, share_server_keys=True).pexels_api_key == "owner-key"
-    assert settings_with_keys(base, {"PEXELS_API_KEY": "mine"}, share_server_keys=True).pexels_api_key == "mine"
 
 
 def test_preferences_follow_the_account(client):

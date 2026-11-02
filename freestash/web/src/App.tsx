@@ -4,13 +4,14 @@ import { Icon, type IconName } from "./components/Icon";
 import { api } from "./lib/api";
 import { PrefsProvider } from "./lib/prefs";
 import { showsSignIn } from "./lib/gate";
-import { useSession } from "./lib/session";
+import { updateSessionUser, useSession } from "./lib/session";
+import { AdminPage } from "./pages/AdminPage";
 import { CollectionsPage, DownloadsPage, LedgerPage, LicenseCheckPage, SourcesPage } from "./pages/OtherPages";
 import { SearchPage } from "./pages/SearchPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SignInPage } from "./pages/SignInPage";
 
-type Route = "search" | "collections" | "downloads" | "ledger" | "check" | "sources" | "settings";
+type Route = "search" | "collections" | "downloads" | "ledger" | "check" | "sources" | "settings" | "admin";
 // Same screens, same order, same names as the desktop app's nav rail (shared/parity.json).
 const NAV: { group: string; items: { id: Route; label: string; icon: IconName }[] }[] = [
   { group: "Library", items: [
@@ -22,7 +23,8 @@ const NAV: { group: string; items: { id: Route; label: string; icon: IconName }[
     { id: "settings", label: "Settings", icon: "settings" },
   ] },
 ];
-const ROUTES = NAV.flatMap((g) => g.items.map((i) => i.id));
+// Site administration is web-only and reached from Settings, not the nav (parity.json `admin`).
+const ROUTES: Route[] = [...NAV.flatMap((g) => g.items.map((i) => i.id)), "admin"];
 
 function routeFromHash(): Route {
   const h = window.location.hash.replace(/^#\//, "").split("?")[0] as Route;
@@ -63,6 +65,8 @@ function Shell({ accountMode }: { accountMode: boolean }) {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+  // Refresh who's signed in once per load: an admin made or unmade since the last sign-in shows up here.
+  useEffect(() => { if (accountMode) api.me().then(updateSessionUser).catch(() => {}); }, [accountMode]);
 
   const name = session?.user.display_name || session?.user.email?.split("@")[0] || "This computer";
 
@@ -95,6 +99,7 @@ function Shell({ accountMode }: { accountMode: boolean }) {
         {route === "check" && <LicenseCheckPage />}
         {route === "sources" && <SourcesPage />}
         {route === "settings" && <SettingsPage onToast={setToast} accountMode={accountMode} />}
+        {route === "admin" && <AdminPage onToast={setToast} />}
       </main>
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>

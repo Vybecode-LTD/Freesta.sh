@@ -93,6 +93,13 @@ describe("session", () => {
     expect(headers.has("Authorization")).toBe(false);
   });
 
+  it("a refused search stream shows the server's words, not its JSON (the hourly cap, PR #6)", async () => {
+    const { searchStream } = await import("./api");
+    vi.stubGlobal("fetch", vi.fn(async () => json({ detail: "You've reached this hour's limit of 60 searches." }, 429)));
+    const run = searchStream({ q: "x", media: ["image"], use: "demo", maxTier: "yellow" }, () => {}, new AbortController().signal);
+    await expect(run).rejects.toThrow(/^You've reached this hour's limit of 60 searches\.$/);
+  });
+
   it("sign out clears the cookie on the server, and signs out here even if that fails", async () => {
     const s = await import("./session");
     const { api } = await import("./api");

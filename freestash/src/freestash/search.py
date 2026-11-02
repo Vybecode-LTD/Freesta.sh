@@ -121,6 +121,11 @@ class Freestash:
         return ProviderStatus(provider=cls.info.id, ok=False, error=err,
                               elapsed_ms=int((time.perf_counter() - started) * 1000)), []
 
+    async def run_provider(self, cls: type[Provider], query: SearchQuery,
+                           settings: Settings) -> tuple[ProviderStatus, list[Asset]]:
+        """One provider on its own, outside a federated search (the admin's key test)."""
+        return await self._run(cls, query, settings)
+
     async def search_stream(self, query: SearchQuery, settings: Settings | None = None) -> AsyncIterator[ProviderBatch]:
         """`settings` overrides the engine's own for one call: the API passes each user's keys this way."""
         settings = settings or self.settings

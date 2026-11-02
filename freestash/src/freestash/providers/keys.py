@@ -134,10 +134,17 @@ def key_spec(name: str) -> KeySpec | None:
     return _BY_NAME.get(name)
 
 
-def settings_with_keys(base: Settings, keys: dict[str, str], *, share_server_keys: bool) -> Settings:
-    """The engine settings for one user: their own keys, plus the server's only if sharing is on."""
+def settings_with_keys(base: Settings, own: dict[str, str], site: dict[str, str]) -> Settings:
+    """The engine settings for one member (decision 0003): their own key, else the admin's stored key, else env."""
     update = {}
     for spec in KEY_CATALOG:
-        own = (keys.get(spec.name) or "").strip()
-        update[spec.setting] = own or (getattr(base, spec.setting) if share_server_keys else None)
+        update[spec.setting] = ((own.get(spec.name) or "").strip() or (site.get(spec.name) or "").strip()
+                                or getattr(base, spec.setting))
     return base.model_copy(update=update)
+
+
+def site_keyed_providers(base: Settings, own: dict[str, str], site: dict[str, str]) -> set[str]:
+    """Providers a member searches on the site's key (stored or env): the calls that spend the shared quota."""
+    return {spec.provider for spec in KEY_CATALOG
+            if not (own.get(spec.name) or "").strip()
+            and ((site.get(spec.name) or "").strip() or getattr(base, spec.setting))}

@@ -100,10 +100,16 @@ async def put_prefs(body: PrefsIn, user: User, request: Request,
         raise HTTPException(422, str(exc)) from exc
 
 
+def _with_site(request: Request, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Each row says whether Freesta.sh has its own key for it (stored by an admin, or env): decision 0003."""
+    admin = request.app.state.admin
+    return [{**row, "site": admin.has_site_key(row["name"])} for row in rows]
+
+
 @router.get("/api/me/keys")
 async def get_keys(user: User, request: Request, settings: Settings = Depends(get_settings)) -> dict[str, Any]:
     _accounts_only(user, settings)
-    return {"keys": accounts(request).keys_masked(user.id)}
+    return {"keys": _with_site(request, accounts(request).keys_masked(user.id))}
 
 
 @router.put("/api/me/keys")
@@ -112,7 +118,7 @@ async def put_keys(body: KeysIn, user: User, request: Request,
     _accounts_only(user, settings)
     svc = accounts(request)
     _call(svc.set_keys, user.id, body.values)
-    return {"keys": svc.keys_masked(user.id)}
+    return {"keys": _with_site(request, svc.keys_masked(user.id))}
 
 
 @router.get("/api/me/keys/{name}")

@@ -13,7 +13,8 @@ public sealed record KeySpec(
     string Name, string Setting, string Provider, string ProviderName, string Label, string Url, string UrlLabel,
     List<string> Steps, string? Limits, string Unlocks, bool Optional, string? Notice, string? Action);
 
-public sealed record KeyState(string Name, bool Set, string? Hint, string? UpdatedAt);
+/// <summary><paramref name="Site"/>: Freesta.sh has its own key for this source (decision 0003), so the member's is optional.</summary>
+public sealed record KeyState(string Name, bool Set, string? Hint, string? UpdatedAt, bool Site = false);
 
 public sealed record KeysResponse(List<KeyState> Keys);
 

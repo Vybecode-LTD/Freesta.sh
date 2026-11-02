@@ -75,6 +75,22 @@ public class AccountTests : IDisposable
     }
 
     [Fact]
+    public async Task Key_rows_say_when_freesta_sh_has_its_own_key()
+    {
+        // Decision 0003: members search on the site's keys; each row says whether the site covers it.
+        var server = new FakeServer
+        {
+            Respond = _ => (HttpStatusCode.OK, """{"keys":[{"name":"PEXELS_API_KEY","set":false,"hint":null,"updated_at":null,"site":true},{"name":"UNSPLASH_ACCESS_KEY","set":false,"hint":null,"updated_at":null}]}"""),
+        };
+        using var client = new AccountClient(new Uri("https://freesta.sh"), () => "jwt-1", server);
+
+        var keys = await client.KeysAsync(Ct);
+
+        Assert.True(keys[0].Site);
+        Assert.False(keys[1].Site); // an older server without the field: not covered
+    }
+
+    [Fact]
     public async Task A_401_raises_SessionExpired_so_the_app_signs_out()
     {
         var server = new FakeServer { Respond = _ => (HttpStatusCode.Unauthorized, """{"detail":"Your session has expired. Sign in again."}""") };
