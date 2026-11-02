@@ -7,7 +7,7 @@ the website at **freesta.sh** and a Windows desktop app, on **one account**. Git
 Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner, 2026-10-31).
 
 ## Current State
-- `main` holds PRs #1–#3, all live and verified 2026-11-01:
+- `main` holds PRs #1–#4, all live and verified 2026-11-01/02 (#4: accounts mode needs a database URL):
   - #1: accounts, synced keys + prefs, key help, the Aperture redesign on both apps, parity gates;
   - #2: the path-traversal hotfix;
   - #3: ledger paging, the CSP, SMTP reset email.

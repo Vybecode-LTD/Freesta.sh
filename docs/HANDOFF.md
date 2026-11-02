@@ -2,7 +2,7 @@
 
 ## State
 - `main` = the merge of **PR #3** (bfdae9b). PRs #1–#3 are merged (#2 and #3 on the owner's OK), and **all are
-  live**. PR #4 (the no-database guard) is open; the next is #5. Railway builds `main`.
+  live**. PR #4 (the no-database guard) was merged as a683d67 and deployed (af809fd6, healthy). The next PR is #5.
 - Verified on production after the deploys:
   - https://freesta.sh: the certificate is valid and health reports `auth_mode: accounts`.
   - Traversal and `%00` paths get the page on both hosts.
@@ -21,7 +21,7 @@
   - CI publishes a self-contained single-file exe on every push to `main` (artifact `freestash-desktop-win-x64`).
   - There's a local Release build of `main` at `freestash-desktop/publish/Freestash.exe` (unsigned, ignored by git).
   - There's no installer, no signing and no GitHub Release yet.
-- This checkout is on `feat/pr4-followups`, which is PR #4: the no-database guard plus these docs.
+- This checkout is on `feat/pr5-followups`: this docs update, committed locally. Fold it into PR #5.
 
 ## Done this session
 - Owner decisions (`docs/decisions/0002`): Spacemail SMTP instead of Resend; a CSP now, then an HttpOnly cookie;
@@ -32,11 +32,11 @@
   - ledger paging on both apps (a keyset cursor, Load more);
   - a strict CSP (`api/csp.py`);
   - the SMTP mailer (`mailer.py`, `mail.spacemail.com:465`).
-- PR #4 (open): accounts mode refuses to start without a database URL (regression test).
+- PR #4 (merged and live): accounts mode refuses to start without a database URL (regression test).
 - Gates: pytest 122 · ruff · export check · vitest 15 · web build · dotnet 33 · 0 warnings.
 
 ## Next
-0. Owner: merge PR #4 (the no-database guard). Sign up again on https://freesta.sh: earlier accounts are gone.
+0. Owner: sign up again on https://freesta.sh: earlier accounts are gone.
    Turn on scheduled backups for the Postgres volume (Railway → Postgres → Backups).
    The spare empty volume `postgres-volume-EFLf` can be deleted.
 1. The SMTP variables are set (the owner, 2026-11-01). Once the owner has re-registered, request a reset and
