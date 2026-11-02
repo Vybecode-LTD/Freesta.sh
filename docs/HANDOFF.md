@@ -1,19 +1,27 @@
 # Handoff — Freesta.sh (2026-11-01, third session)
 
 ## State
-- `main` = the merge of **PR #4** (a683d67). PRs #1–#4 are merged and **live**: deploy af809fd6, health
-  `auth_mode: accounts`, verified 2026-11-02.
-- **PR #5 is built on `feat/pr5-followups`, not pushed.** The website now signs in with an HttpOnly cookie, per
-  decision 0002 and the contract `dev plans/contracts/web-cookie-session.md`:
+- `main` = the merge of **PR #5** (485cece), merged 2026-11-02 on the owner's OK. PRs #1–#5 are **live**: deploy
+  5303ef57. The repository now allows auto-merge (the owner, 2026-11-02). The checkout is on `feat/pr6-admin`; its
+  only commit so far is this docs update.
+- **PR #5: the website signs in with an HttpOnly cookie**, per decision 0002 and the contract
+  `dev plans/contracts/web-cookie-session.md`:
   - The auth calls send `X-Freestash-Session: cookie`. The server sets `freestash_session` (`SameSite=Lax`,
     `Path=/api`, `Secure` except on loopback), and the body carries no token.
   - A cookie-signed write must carry the site's own Origin (or Referer), or it gets 403.
   - There's a new `POST /api/auth/logout`. "Sign out everywhere" also clears the cookie.
   - The desktop is unchanged (bearer).
   - Web localStorage holds only the user. An old saved token is deleted on load, so web users sign in once after the deploy.
-  - Verified live on the dev server (:8790): sign-up, script can't read the token, reads, a write and the search
-    stream all work on the cookie alone, and Sign out leaves `/api/auth/me` at 401.
-- Gates on the branch: pytest 128 · ruff · export check · vitest 19 · web build. The desktop is untouched (dotnet 33 at PR #3).
+  - Review fix (Codex): the stored session carries a random `gen`, so a password change still reaches other tabs.
+  - Verified on the dev server (:8790): sign-up, script can't read the token, reads, a write and the search stream all
+    work on the cookie alone, and Sign out leaves `/api/auth/me` at 401.
+  - **Verified on https://freesta.sh** (2026-11-02, no account created):
+    - logout answers 204 and clears the cookie with `HttpOnly; Path=/api; SameSite=lax; Secure`;
+    - a web login and a cookie write from another site get 403, and from the site itself 401 (made-up account, bad cookie);
+    - the served bundle asks for the cookie.
+  - A real sign-in on production hasn't been checked: no production account exists yet.
+- Gates at the merge: pytest 128 · ruff · export check · vitest 19 · web build · CI engine/web/desktop green. The desktop
+  is untouched (dotnet 33 at PR #3).
 - **Decision 0003 (owner, 2026-11-01):**
   - Admin-held provider keys shared with every member, with caps of 60 searches an hour and 20 web searches a day.
   - Admin screen on the web only; web finds are always CHECK.
@@ -28,8 +36,8 @@
   No installer, no signing, no release.
 
 ## Next
-1. **Owner OK → push `feat/pr5-followups` and open PR #5.** After the merge and deploy, check on https://freesta.sh:
-   sign in, confirm DevTools shows `freestash_session` as HttpOnly and Secure, search, then sign out.
+1. **Owner:** sign up again on https://freesta.sh (earlier accounts are gone). That is also the last PR #5 check: a
+   search works, and Sign out returns to the sign-in page.
 2. **PR #6: admin + shared keys** (plan §3·3). Contract first. Its pieces:
    - `users.is_admin`, with the first admin set by `FREESTASH_ADMIN_EMAILS`;
    - a `server_keys` table, Fernet-encrypted;
