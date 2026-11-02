@@ -5,6 +5,7 @@
 // The third argument is an accounts-mode server (freestash/scripts/dev_accounts.py): signs up through the real
 // sign-in screen, saves a key and an accent from Settings, and reads them back through the account API.
 
+using System.Reflection;
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Media;
@@ -150,6 +151,30 @@ async Task Script()
     Go(vm.Settings);
     await Shot("09-settings.png");
 
+    // ---- query words pick the media, and several media group into sections (contract grouped-results)
+    vm.Search.CloseDetailCommand.Execute(null);
+    Go(vm.Search);
+    vm.Search.Query = "anchor photo icon";
+    await vm.Search.SearchAsync();
+    await WaitFor(() => !vm.Search.IsSearching, 60_000, "search words");
+    Console.WriteLine($"  read as: {string.Join(", ", vm.Search.Picks.Select(p => p.Text))} · sections: " +
+                      string.Join(", ", vm.Search.Sections.Select(s => $"{s.Label} {s.Cards.Count}/{s.Total}")));
+    if (vm.Search.Query != "anchor" || vm.Search.Picks.Count != 2 || !vm.Search.IsGrouped || vm.Search.Sections.Count < 2)
+        throw new InvalidOperationException("the query words weren't read as Images + Icons sections");
+    await Wait(7000);
+    await Shot("09b-search-grouped.png");
+    vm.Search.ToggleSectionCommand.Execute(vm.Search.Sections[1]);
+    await Wait(500);
+    vm.Search.JumpCommand.Execute(vm.Search.Sections[1]);
+    await Wait(2500);
+    await Shot("09c-search-jump-expanded.png");
+    await vm.Search.RemovePickCommand.ExecuteAsync(vm.Search.Picks.First(p => p.Pick.Word == "icon"));
+    await WaitFor(() => !vm.Search.IsSearching, 60_000, "search after removing a chip");
+    if (vm.Search.Query != "anchor icon" || vm.Search.Picks.Count != 1 || vm.Search.IsGrouped)
+        throw new InvalidOperationException($"removing the chip left '{vm.Search.Query}', {vm.Search.Picks.Count} chip(s)");
+    await Wait(5000);
+    await Shot("09d-search-chip-removed.png");
+
     // ---- Frost (light) + icons/fonts/textures mix
     services.Theme.Apply(AppTheme.Frost, AccentColor.Sodium);
     foreach (var m in vm.Search.Media) m.IsSelected = m.Value is MediaType.Texture or MediaType.Icon or MediaType.Font or MediaType.Hdri;
@@ -173,6 +198,24 @@ async Task Script()
     Go(vm.Search);
     await Wait(1500);
     await Shot("13-iris-accent.png");
+
+    // ---- regression (CodeRabbit, PR #7): a query read that answers after a newer one must not take over
+    var slow = DispatchProxy.Create<IFreestashApi, SlowRead>();
+    ((SlowRead)(object)slow).Inner = services.Api.Current;
+    ((SlowRead)(object)slow).SlowText = "rain sfx";
+    services.Api.Override = slow;
+    vm.Search.Query = "rain sfx";
+    var older = vm.Search.SearchAsync(); // its read waits at the gate
+    vm.Search.Query = "anchor font";
+    await vm.Search.SearchAsync();
+    ((SlowRead)(object)slow).Gate.SetResult();
+    await older;
+    await WaitFor(() => !vm.Search.IsSearching, 60_000, "search after the stale read");
+    services.Api.Override = null;
+    var picks = string.Join(", ", vm.Search.Picks.Select(p => p.Text));
+    Console.WriteLine($"  stale read: query '{vm.Search.Query}' · read as {picks}");
+    if (vm.Search.Query != "anchor" || picks != "“font” → Fonts")
+        throw new InvalidOperationException($"an older read took over: '{vm.Search.Query}', {picks}");
 
     if (accountsUrl is null) return;
 
@@ -209,4 +252,25 @@ async Task Script()
     if (!keyOk || prefs.Accent != "teal") throw new InvalidOperationException("account sync failed");
     await Wait(800);
     await Shot("16-account-settings.png");
+}
+
+/// <summary>Forwards every call to the real client but holds back one query's read until <see cref="Gate"/> opens.</summary>
+public class SlowRead : DispatchProxy
+{
+    public IFreestashApi Inner { get; set; } = null!;
+    public string SlowText { get; set; } = "";
+    public TaskCompletionSource Gate { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    protected override object? Invoke(MethodInfo? method, object?[]? args)
+    {
+        if (method!.Name == nameof(IFreestashApi.ParseQueryAsync) && args![0] as string == SlowText)
+            return HeldAsync((string)args[0]!, (IReadOnlyList<string>)args[1]!);
+        return method.Invoke(Inner, args);
+    }
+
+    private async Task<ParsedQuery> HeldAsync(string q, IReadOnlyList<string> keep)
+    {
+        await Gate.Task;
+        return await Inner.ParseQueryAsync(q, keep);
+    }
 }

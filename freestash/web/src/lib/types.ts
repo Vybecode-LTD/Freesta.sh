@@ -1,4 +1,5 @@
 // Mirrors src/freestash/models.py. Keep in sync when the Python models change.
+import { CATEGORIES } from "./categories";
 
 export type MediaType = "image" | "audio" | "video" | "texture" | "hdri" | "model" | "font" | "icon";
 export type UseCase = "reference" | "demo" | "client" | "bundled" | "merch";
@@ -100,11 +101,13 @@ export const SHOW_OPTIONS: { id: Tier; label: string; hint: string }[] = [
   { id: "red", label: "All", hint: "Everything, including blocked results" },
 ];
 
-export const MEDIA_TYPES: { id: MediaType; label: string }[] = [
-  { id: "image", label: "Images" }, { id: "audio", label: "Audio" }, { id: "video", label: "Video" },
-  { id: "texture", label: "Textures" }, { id: "hdri", label: "HDRIs" }, { id: "model", label: "3D" },
-  { id: "font", label: "Fonts" }, { id: "icon", label: "Icons" },
-];
+/** The Media filter: one pill per category, labelled and ordered by shared/categories.json (as on the desktop). */
+export const MEDIA_TYPES: readonly { id: MediaType; label: string }[] = CATEGORIES;
+
+/** A query word read as a category ("sfx" → audio); `word` is exactly as typed. Mirrors models.QueryPick. */
+export interface QueryPick { word: string; media_type: MediaType }
+/** What the engine made of a query (`GET /api/search/parse`). Empty `media_types` means nothing was picked. */
+export interface ParsedQuery { original: string; q: string; media_types: MediaType[]; picks: QueryPick[] }
 
 export const USE_CASES: { id: UseCase; label: string; hint: string }[] = [
   { id: "reference", label: "Reference", hint: "Mood boards and internal reference. Never shipped or shown." },

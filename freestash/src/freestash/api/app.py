@@ -39,6 +39,7 @@ from freestash.models import (
     Asset,
     LedgerEntry,
     MediaType,
+    ParsedQuery,
     ProviderStatus,
     ScoredAsset,
     SearchQuery,
@@ -49,6 +50,7 @@ from freestash.models import (
 )
 from freestash.providers import PROVIDERS
 from freestash.providers.keys import settings_with_keys, site_keyed_providers
+from freestash.query_words import parse_query
 from freestash.search import Freestash
 from freestash.store import Store, entry_from_scored
 
@@ -202,6 +204,17 @@ async def search_stream(
 
     return StreamingResponse(events(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/api/search/parse", response_model=ParsedQuery)
+async def search_parse(
+    user: User,
+    q: Annotated[str, Query(max_length=500)],
+    keep: Annotated[list[str], Query(max_length=20)] = [],  # noqa: B006
+) -> ParsedQuery:
+    """Read category words out of a query ("rain sfx" -> "rain" in Audio). The apps call it before searching and
+    show each pick as a chip; removing one sends its word back in `keep`. No providers, no search cap."""
+    return parse_query(q, keep)
 
 
 @app.get("/api/assets/{uid:path}")

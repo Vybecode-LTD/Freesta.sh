@@ -85,6 +85,12 @@ public sealed record PdCutoff(int Works, int SoundRecordings);
 public sealed record SearchRequest(string Query, IReadOnlyList<MediaType> Media, UseCase Use, Tier MaxTier,
                                    IReadOnlyList<string>? Providers = null, int Limit = 12, int Page = 1);
 
+/// <summary>A query word read as a category ("sfx" → audio); <see cref="Word"/> is exactly as typed.</summary>
+public sealed record QueryPick(string Word, MediaType MediaType);
+
+/// <summary>What the engine made of a query (<c>GET /api/search/parse</c>). Empty <see cref="MediaTypes"/> means no pick.</summary>
+public sealed record ParsedQuery(string Original, string Q, List<MediaType> MediaTypes, List<QueryPick> Picks);
+
 public static class Formatting
 {
     public static string Bytes(long? n) => n switch

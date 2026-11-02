@@ -31,6 +31,8 @@ public interface IFreestashApi
     Task<List<ProviderInfo>> ProvidersAsync(CancellationToken ct = default);
     Task<PdCutoff> PdCutoffAsync(CancellationToken ct = default);
     IAsyncEnumerable<StreamBatch> SearchStreamAsync(SearchRequest request, CancellationToken ct = default);
+    /// <summary>Query words that pick categories ("rain sfx" → "rain" in Audio); <paramref name="keep"/> are searched as words.</summary>
+    Task<ParsedQuery> ParseQueryAsync(string q, IReadOnlyList<string> keep, CancellationToken ct = default);
     Task<AssetDetail> AssetAsync(string uid, UseCase use, CancellationToken ct = default);
     Task<LicenseCheckResult> CheckLicenseAsync(string license, Trust trust, MediaType media, int? year, CancellationToken ct = default);
     Task<List<Collection>> CollectionsAsync(CancellationToken ct = default);
@@ -120,6 +122,16 @@ public sealed class FreestashApiClient : IFreestashApi, IDisposable
         foreach (var p in r.Providers ?? []) sb.Append("&providers=").Append(Q(p));
         return sb.ToString();
     }
+
+    public static string BuildParseQuery(string q, IReadOnlyList<string> keep)
+    {
+        var sb = new StringBuilder($"/api/search/parse?q={Q(q)}");
+        foreach (var k in keep) sb.Append("&keep=").Append(Q(k));
+        return sb.ToString();
+    }
+
+    public Task<ParsedQuery> ParseQueryAsync(string q, IReadOnlyList<string> keep, CancellationToken ct = default) =>
+        Send<ParsedQuery>(HttpMethod.Get, BuildParseQuery(q, keep), null, ct, TimeSpan.FromSeconds(10));
 
     public async IAsyncEnumerable<StreamBatch> SearchStreamAsync(SearchRequest request, [EnumeratorCancellation] CancellationToken ct = default)
     {

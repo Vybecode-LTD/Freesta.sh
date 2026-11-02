@@ -17,6 +17,7 @@ from freestash.export import attribution_markdown, credits_html, ledger_csv
 from freestash.licenses import evaluate_all, normalize_license, us_public_domain_cutoff
 from freestash.models import Asset, MediaType, ScoredAsset, SearchQuery, Tier, Trust, UseCase
 from freestash.providers import PROVIDERS
+from freestash.query_words import parse_query
 
 INSTRUCTIONS = """Freestash finds public domain and openly licensed assets (images, audio, video, PBR textures, HDRIs,
 3D models, fonts, icons) across ~20 sources and scores each result GREEN / YELLOW / RED for a use case.
@@ -68,16 +69,24 @@ async def search_assets(
     providers: list[str] | None = None,
     limit_per_provider: int = 6,
     page: int = 1,
+    literal: bool = False,
 ) -> dict[str, Any]:
     """Search every enabled source at once. media_types: image, audio, video, texture, hdri, model, font, icon.
-    Results come back interleaved across sources, GREEN first, each with its license verdict for use_case."""
+    Without media_types, words like "sfx", "font" or "3d model" pick the media and leave the query (read_as says
+    which); pass literal=true to search every word. Results come back interleaved across sources, GREEN first, each
+    with its license verdict for use_case."""
     engine = _get_engine()
+    parsed = parse_query(query) if media_types is None and not literal else None
+    if parsed and parsed.picks:
+        query, media_types = parsed.q, parsed.media_types
     resp = await engine.search(SearchQuery(q=query, media_types=media_types or [MediaType.IMAGE], use_case=use_case,
                                            max_tier=max_tier, providers=providers,
                                            limit_per_provider=max(1, min(limit_per_provider, 25)), page=page))
     engine.recent.flush()
     return {
         "use_case": use_case.value,
+        "searched_for": query,
+        "read_as": [{"word": p.word, "media_type": p.media_type.value} for p in parsed.picks] if parsed else [],
         "results": [_compact(s) for s in resp.results],
         "hidden_by_tier": resp.hidden_by_tier,
         "sources": [{"provider": p.provider, "ok": p.ok, "count": p.count, "error": p.error} for p in resp.providers],

@@ -21,6 +21,18 @@ def test_every_feature_exists_on_both_sides_or_says_why_not():
     assert not problems, "\n".join(problems)
 
 
+def test_categories_are_the_media_types_and_no_word_picks_two():
+    from freestash.models import MediaType
+
+    cats = json.loads((REPO / "shared" / "categories.json").read_text(encoding="utf-8"))["categories"]
+    ids = [c["id"] for c in cats]
+    assert sorted(ids) == sorted(m.value for m in MediaType), ids  # every medium once, nothing else
+    words = [w for c in cats for w in c["words"]]
+    assert len(words) == len(set(words)), "a word picks two categories"
+    assert all(w == " ".join(w.lower().split()) and len(w.split()) <= 3 for w in words), words  # parser's rules
+    assert all(c["label"].strip() for c in cats)
+
+
 def test_both_apps_list_the_same_screens_in_the_same_order():
     web = (REPO / "freestash/web/src/App.tsx").read_text(encoding="utf-8")
     desktop = (REPO / "freestash-desktop/src/Freestash.Desktop/ViewModels/MainWindowViewModel.cs").read_text(encoding="utf-8")

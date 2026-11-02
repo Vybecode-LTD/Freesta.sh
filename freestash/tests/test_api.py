@@ -43,6 +43,21 @@ def test_search_and_stream(client):
     assert "event: batch" in body and "event: done" in body
 
 
+def test_parse_reads_category_words_and_keeps_what_it_is_told(client):
+    r = client.get("/api/search/parse", params={"q": "sound of rain sfx"})
+    assert r.status_code == 200
+    assert r.json() == {"original": "sound of rain sfx", "q": "rain", "media_types": ["audio"],
+                        "picks": [{"word": "sound", "media_type": "audio"}, {"word": "sfx", "media_type": "audio"}]}
+    kept = client.get("/api/search/parse", params={"q": "sound of rain sfx", "keep": ["sound"]}).json()
+    assert kept["q"] == "sound of rain" and [p["word"] for p in kept["picks"]] == ["sfx"]
+
+
+def test_parse_refuses_oversized_input(client):
+    assert client.get("/api/search/parse", params={"q": "x" * 501}).status_code == 422
+    assert client.get("/api/search/parse", params={"q": "rain", "keep": ["w"] * 21}).status_code == 422
+    assert client.get("/api/search/parse", params={"q": "x" * 500, "keep": ["w"] * 20}).status_code == 200
+
+
 @respx.mock
 def test_collections_and_ledger_flow(client):
     respx.get("https://api.smk.dk/api/v1/art/search/").mock(return_value=httpx.Response(200, json=load("smk_search")))

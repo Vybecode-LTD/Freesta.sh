@@ -63,7 +63,7 @@ python -m freestash admin grant you@example.com   # the first site admin (accoun
 
 python -m freestash serve --reload            # API on :8787, local mode (serves web/dist if built)
 python scripts/dev_accounts.py --port 8790    # accounts mode, as on Railway (throwaway DB + secrets in %LOCALAPPDATA%)
-python scripts/export_shared.py               # after editing providers/keys.py or ../shared/design-tokens.json
+python scripts/export_shared.py               # after editing providers/keys.py, ../shared/design-tokens.json or ../shared/categories.json
 cd web && npm install && npm run dev       # UI on :5173, proxies /api to :8787
 python -m freestash mcp                       # MCP over stdio
 ```
