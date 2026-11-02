@@ -1,10 +1,12 @@
-# Handoff — Freesta.sh (2026-11-02, end of the fifth session)
+# Handoff — Freesta.sh (2026-11-02, fifth session, after the PR #8 merge)
 
-## State (verified at the end of the session)
-- `main` = `origin/main` = **f1737d6** (PR #7 merge), live. PRs #1–#7 are merged. The owner is the only production admin.
-- The checkout is `feat/pr8-packs` (head 12af9d0, the PR #7 docs commit, not pushed, no upstream). **PR #8's work is in the
-  working tree, uncommitted**: nothing has been committed, pushed or opened. No PRs are open.
-- **PR #8: packs, and brushes, shapes and sprites.** Contract `dev plans/contracts/packs-and-new-kinds.md` (done; dated
+## State (verified after the merge)
+- `main` = `origin/main` = **71a29d6**, the merge of PR #8. PRs #1–#8 are merged. No PRs are open. The owner is the only
+  production admin.
+- **Live:** after the deploy the production bundle changed and contains "Game assets" (a string only PR #8 ships); the parse route
+  answers 401 and a made-up `/api/search/` path 404, on both hosts. Not checked signed in on production (the owner's account).
+- The checkout is `feat/pr9-github-curated-packs`, cut from 71a29d6, with this handoff as a local commit (not pushed).
+- **PR #8 (merged on the owner's "it's green, go for it", CI green on c02cfbe): packs, and brushes, shapes and sprites.** Contract `dev plans/contracts/packs-and-new-kinds.md` (done; dated
   changes logged there). Built and verified, both apps:
   - **Model:** `MediaType` + `brush`/`shape`/`sprite`; `Asset` + `is_pack`, `item_count`, `formats`, `member_licenses`,
     `members_checked`; `SearchQuery.packs`; `QueryPick.media_type` nullable + `packs`; `ParsedQuery.packs`. Three mirrors in step.
@@ -17,25 +19,27 @@
   - **Words and UI:** `shared/categories.json` gained the three categories, `pack_words` and the `game-assets` preset
     (exported to engine, web, desktop). `--packs` (CLI), `packs` (MCP, API, stream). Both apps: Packs Off/On, Game assets pill,
     pack words as a chip, packs lead each section, card badge `Pack · 24 files`, detail rows Pack / Formats / Licenses inside.
-- **Gates:** pytest 203 · ruff clean · export check clean · vitest 47 · web build · dotnet build 0 warnings · dotnet 61.
+- **Gates at the merge:** pytest 205 · ruff clean · export check clean · vitest 50 · web build · dotnet build 0 warnings · dotnet 61.
   Live on the dev server: "game icon pack" → chips icon→Icons, pack→Packs, Packs On, Game Icons (4,133 files) first, drawer rows
   right; Game assets → one search with six media + packs; "grunge brushes" (Reference) → IA brush packs, all Check, "No license stated".
   Rendered contrast on the search page with pack cards: packs grid and Game assets sections, dark and light, 1440 and 390 and
   hovers, **0 failing**; positive control (badge in its own colour) fails at 1:1. The open drawer's own text passes; two
   "undecided" remain at 390 px in page chrome the drawer covers (the Downloads nav link, the aperture's "08"), not pack content.
-  Desktop: headless renders `freestash-desktop/docs/screenshots/09e`, `09f` (and 01, 02, 09b–d, 10 re-rendered); the snapshot
+  Desktop: headless renders `freestash-desktop/docs/screenshots/09e`, `09f`, `09g` (narrow window); the snapshot
   script asserts the chips, a set leading, the pack detail rows and the preset.
+- **Review fixes (Codex, CodeRabbit), each with a test that failed first except the pill wrap (checked by a 760 px render):** assets saved before packs have no pack fields (the web's
+  helpers default them); reference isn't floored by unread files; the dedupe key includes the media type; a late query read
+  searches with the latest media and Packs; the desktop's Media pills wrap.
 - **Contract change:** the Game assets pill has no dashed border (Avalonia can't); pack uids carry their kind
   (`iconify:set:…`, `freesound:pack:…`, `internet_archive:brush:…`). Both in the contract's dated list.
 
 ## Next
-1. **Owner:** say whether to commit and push `feat/pr8-packs` as PR #8 (predicted number 8: highest PR is 7, no issues).
-   After merge and deploy, search "game icon pack" signed in on https://freesta.sh.
-2. **PR #9: GitHub source and curated packs** (plan §3·1; needs the owner's GitHub token on `#/admin` and a curated-pack list).
-   Contract first. Then web or AI search (decision 0003's order; the AI Search question is still open).
+1. **Owner (optional):** signed in on https://freesta.sh, search "game icon pack": two chips, Packs On, Game Icons (4,133 files) first.
+2. **PR #9: GitHub source and curated packs** (plan §3·1). Contract first. Needs the owner's GitHub token on `#/admin` and the
+   curated-pack list (Kenney, Quaternius: admin-recorded licences). Then web or AI search (the AI Search question is still open).
 3. **Owner (optional):** record real Freesound fixtures with a key (`freesound_packs_synthetic.json` is hand-built).
-4. Still open from before: provider keys on `#/admin` (apply for Unsplash production first); Wikimedia decision; test the reset
-   email on production; Postgres volume backups; delete the spare volume `postgres-volume-EFLf`; `www.freesta.sh`; Google
+4. Still open from before: provider keys on `#/admin` (apply for Unsplash production first); the Wikimedia decision; test the
+   reset email on production; Postgres volume backups; delete the spare volume `postgres-volume-EFLf`; `www.freesta.sh`; Google
    sign-in; the desktop installer; retire `railway.json` before 2026-12-01.
 
 ## Warnings

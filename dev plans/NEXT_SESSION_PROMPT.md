@@ -11,19 +11,16 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 - **Needs the owner's OK:** committing/pushing/merging, DNS, production accounts, deleting Railway resources, computer-use,
   admin grants. No email address makes an admin: grants go only through `python -m freestash admin grant`.
 
-## 3. State (verified 2026-11-02, end of session)
-- `main` = `origin/main` = **f1737d6** (PR #7), live. No open PRs; highest PR number 7, no issues.
-- The checkout is `feat/pr8-packs` at 12af9d0 (no upstream). **PR #8's whole build is in the working tree, uncommitted** (engine,
-  web, desktop, tests, fixtures, docs, the contract `dev plans/contracts/packs-and-new-kinds.md`, screenshots 09e/09f).
-  All gates were green on it: pytest 203, ruff, export check, vitest 47, web build, dotnet 0 warnings / 61 tests, contrast 0 failing.
-- Nothing deployed from it. The owner hasn't yet said to commit or push.
+## 3. State (verified 2026-11-02, after the PR #8 merge)
+- `main` = `origin/main` = **71a29d6** (PR #8 merge), deployed: the production bundle carries "Game assets" (not checked signed in).
+  No open PRs; the highest is 8. Gates at the merge: pytest 205, vitest 50, dotnet 61, CI engine/web/desktop green.
+- The checkout is `feat/pr9-github-curated-packs`, cut from 71a29d6: one local docs commit, not pushed, no upstream. It goes in with PR #9.
 
 ## 4. First job, then the order
-1. **Re-run the gates on the working tree, then ask the owner** to commit and push PR #8 (one push, branch + docs + status rows,
-   `git push -u origin feat/pr8-packs:feat/pr8-packs`; PR number 8). `git add` by path: check the staged diff for secrets.
-2. Then **PR #9: GitHub source and curated packs** (plan `dev plans/2026-11-01-packs-web-admin-plan.md` §3·1). Contract first.
-   Needs a GitHub token on `#/admin` (ask the owner) and the curated-pack list (Kenney, Quaternius: admin-recorded licences).
-3. Then web or AI search (decision 0003's order).
+1. **PR #9: GitHub source and curated packs** (plan `dev plans/2026-11-01-packs-web-admin-plan.md` §3·1). Contract first, from
+   `_templates/feature-CONTRACT.md`. Needs a GitHub token on `#/admin` (ask the owner) and the curated-pack list (Kenney, Quaternius:
+   admin-recorded licences, curated trust). Packs from GitHub are `is_pack` with the repo's SPDX licence at uploader trust.
+2. Then web or AI search (decision 0003's order).
 
 ## 5. Open owner decisions (ask, don't decide)
 - AI Search (plan §2b) instead of Brave web search.
@@ -31,9 +28,9 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 - The infrastructure items in `docs/HANDOFF.md` → Next 4.
 
 ## 6. Environment that worked
-- **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (203, ~75 s) · `ruff check src tests scripts` ·
+- **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (205, ~75 s) · `ruff check src tests scripts` ·
   `python scripts/export_shared.py --check`.
-- **Web and desktop:** `cd freestash/web; npm test` (47) · `npm run build`. `cd freestash-desktop; dotnet build
+- **Web and desktop:** `cd freestash/web; npm test` (50) · `npm run build`. `cd freestash-desktop; dotnet build
   Freestash.Desktop.sln; dotnet test --project tests/Freestash.Client.Tests` (61).
 - **Servers:** `preview_start freestash-accounts` (:8790) · `freestash-local` (:8791, for `dotnet run --project
   tools/Freestash.Desktop.Snapshots -- http://127.0.0.1:8791 docs/screenshots`; restore the shots a change doesn't touch with
@@ -49,7 +46,7 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 
 ## 7. Evidence and IDs
 - Decisions `docs/decisions/0001–0003` (next 0004). Contracts `dev plans/contracts/{accounts-sync,web-cookie-session,
-  admin-shared-keys,grouped-results,packs-and-new-kinds}.md`. Next PR #9.
+  admin-shared-keys,grouped-results,packs-and-new-kinds}.md`. Next PR #9 (the highest is 8, no issues).
 - Recorded fixtures: `iconify_collections.json`, `ia_packs.json`; **synthetic** (no key yet): `freesound_packs_synthetic.json`.
 
 ## 8. Promotion candidates (owner approves)

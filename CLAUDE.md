@@ -7,7 +7,7 @@ the website at **freesta.sh** and a Windows desktop app, on **one account**. Git
 Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner, 2026-10-31).
 
 ## Current State
-- `main` holds PRs #1–#7, all live and verified 2026-11-01/02 (#4: accounts mode needs a database URL; #5: cookie
+- `main` holds PRs #1–#8, all live and verified 2026-11-01/02 (#4: accounts mode needs a database URL; #5: cookie
   session; #6: admin screen and shared keys):
   - #1: accounts, synced keys + prefs, key help, the Aperture redesign on both apps, parity gates;
   - #2: the path-traversal hotfix;
@@ -17,15 +17,16 @@ Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner,
 - **PR #7** (merged 2026-11-02 as f1737d6, live, verified on production): results grouped by category and query words
   as chips, both apps; `shared/categories.json` → `export_shared.py`; `GET /api/search/parse`. Contract
   `dev plans/contracts/grouped-results.md`.
-- **PR #8** (built on `feat/pr8-packs`, uncommitted, not pushed): packs (Iconify sets, Freesound packs, Internet Archive
-  bundles) and brush/shape/sprite, both apps; brush and pack policy rows; Packs switch, pack words, Game assets preset.
-  Contract `dev plans/contracts/packs-and-new-kinds.md`. The next is PR #9 (GitHub and curated packs).
+- **PR #8** (merged 2026-11-02 as 71a29d6, live: the production bundle carries "Game assets"; not checked signed in): packs
+  (Iconify sets, Freesound packs, Internet Archive bundles) and brush/shape/sprite, both apps; brush and pack policy rows;
+  Packs switch, pack words, Game assets preset. Contract `dev plans/contracts/packs-and-new-kinds.md`. The next is PR #9
+  (GitHub and curated packs).
   Decisions: `docs/decisions/0002` (Spacemail SMTP, CSP then cookie, no Cloudflare); `0003` (admin-held keys, then
   grouped results, packs, brush/shape/sprite, web search; plan `dev plans/2026-11-01-packs-web-admin-plan.md`).
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
   valid 2026-11-01) and https://freestash-production.up.railway.app, building from `main`. IDs and steps:
   `freestash/IMPLEMENTATION.md` → P2.
-- Gates 2026-11-02 (PR #8 working tree): pytest 203 · ruff clean · export check · vitest 47 · web build · dotnet 61 · 0 warnings.
+- Gates 2026-11-02 (`main` at PR #8): pytest 205 · ruff clean · export check · vitest 50 · web build · dotnet 61 · 0 warnings.
   Rendered contrast on the search page with pack cards: both themes, 1440 + 390, hovers, 0 failing, positive control fails.
 
 ## The parity rule (binding)
