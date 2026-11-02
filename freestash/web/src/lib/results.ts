@@ -79,13 +79,13 @@ export const fileCount = (n: number) => `${n.toLocaleString("en-US")} file${n ==
 export const packBadge = (a: Asset) => (a.item_count != null ? `Pack · ${fileCount(a.item_count)}` : "Pack");
 
 /** "WAV · MP3". */
-export const formatList = (a: Asset) => a.formats.map((f) => f.toUpperCase()).join(" · ");
+export const formatList = (a: Asset) => (a.formats ?? []).map((f) => f.toUpperCase()).join(" · "); // `?? []`: older saved snapshots have no pack fields
 
 /** The licenses of a pack's files, and how far they were read: "CC0 1.0, CC BY 4.0 · read for 1 of 24 files".
  *  Null when one license covers the whole pack. */
 export function licensesInside(a: Asset): string | null {
   if (a.members_checked == null) return null;
-  const labels = a.member_licenses.map((l) => l.label).join(", ") || "None read yet";
+  const labels = (a.member_licenses ?? []).map((l) => l.label).join(", ") || "None read yet";
   const checked = a.members_checked;
   if (a.item_count == null) return `${labels} · read for ${fileCount(checked)}`;
   return checked < a.item_count ? `${labels} · read for ${checked} of ${fileCount(a.item_count)}` : labels;

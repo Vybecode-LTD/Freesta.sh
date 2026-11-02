@@ -95,7 +95,7 @@ export function AssetDrawer({ item, useCase, collections, onClose, onToast, onCo
             <dt>Source</dt>
             <dd>{asset.landing_url ? <a href={asset.landing_url} target="_blank" rel="noreferrer">{asset.source_name || asset.provider} ↗</a> : asset.provider}</dd>
             {asset.is_pack ? (<><dt>Pack</dt><dd>{asset.item_count != null ? fileCount(asset.item_count) : "Not counted"}</dd></>) : null}
-            {asset.formats.length ? (<><dt>Formats</dt><dd className="mono">{formatList(asset)}</dd></>) : null}
+            {formatList(asset) ? (<><dt>Formats</dt><dd className="mono">{formatList(asset)}</dd></>) : null}
             {inside ? (<><dt>Licenses inside</dt><dd>{inside}</dd></>) : null}
             {asset.width && asset.height ? (<><dt>Size</dt><dd className="mono">{asset.width} × {asset.height}</dd></>) : null}
             {asset.license.raw ? (<><dt>As stated</dt><dd className="mono faint">{asset.license.raw}</dd></>) : null}

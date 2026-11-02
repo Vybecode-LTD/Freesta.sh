@@ -81,6 +81,23 @@ describe("pack words", () => {
   });
 });
 
+describe("assets saved before packs existed", () => {
+  // Collections and ledger snapshots keep the asset as it was saved: no pack fields at all (Codex, PR #8)
+  const old = (): ScoredAsset["asset"] => {
+    const { is_pack, item_count, formats, member_licenses, members_checked, ...rest } = card("old:1").asset;
+    void [is_pack, item_count, formats, member_licenses, members_checked];
+    return rest as ScoredAsset["asset"];
+  };
+  it("read as a single file with no formats or licenses inside", () => {
+    expect(formatList(old())).toBe("");
+    expect(licensesInside(old())).toBeNull();
+    expect(leadPacks([{ ...card("old:1"), asset: old() }]).map((s) => s.uid)).toEqual(["old:1"]);
+  });
+  it("a snapshot that names licenses but no list still doesn't throw", () => {
+    expect(licensesInside({ ...old(), members_checked: 2 })).toBe("None read yet · read for 2 files");
+  });
+});
+
 describe("reading query words", () => {
   it("a pick replaces the media and remembers the selection it replaced", () => {
     const { reading, media } = readQuery(parsed({ media_types: ["audio"], picks: [SFX] }), ["image", "font"], null);
