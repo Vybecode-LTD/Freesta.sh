@@ -63,11 +63,11 @@
 ## Next
 1. **Owner:** sign up again on https://freesta.sh (earlier accounts are gone). That is also the last PR #5 check: a
    search works, and Sign out returns to the sign-in page.
-2. **Owner's OK: make the owner the first admin** (nobody is an admin on production yet). Once the owner confirms
-   the address they signed up with, run `railway ssh --project ba994460-f01e-4a4d-9e83-994f352b6634 --environment
-   production --service freestash -- python -m freestash admin grant <email>` (this folder isn't `railway link`ed). Then the owner signs in, opens
-   Settings → Site administration, stores the provider keys and presses Test on each. Any provider keys already in Railway's env are shared with every member
-   from the deploy onwards (decision 0003); the meter shows their use.
+2. **Done 2026-11-02 (owner's OK):** `python -m freestash admin grant color8studios@gmail.com` on production
+   (`railway ssh --project ba994460-f01e-4a4d-9e83-994f352b6634 --environment production --service freestash -- …`;
+   this folder isn't `railway link`ed). `admin list` shows it, and `admin_audit` holds a server-command row. **Owner:**
+   sign in, then Settings → Site administration: paste the provider keys and press Test on each. Any keys already in
+   Railway's env serve every member now (decision 0003). Apply for Unsplash production first.
 3. Then grouped results, packs and new kinds, GitHub and curated packs, and web or AI search (the owner chooses first).
 4. Still open from before: the owner re-registers on production; test reset email; Postgres volume backups; delete the
    spare volume `postgres-volume-EFLf`; `www.freesta.sh`; Google sign-in; the desktop installer; retire `railway.json`
