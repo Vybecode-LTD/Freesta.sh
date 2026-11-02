@@ -37,7 +37,7 @@
     - the served bundle asks for the cookie.
   - A real sign-in on production hasn't been checked: no production account exists yet.
 - Gates at the PR #5 merge: pytest 128 · ruff · export check · vitest 19 · web build · CI green. On the PR #6 branch:
-  pytest 140 · ruff · export check · vitest 26 · web build · dotnet 34, 0 warnings.
+  pytest 140 · ruff · export check · vitest 27 · web build · dotnet 41, 0 warnings.
 - **Decision 0003 (owner, 2026-11-01):**
   - Admin-held provider keys shared with every member, with caps of 60 searches an hour and 20 web searches a day.
   - Admin screen on the web only; web finds are always CHECK.

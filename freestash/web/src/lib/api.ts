@@ -59,7 +59,7 @@ export async function searchStream(p: SearchParams, onBatch: (b: StreamBatch) =>
   if (res.status === 401) signOutIfStill(sentAt);
   if (!res.ok || !res.body) {
     const text = await res.text();
-    let detail: unknown = text;
+    let detail: unknown = text || res.statusText; // an empty body would make an empty toast
     try { detail = (JSON.parse(text) as { detail?: unknown }).detail ?? text; } catch { /* not JSON */ }
     throw new ApiError(res.status, detail); // e.g. the hourly search cap's own words
   }

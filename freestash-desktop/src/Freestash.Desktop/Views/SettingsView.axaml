@@ -112,6 +112,7 @@
                           <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource AccentTextBrush}" IsVisible="{Binding IsSite}" />
                           <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource YellowBrush}" IsVisible="{Binding IsMissing}" />
                           <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding ShowsOptional}" />
+                          <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource RedBrush}" IsVisible="{Binding IsRemoving}" />
                         </Panel>
                       </Grid>
                       <Grid ColumnDefinitions="*,Auto,Auto">

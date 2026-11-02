@@ -93,7 +93,7 @@ export function SettingsPage({ onToast, accountMode }: Toast & { accountMode: bo
       )}
 
       <Section id="keys" icon="key" title="API keys" sub={accountMode
-        ? <>Optional. Searches use Freesta.sh's own keys; add yours only to raise your limits.
+        ? <>Optional. Searches use Freesta.sh's own keys where it has them; add yours to raise your limits, or to turn on a source it has no key for.
           <div className="mono faint keys-count">{siteCount} of {catalog.length} covered by Freesta.sh · {setCount} of your own, encrypted in your account</div></>
         : <>All free. Sources without a key stay off; everything else works without any.</>}>
         <div className="key-list">

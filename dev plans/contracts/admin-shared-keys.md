@@ -110,6 +110,11 @@ New tables only. No existing table changes, so there's still no Alembic: `create
 None. The owner's answers are decision 0003.
 
 ## Changes after approval
+- 2026-11-02, PR #6 review (CodeRabbit):
+  - A key row being removed showed no label on the desktop. The rule now lives in one tested function,
+    `Freestash.Client.Account.KeyStatus`, with exactly one status per row, mirroring the web's `memberKeyStatus`.
+  - The intro now says a member's key also turns on a source the site has no key for, in both apps.
+  - A refused search stream with an empty body shows the HTTP status text.
 - 2026-11-02, PR #6 review (Codex):
   - **P1:** `FREESTASH_ADMIN_EMAILS` made whoever first signed up with a listed address an admin. Sign-up doesn't
     verify email, so that's a takeover. It's removed: admins come from `python -m freestash admin grant` on the

@@ -100,6 +100,16 @@ describe("session", () => {
     await expect(run).rejects.toThrow(/^You've reached this hour's limit of 60 searches\.$/);
   });
 
+  it("a refused stream with an empty body falls back to the status text, and keeps a plain-text body (PR #6 review)", async () => {
+    const { searchStream } = await import("./api");
+    const run = (r: Response) => {
+      vi.stubGlobal("fetch", vi.fn(async () => r));
+      return searchStream({ q: "x", media: ["image"], use: "demo", maxTier: "yellow" }, () => {}, new AbortController().signal);
+    };
+    await expect(run(new Response("", { status: 503, statusText: "Service Unavailable" }))).rejects.toThrow(/^Service Unavailable$/);
+    await expect(run(new Response("Bad gateway at the edge", { status: 502 }))).rejects.toThrow(/^Bad gateway at the edge$/);
+  });
+
   it("sign out clears the cookie on the server, and signs out here even if that fails", async () => {
     const s = await import("./session");
     const { api } = await import("./api");

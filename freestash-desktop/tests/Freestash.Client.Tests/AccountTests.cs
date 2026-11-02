@@ -74,6 +74,21 @@ public class AccountTests : IDisposable
         Assert.All(server.Calls, c => Assert.Equal("jwt-1", c.Auth));
     }
 
+    [Theory]
+    // (saved, hint, removing, site, optional) -> what the row says; same words as the web's lib/admin.ts::memberKeyStatus
+    [InlineData(true, "1234", true, true, true, KeyTone.Removing, "WILL BE REMOVED")] // PR #6 review: no label showed
+    [InlineData(true, "1234", true, false, false, KeyTone.Removing, "WILL BE REMOVED")]
+    [InlineData(true, "1234", false, true, false, KeyTone.Set, "YOURS · …1234")]
+    [InlineData(true, null, false, false, false, KeyTone.Set, "SET")] // local engine: no hint, the value is on this machine
+    [InlineData(false, null, false, true, false, KeyTone.Site, "FREESTA.SH'S KEY")]
+    [InlineData(false, null, false, false, true, KeyTone.Optional, "OPTIONAL")]
+    [InlineData(false, null, false, false, false, KeyTone.Missing, "NOT SET")]
+    public void Every_key_row_shows_exactly_one_status(bool saved, string? hint, bool removing, bool site, bool optional,
+                                                      KeyTone tone, string text)
+    {
+        Assert.Equal((tone, text), KeyStatus.For(saved, hint, removing, site, optional));
+    }
+
     [Fact]
     public async Task Key_rows_say_when_freesta_sh_has_its_own_key()
     {

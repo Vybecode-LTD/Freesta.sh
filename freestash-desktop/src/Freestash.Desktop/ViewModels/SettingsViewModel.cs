@@ -48,14 +48,14 @@ public sealed partial class KeyRowViewModel : ObservableObject
     public bool HasSaved => SavedHint is not null || OriginalValue.Length > 0;
     public bool IsDirty => Removing || Value.Trim() != OriginalValue.Trim();
     public char Mask => IsRevealed ? '\0' : '•';
-    // Same words as the web's lib/admin.ts::memberKeyStatus (the web upper-cases them in CSS).
-    public string StatusText => Removing ? "WILL BE REMOVED"
-        : HasSaved ? (SavedHint is { } h ? $"YOURS · …{h}" : "SET")
-        : SiteKey ? "FREESTA.SH'S KEY" : Spec.Optional ? "OPTIONAL" : "NOT SET";
-    public bool IsSet => HasSaved && !Removing;
-    public bool IsSite => !HasSaved && !Removing && SiteKey;
-    public bool IsMissing => !HasSaved && !Spec.Optional && !SiteKey;
-    public bool ShowsOptional => Spec.Optional && !IsSet && !SiteKey; // a saved optional key shows only its green badge
+    // One rule for both apps (KeyStatus, the web's memberKeyStatus): exactly one of the badges below is visible.
+    private (KeyTone Tone, string Text) Status => KeyStatus.For(HasSaved, SavedHint, Removing, SiteKey, Spec.Optional);
+    public string StatusText => Status.Text;
+    public bool IsSet => Status.Tone == KeyTone.Set;
+    public bool IsSite => Status.Tone == KeyTone.Site;
+    public bool IsMissing => Status.Tone == KeyTone.Missing;
+    public bool ShowsOptional => Status.Tone == KeyTone.Optional;
+    public bool IsRemoving => Status.Tone == KeyTone.Removing;
     public string Placeholder => SavedHint is { } h && Value.Length == 0 ? $"Saved key ending in {h}. Paste a new one to replace it." : $"Paste your {Spec.Label}";
 
     partial void OnValueChanged(string value) => Refresh();
@@ -66,7 +66,7 @@ public sealed partial class KeyRowViewModel : ObservableObject
 
     private void Refresh()
     {
-        foreach (var p in new[] { nameof(HasSaved), nameof(IsDirty), nameof(StatusText), nameof(IsSet), nameof(IsSite), nameof(IsMissing), nameof(ShowsOptional), nameof(Placeholder) })
+        foreach (var p in new[] { nameof(HasSaved), nameof(IsDirty), nameof(StatusText), nameof(IsSet), nameof(IsSite), nameof(IsMissing), nameof(ShowsOptional), nameof(IsRemoving), nameof(Placeholder) })
             OnPropertyChanged(p);
     }
 
@@ -186,7 +186,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     public int KeysSite => Keys.Count(k => k.SiteKey);
     // Same words as the web's Settings → API keys (decision 0003: members search on the site's keys).
     public string KeysIntro => KeysInAccount
-        ? "Optional. Searches use Freesta.sh's own keys; add yours only to raise your limits."
+        ? "Optional. Searches use Freesta.sh's own keys where it has them; add yours to raise your limits, or to turn on a source it has no key for."
         : "All free. Sources without a key stay off; everything else works without any.";
     public string KeysSummary => KeysInAccount
         ? $"{KeysSite} of {Keys.Count} covered by Freesta.sh · {KeysSet} of your own, encrypted in your account"
