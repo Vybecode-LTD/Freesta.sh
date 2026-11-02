@@ -38,11 +38,14 @@
 
 ## Request flow (web search)
 
+0. UI → `GET /api/search/parse?q=…` when the text is new: `query_words.parse_query` reads category words out of it
+   ("rain sfx" → "rain" in Audio, from `shared/categories.json`); the UI shows each pick as a removable chip
 1. UI → `GET /api/search/stream?q=…&media=image&use=bundled&max_tier=yellow`
 2. API → `Freestash.search_stream` → `select_providers` (enabled + media overlap) → one task per provider
 3. Each provider → `search()` → `ProviderPage(assets)`; `_run` wraps it with timeout + error capture
 4. As each finishes: dedupe by landing URL, `evaluate()` each asset, drop above `max_tier`, emit `batch`
-5. UI interleaves batches round-robin by provider, greens first
+5. UI interleaves batches round-robin by provider, greens first; with several media it lays them out as one section
+   per category (8 each, "Show all (n)", a jump bar). Contract: `../../dev plans/contracts/grouped-results.md`
 
 ## Auth (accounts mode, the hosted app)
 

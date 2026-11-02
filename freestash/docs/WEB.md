@@ -28,7 +28,8 @@ It isn't in the nav, so the web and desktop navs stay the same. On the dev serve
 
 ## Views
 
-Search (streaming, media chips, use-case selector, tier filter, source health strip) · asset drawer
+Search (streaming, media chips, use-case selector, tier filter, source health strip; query words such as "sfx" pick
+the media and show as "Read as" chips; several media group into sections with a jump bar) · asset drawer
 (verdict matrix for all uses, attribution copy text/HTML, files, "Record + open file", add to collection)
 · Collections · Ledger (project filter, ATTRIBUTION.md / HTML / CSV export) · License check · Sources.
 

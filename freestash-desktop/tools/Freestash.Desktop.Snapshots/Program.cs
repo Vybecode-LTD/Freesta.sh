@@ -150,6 +150,30 @@ async Task Script()
     Go(vm.Settings);
     await Shot("09-settings.png");
 
+    // ---- query words pick the media, and several media group into sections (contract grouped-results)
+    vm.Search.CloseDetailCommand.Execute(null);
+    Go(vm.Search);
+    vm.Search.Query = "anchor photo icon";
+    await vm.Search.SearchAsync();
+    await WaitFor(() => !vm.Search.IsSearching, 60_000, "search words");
+    Console.WriteLine($"  read as: {string.Join(", ", vm.Search.Picks.Select(p => p.Text))} · sections: " +
+                      string.Join(", ", vm.Search.Sections.Select(s => $"{s.Label} {s.Cards.Count}/{s.Total}")));
+    if (vm.Search.Query != "anchor" || vm.Search.Picks.Count != 2 || !vm.Search.IsGrouped || vm.Search.Sections.Count < 2)
+        throw new InvalidOperationException("the query words weren't read as Images + Icons sections");
+    await Wait(7000);
+    await Shot("09b-search-grouped.png");
+    vm.Search.ToggleSectionCommand.Execute(vm.Search.Sections[1]);
+    await Wait(500);
+    vm.Search.JumpCommand.Execute(vm.Search.Sections[1]);
+    await Wait(2500);
+    await Shot("09c-search-jump-expanded.png");
+    await vm.Search.RemovePickCommand.ExecuteAsync(vm.Search.Picks.First(p => p.Pick.Word == "icon"));
+    await WaitFor(() => !vm.Search.IsSearching, 60_000, "search after removing a chip");
+    if (vm.Search.Query != "anchor icon" || vm.Search.Picks.Count != 1 || vm.Search.IsGrouped)
+        throw new InvalidOperationException($"removing the chip left '{vm.Search.Query}', {vm.Search.Picks.Count} chip(s)");
+    await Wait(5000);
+    await Shot("09d-search-chip-removed.png");
+
     // ---- Frost (light) + icons/fonts/textures mix
     services.Theme.Apply(AppTheme.Frost, AccentColor.Sodium);
     foreach (var m in vm.Search.Media) m.IsSelected = m.Value is MediaType.Texture or MediaType.Icon or MediaType.Font or MediaType.Hdri;

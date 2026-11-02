@@ -1,8 +1,8 @@
 import { ledgerPath, type LedgerQuery } from "./ledgerPages";
 import { getSession, sessionEpoch, setSession, type Session, type SessionUser } from "./session";
 import type {
-  AdminKey, AdminUser, Asset, AssetDetail, AuditEntry, Collection, KeySpec, KeyState, LedgerEntry, MediaType, Prefs,
-  ProviderInfo, ProviderStatus, ScoredAsset, SiteSettings, Tier, UsageRow, UseCase, Verdict,
+  AdminKey, AdminUser, Asset, AssetDetail, AuditEntry, Collection, KeySpec, KeyState, LedgerEntry, MediaType, ParsedQuery,
+  Prefs, ProviderInfo, ProviderStatus, ScoredAsset, SiteSettings, Tier, UsageRow, UseCase, Verdict,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "";
@@ -113,6 +113,12 @@ export const api = {
 
   // ---- library
   providers: () => req<ProviderInfo[]>("/api/providers"),
+  /** Query words that pick categories ("rain sfx" → "rain" in Audio); `keep` are words to search as words. */
+  parseQuery: (q: string, keep: string[] = []) => {
+    const qs = new URLSearchParams({ q });
+    keep.forEach((k) => qs.append("keep", k));
+    return req<ParsedQuery>(`/api/search/parse?${qs}`);
+  },
   pdCutoff: () => req<{ works: number; sound_recordings: number }>("/api/pd-cutoff"),
   asset: (uid: string, use: UseCase) => req<AssetDetail>(`/api/assets/${encodeURIComponent(uid)}?use=${use}`),
   checkLicense: (license: string, trust: string, media_type: MediaType, year?: number) =>

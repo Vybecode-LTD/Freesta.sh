@@ -11,6 +11,44 @@ from freestash.store import Store, entry_from_scored
 from .conftest import make_asset
 
 
+def _search_cli(monkeypatch, tmp_path, args):
+    """Run `freestash search` with the engine stubbed out; return (output, the SearchQuery it ran)."""
+    from datetime import UTC, datetime
+
+    from freestash import search as search_module
+    from freestash.models import SearchResponse
+
+    monkeypatch.setenv("FREESTASH_DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    seen = []
+
+    async def fake_search(self, query, settings=None):
+        seen.append(query)
+        return SearchResponse(query=query, results=[], providers=[], generated_at=datetime.now(UTC))
+
+    monkeypatch.setattr(search_module.Freestash, "search", fake_search)
+    try:
+        result = CliRunner().invoke(app, ["search", *args])
+    finally:
+        get_settings.cache_clear()
+    assert result.exit_code == 0, result.output
+    return result.output, seen[0]
+
+
+def test_search_reads_query_words_and_says_so(tmp_path, monkeypatch):
+    out, query = _search_cli(monkeypatch, tmp_path, ["rain sfx"])
+    assert (query.q, [m.value for m in query.media_types]) == ("rain", ["audio"])
+    assert 'Read "sfx" as Audio' in out and 'searching "rain"' in out and "--literal" in out
+
+
+def test_search_literal_or_explicit_media_keeps_every_word(tmp_path, monkeypatch):
+    _, literal = _search_cli(monkeypatch, tmp_path, ["rain sfx", "--literal"])
+    assert (literal.q, [m.value for m in literal.media_types]) == ("rain sfx", ["image"])
+    out, explicit = _search_cli(monkeypatch, tmp_path, ["rain sfx", "-m", "video"])
+    assert (explicit.q, [m.value for m in explicit.media_types]) == ("rain sfx", ["video"])
+    assert "Read " not in out
+
+
 def test_ledger_export_writes_utf8(tmp_path, monkeypatch):
     monkeypatch.setenv("FREESTASH_DATA_DIR", str(tmp_path))
     get_settings.cache_clear()

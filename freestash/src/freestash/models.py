@@ -136,6 +136,22 @@ class SearchQuery(BaseModel):
     page: int = Field(default=1, ge=1)
 
 
+class QueryPick(BaseModel):
+    """A query word read as a category ("sfx" -> audio). `word` is exactly as typed, punctuation and all."""
+
+    word: str
+    media_type: MediaType
+
+
+class ParsedQuery(BaseModel):
+    """What `query_words.parse_query` made of the text: search `q` in `media_types` (empty = no pick)."""
+
+    original: str
+    q: str
+    media_types: list[MediaType] = Field(default_factory=list)
+    picks: list[QueryPick] = Field(default_factory=list)
+
+
 class ProviderStatus(BaseModel):
     provider: str
     ok: bool

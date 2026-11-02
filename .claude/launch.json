@@ -6,6 +6,12 @@
       "runtimeExecutable": "freestash/.venv/Scripts/python.exe",
       "runtimeArgs": ["freestash/scripts/dev_accounts.py", "--port", "8790"],
       "port": 8790
+    },
+    {
+      "name": "freestash-local",
+      "runtimeExecutable": "freestash/.venv/Scripts/python.exe",
+      "runtimeArgs": ["-m", "freestash", "serve", "--port", "8791"],
+      "port": 8791
     }
   ]
 }

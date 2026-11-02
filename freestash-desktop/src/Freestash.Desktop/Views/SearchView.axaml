@@ -7,7 +7,7 @@
              x:DataType="vm:SearchViewModel">
   <!-- Same screen as the web's pages/SearchPage.tsx: lens + aperture, source spectrum, filters, results. -->
   <Grid ColumnDefinitions="*,Auto">
-    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Margin="30,24,22,0">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Margin="30,24,22,0">
 
       <!-- the lens -->
       <Border x:Name="Lens" Classes="lens" Padding="16,16,16,18">
@@ -37,8 +37,27 @@
         </Grid>
       </Border>
 
+      <!-- query words read as categories (web: components/QueryChips.tsx) -->
+      <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,12,0,0" IsVisible="{Binding HasPicks}">
+        <TextBlock Text="READ AS" Classes="caption" VerticalAlignment="Center" Margin="0,0,6,0" />
+        <ItemsControl ItemsSource="{Binding Picks}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="6" LineSpacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:QueryPickViewModel">
+              <Button Classes="pick" ToolTip.Tip="{Binding Tip}" AutomationProperties.Name="{Binding Tip}"
+                      Command="{Binding $parent[UserControl].((vm:SearchViewModel)DataContext).RemovePickCommand}" CommandParameter="{Binding}">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                  <TextBlock Text="{Binding Text}" VerticalAlignment="Center" />
+                  <c:Icon Data="{StaticResource IconClose}" Size="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
       <!-- the source spectrum: one column per source, bar = response time relative to the slowest -->
-      <ItemsControl Grid.Row="1" ItemsSource="{Binding SourceStatuses}" Margin="0,14,0,0">
+      <ItemsControl Grid.Row="2" ItemsSource="{Binding SourceStatuses}" Margin="0,14,0,0">
         <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="vm:SourceStatusViewModel">
@@ -56,7 +75,7 @@
       </ItemsControl>
 
       <!-- filters: pills, as on the web -->
-      <WrapPanel Grid.Row="2" Margin="0,18,0,0" ItemSpacing="26" LineSpacing="10">
+      <WrapPanel Grid.Row="3" Margin="0,18,0,0" ItemSpacing="26" LineSpacing="10">
         <StackPanel Orientation="Horizontal" Spacing="6">
           <TextBlock Text="MEDIA" Classes="caption" VerticalAlignment="Center" Margin="0,0,6,0" />
           <ItemsControl ItemsSource="{Binding Media}">
@@ -90,24 +109,54 @@
         </StackPanel>
       </WrapPanel>
 
-      <!-- results heading -->
-      <WrapPanel Grid.Row="3" Margin="0,24,0,14" ItemSpacing="12" IsVisible="{Binding HasSearched}">
-        <TextBlock Text="{Binding ResultsHeading}" Classes="h2" VerticalAlignment="Bottom" />
-        <TextBlock Text="{Binding UseHint}" Classes="mono" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,0,2" />
-        <TextBlock Text="{Binding ResultSummary}" Classes="mono" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,0,2" />
-      </WrapPanel>
+      <!-- results heading, and the jump bar when there are sections (fixed above the scrolling results) -->
+      <StackPanel Grid.Row="4" Margin="0,24,0,14" Spacing="14" IsVisible="{Binding HasSearched}">
+        <WrapPanel ItemSpacing="12">
+          <TextBlock Text="{Binding ResultsHeading}" Classes="h2" VerticalAlignment="Bottom" />
+          <TextBlock Text="{Binding UseHint}" Classes="mono" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+          <TextBlock Text="{Binding ResultSummary}" Classes="mono" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+        </WrapPanel>
+        <ItemsControl ItemsSource="{Binding Sections}" IsVisible="{Binding IsGrouped}" AutomationProperties.Name="Jump to a section">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="6" LineSpacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:ResultSectionViewModel">
+              <Button Classes="jump" Command="{Binding $parent[UserControl].((vm:SearchViewModel)DataContext).JumpCommand}" CommandParameter="{Binding}">
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding Total}" Classes="mono" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
 
-      <!-- results / states -->
-      <Panel Grid.Row="4">
+      <!-- results / states: one section per category, or one headless section for a single medium -->
+      <Panel Grid.Row="5">
         <ScrollViewer x:Name="ResultsScroll" Padding="0,0,8,24">
-          <ItemsControl ItemsSource="{Binding Results}">
-            <ItemsControl.ItemsPanel><ItemsPanelTemplate><c:AdaptiveGrid MinItemWidth="232" ItemHeight="292" Spacing="18" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl x:Name="SectionsItems" ItemsSource="{Binding Sections}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="30" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="vm:AssetCardViewModel">
-                <Button Classes="asset" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                        Command="{Binding $parent[UserControl].((vm:SearchViewModel)DataContext).OpenCommand}" CommandParameter="{Binding}">
-                  <v:AssetCardView />
-                </Button>
+              <DataTemplate DataType="vm:ResultSectionViewModel">
+                <StackPanel Spacing="12">
+                  <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding ShowHeader}">
+                    <TextBlock Text="{Binding Label}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Bottom" />
+                    <TextBlock Text="{Binding Total}" Classes="mono" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                  </StackPanel>
+                  <ItemsControl ItemsSource="{Binding Cards}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><c:AdaptiveGrid MinItemWidth="232" ItemHeight="292" Spacing="18" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="vm:AssetCardViewModel">
+                        <Button Classes="asset" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                Command="{Binding $parent[UserControl].((vm:SearchViewModel)DataContext).OpenCommand}" CommandParameter="{Binding}">
+                          <v:AssetCardView />
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Button Classes="link" HorizontalAlignment="Left" FontSize="13" Margin="0,2,0,0" IsVisible="{Binding HasMore}" Content="{Binding ToggleText}"
+                          Command="{Binding $parent[UserControl].((vm:SearchViewModel)DataContext).ToggleSectionCommand}" CommandParameter="{Binding}" />
+                </StackPanel>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>

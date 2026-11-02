@@ -320,6 +320,28 @@
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
   </Style>
 
+  <!-- query-word chips and the section jump bar (web: .chip / .jump in styles.css) -->
+  <Style Selector="Button.pick">
+    <Setter Property="CornerRadius" Value="999" /><Setter Property="Padding" Value="12,5,10,5" /><Setter Property="MinHeight" Value="30" />
+    <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource AccentLineBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" /><Setter Property="FontSize" Value="13" /><Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style Selector="Button.pick /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BoxShadow" Value="0 0 0 0 Transparent" /></Style>
+  <Style Selector="Button.pick:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+  </Style>
+  <Style Selector="Button.jump">
+    <Setter Property="CornerRadius" Value="999" /><Setter Property="Padding" Value="12,5" /><Setter Property="MinHeight" Value="30" />
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" /><Setter Property="FontSize" Value="13" /><Setter Property="FontWeight" Value="Normal" />
+  </Style>
+  <Style Selector="Button.jump /template/ ContentPresenter#PART_ContentPresenter"><Setter Property="BoxShadow" Value="0 0 0 0 Transparent" /></Style>
+  <Style Selector="Button.jump:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" /><Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+  </Style>
+
   <!-- ============================================================= inputs (carved / inset) -->
   <Style Selector="TextBox">
     <Setter Property="Background" Value="{DynamicResource InsetBrush}" />

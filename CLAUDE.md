@@ -13,20 +13,24 @@ Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner,
   - #2: the path-traversal hotfix;
   - #3: ledger paging, the CSP, SMTP reset email.
   PRs #5 (the website's HttpOnly cookie session) and #6 (site administration + shared keys) merged 2026-11-02 and are
-  live, verified on production. The owner is the production admin (granted 2026-11-02). The next is PR #7 (grouped results). `docs/HANDOFF.md`.
+  live, verified on production. The owner is the production admin (granted 2026-11-02). `docs/HANDOFF.md`.
+- **PR #7 open** (`feat/pr7-grouped-results`, not merged): results grouped by category and query words as chips, both
+  apps; `shared/categories.json` → `export_shared.py`; `GET /api/search/parse`. Contract `dev plans/contracts/grouped-results.md`.
   Decisions: `docs/decisions/0002` (Spacemail SMTP, CSP then cookie, no Cloudflare); `0003` (admin-held keys, then
   grouped results, packs, brush/shape/sprite, web search; plan `dev plans/2026-11-01-packs-web-admin-plan.md`).
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
   valid 2026-11-01) and https://freestash-production.up.railway.app, building from `main`. IDs and steps:
   `freestash/IMPLEMENTATION.md` → P2.
-- Gates 2026-11-02 (`main` at PR #6): pytest 140 · ruff clean · export check · vitest 27 · web build · dotnet 41 · 0 warnings. Rendered-contrast 11 runs /
-  136 states / 0 failing (2026-10-31; not re-run: the one new control reuses `.btn`).
+- Gates 2026-11-02 (PR #7 branch): pytest 165 · ruff clean · export check · vitest 38 · web build · dotnet 54 · 0 warnings.
+  Rendered contrast on the grouped search page: both themes, 1440 + 390, hovers, 0 failing, positive control fails.
 
 ## The parity rule (binding)
 **Web and desktop are the same product.** Every user-facing change lands in both apps in the same pull request:
 - Add or update the feature's row in `shared/parity.json` (a one-platform feature needs a `why`).
 - Colours: edit `shared/design-tokens.json`, then `python scripts/export_shared.py` (in `freestash/`) writes
   `web/src/tokens.css` and the desktop's `Services/DesignTokens.g.cs`. Never hand-edit those two.
+- Categories (labels, order, query words): edit `shared/categories.json`; the same script writes the engine's
+  `categories_data.py`, the web's `lib/categories.ts` and the desktop's `Freestash.Client/Categories.g.cs`.
 - Key help: edit `freestash/src/freestash/providers/keys.py` (`KEY_CATALOG`), then the same script writes
   `shared/provider-keys.json` (embedded in the desktop). Re-check a provider's signup page before changing its steps.
 - Same words in both: nav labels and order, CLEAR / CHECK / BLOCKED, filter labels.

@@ -67,22 +67,49 @@ public sealed class AssetCardViewModel(ScoredAsset scored)
     public string TopReason => Scored.Verdict.Reasons.FirstOrDefault() ?? "";
 }
 
+/// <summary>One category's results (web: components/ResultSections.tsx). With one medium selected there's a single
+/// section without a heading, so the results look as they always have.</summary>
+public sealed partial class ResultSectionViewModel(MediaType id, string label, bool showHeader) : ObservableObject
+{
+    public MediaType Id { get; } = id;
+    public string Label { get; } = label;
+    public bool ShowHeader { get; } = showHeader;
+    public ObservableCollection<AssetCardViewModel> Cards { get; } = [];
+    [ObservableProperty] public partial int Total { get; set; }
+    [ObservableProperty] public partial bool IsExpanded { get; set; }
+    public bool HasMore => ShowHeader && Total > ResultGroups.SectionSize;
+    public string ToggleText => IsExpanded ? "Show fewer" : $"Show all ({Total})";
+
+    partial void OnTotalChanged(int value) { OnPropertyChanged(nameof(HasMore)); OnPropertyChanged(nameof(ToggleText)); }
+    partial void OnIsExpandedChanged(bool value) => OnPropertyChanged(nameof(ToggleText));
+}
+
+/// <summary>A query word read as a category, shown as a removable chip (web: components/QueryChips.tsx, same words).</summary>
+public sealed class QueryPickViewModel(QueryPick pick)
+{
+    public QueryPick Pick { get; } = pick;
+    private string Category => Categories.All.FirstOrDefault(c => c.Id == Pick.MediaType)?.Label ?? Pick.MediaType.Wire();
+    public string Text => $"“{Pick.Word}” → {Category}";
+    public string Tip => $"Search “{Pick.Word}” as a word, not as {Category}";
+}
+
 public sealed partial class SearchViewModel : ViewModelBase
 {
     private readonly AppServices _services;
     private CancellationTokenSource? _cts;
-    private readonly Dictionary<string, List<AssetCardViewModel>> _byProvider = new();
+    private readonly Dictionary<string, List<ScoredAsset>> _byProvider = new();
+    private readonly Dictionary<string, AssetCardViewModel> _cards = new(); // one card per uid, so streaming appends don't redraw
+    private readonly HashSet<MediaType> _expanded = [];
+    private List<MediaType> _searchedMedia = [];
+    private QueryReading? _reading;
+    private string _current = ""; // the query of the search last started
+    private bool _applying; // media being set from a read query, not by hand
 
     public SearchViewModel(AppServices services)
     {
         _services = services;
         var s = services.Settings;
-        Media =
-        [
-            new(MediaType.Image, "Images") { IsSelected = true }, new(MediaType.Audio, "Audio"), new(MediaType.Video, "Video"),
-            new(MediaType.Texture, "Textures"), new(MediaType.Hdri, "HDRIs"), new(MediaType.Model, "3D"),
-            new(MediaType.Font, "Fonts"), new(MediaType.Icon, "Icons"),
-        ];
+        Media = new(Categories.All.Select(c => new Option<MediaType>(c.Id, c.Label)));
         UseCases =
         [
             new(UseCase.Reference, "Reference", "Mood boards and internal reference. Never shipped or shown."),
@@ -103,8 +130,10 @@ public sealed partial class SearchViewModel : ViewModelBase
                 OnPropertyChanged(nameof(UseHint));
                 OnPropertyChanged(nameof(SelectedUseCase));
                 OnPropertyChanged(nameof(ResultsHeading));
+                if (_applying) return;
+                if (sender is Option<MediaType>) SetReading(QueryReading.WithoutPicks(_reading)); // by hand: the chips go
                 if (HasSearched && sender is Option<UseCase> { IsSelected: true } or Option<Tier> { IsSelected: true } or Option<MediaType>)
-                    _ = SearchAsync();
+                    _ = RunAsync(_current);
             };
         Project = s.LastProject;
     }
@@ -123,9 +152,15 @@ public sealed partial class SearchViewModel : ViewModelBase
     public ObservableCollection<Option<MediaType>> Media { get; }
     public ObservableCollection<Option<UseCase>> UseCases { get; }
     public ObservableCollection<Option<Tier>> Tiers { get; }
-    public ObservableCollection<AssetCardViewModel> Results { get; } = [];
+    /// <summary>Every result in display order (the sections show them; the snapshot tool reads this).</summary>
+    public IReadOnlyList<AssetCardViewModel> Results { get; private set; } = [];
+    public ObservableCollection<ResultSectionViewModel> Sections { get; } = [];
+    public ObservableCollection<QueryPickViewModel> Picks { get; } = [];
+    /// <summary>The same list as the web's EXAMPLES; the last three show query words picking the media.</summary>
     public IReadOnlyList<string> Suggestions { get; } =
-        ["art deco poster", "weathered concrete", "rain on a tin roof", "botanical illustration", "nebula", "monospace", "arrow"];
+        ["lighthouse", "art deco poster", "botanical engraving", "weathered concrete texture", "rain on a tin roof sfx", "monospace font"];
+    /// <summary>Asks the view to scroll a section to the top of the results.</summary>
+    public event Action<ResultSectionViewModel>? JumpRequested;
     public ObservableCollection<SourceStatusViewModel> SourceStatuses { get; } = [];
 
     [ObservableProperty] public partial string Query { get; set; } = "";
@@ -152,6 +187,8 @@ public sealed partial class SearchViewModel : ViewModelBase
     public bool ShowEmptyHero => !HasSearched;
     public bool ShowNoResults => HasSearched && !IsSearching && Results.Count == 0;
     public bool HasDetail => Detail is not null;
+    public bool HasPicks => Picks.Count > 0;
+    public bool IsGrouped => HasSearched && ResultGroups.IsGrouped(_searchedMedia) && Results.Count > 0;
     public string ResultSummary => Results.Count == 0 ? "" : $"{Results.Count} results" + (HiddenCount > 0 ? $" · {HiddenCount} hidden by filter" : "");
 
     partial void OnHasSearchedChanged(bool value) { OnPropertyChanged(nameof(ShowEmptyHero)); OnPropertyChanged(nameof(ShowNoResults)); OnPropertyChanged(nameof(LensMeta)); }
@@ -162,19 +199,88 @@ public sealed partial class SearchViewModel : ViewModelBase
     partial void OnReportedSourcesChanged(int value) => OnPropertyChanged(nameof(LensMeta));
     partial void OnElapsedSecondsChanged(double value) => OnPropertyChanged(nameof(LensMeta));
 
+    private List<MediaType> SelectedMedia => Media.Where(m => m.IsSelected).Select(m => m.Value).ToList();
+
+    /// <summary>Search what's typed. Category words in it ("sfx", "font") pick the media and show as chips; the same
+    /// text isn't read twice, so Search after removing a chip keeps the word as a word (web: SearchPage's submit).</summary>
     [RelayCommand]
     public async Task SearchAsync()
     {
-        var q = Query.Trim();
+        var text = Query.Trim();
+        if (text.Length == 0) return;
+        if (QueryReading.NeedsParse(text, _reading))
+        {
+            ParsedQuery? parsed = null;
+            try { parsed = await _services.Api.Current.ParseQueryAsync(text, []); }
+            catch (Exception) { } // couldn't be read: every word is searched, as before
+            if (parsed is not null)
+            {
+                var (reading, media) = QueryReading.Read(parsed, SelectedMedia, _reading);
+                Apply(reading, media);
+                text = reading.Q;
+            }
+        }
+        await RunAsync(text);
+    }
+
+    [RelayCommand]
+    private async Task RemovePickAsync(QueryPickViewModel chip)
+    {
+        if (_reading is null) return;
+        var keep = _reading.Keep.Append(chip.Pick.Word).ToList();
+        ParsedQuery parsed;
+        try { parsed = await _services.Api.Current.ParseQueryAsync(_reading.Original, keep); }
+        catch (Exception ex) { _services.Toasts.Show(ex.Message); return; }
+        var (reading, media) = QueryReading.Drop(parsed, _reading, keep);
+        Apply(reading, media);
+        await RunAsync(reading.Q);
+    }
+
+    /// <summary>Take a read query: its text, its chips, and its media (without re-running the search per pill).</summary>
+    private void Apply(QueryReading reading, IReadOnlyList<MediaType> media)
+    {
+        _applying = true;
+        try { foreach (var m in Media) m.IsSelected = media.Contains(m.Value); }
+        finally { _applying = false; }
+        Query = reading.Q;
+        SetReading(reading);
+    }
+
+    private void SetReading(QueryReading? reading)
+    {
+        _reading = reading;
+        Picks.Clear();
+        foreach (var p in reading?.Picks ?? []) Picks.Add(new QueryPickViewModel(p));
+        OnPropertyChanged(nameof(HasPicks));
+    }
+
+    [RelayCommand]
+    private void ToggleSection(ResultSectionViewModel section)
+    {
+        if (!_expanded.Remove(section.Id)) _expanded.Add(section.Id);
+        Rebuild();
+    }
+
+    [RelayCommand]
+    private void Jump(ResultSectionViewModel section) => JumpRequested?.Invoke(section);
+
+    /// <summary>Run one search exactly as given, in the selected media.</summary>
+    private async Task RunAsync(string q)
+    {
+        q = q.Trim();
         if (q.Length == 0) return;
+        _current = q;
         _cts?.Cancel();
         var cts = _cts = new CancellationTokenSource();
-        var media = Media.Where(m => m.IsSelected).Select(m => m.Value).ToList();
+        var media = SelectedMedia;
         if (media.Count == 0) { Media[0].IsSelected = true; media.Add(MediaType.Image); }
 
-        Results.Clear();
-        SourceStatuses.Clear();
+        _searchedMedia = media;
+        _expanded.Clear();
+        _cards.Clear();
         _byProvider.Clear();
+        Rebuild(); // empties the sections
+        SourceStatuses.Clear();
         HiddenCount = 0;
         ReportedSources = 0;
         FailedSources = 0;
@@ -184,6 +290,7 @@ public sealed partial class SearchViewModel : ViewModelBase
         List<string> asked;
         try { asked = (await _services.Api.Current.ProvidersAsync(cts.Token)).Where(p => p.Enabled && p.MediaTypes.Any(wanted.Contains)).Select(p => p.Id).ToList(); }
         catch (Exception) { asked = []; }
+        if (cts.IsCancellationRequested) return; // a newer search started meanwhile
         TotalSources = asked.Count;
         foreach (var id in asked) SourceStatuses.Add(new SourceStatusViewModel(null, id));
         Error = null;
@@ -196,7 +303,7 @@ public sealed partial class SearchViewModel : ViewModelBase
             await foreach (var batch in _services.Api.Current.SearchStreamAsync(req, cts.Token))
             {
                 if (cts.IsCancellationRequested) break;
-                _byProvider[batch.Status.Provider] = batch.Results.Select(r => new AssetCardViewModel(r)).ToList();
+                _byProvider[batch.Status.Provider] = batch.Results;
                 var pending = SourceStatuses.FirstOrDefault(x => x.IsPending && x.Provider == batch.Status.Provider.Replace('_', ' '));
                 if (pending is not null) SourceStatuses.Remove(pending);
                 SourceStatuses.Insert(SourceStatuses.Count(x => !x.IsPending), new SourceStatusViewModel(batch.Status, batch.Status.Provider));
@@ -229,33 +336,43 @@ public sealed partial class SearchViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Round-robin across providers so one chatty source can't bury the rest; greens first.</summary>
+    /// <summary>Interleave the sources (clear first), then lay the results out as sections (one, headless, for a
+    /// single medium). Append-only where possible so visible cards don't jump around while streaming.</summary>
     private void Rebuild()
     {
-        var ordered = new List<AssetCardViewModel>();
-        foreach (var tier in new[] { Tier.Green, Tier.Yellow, Tier.Red })
+        var ordered = ResultGroups.Interleave(_byProvider.Values);
+        Results = ordered.Select(Card).ToList();
+        var grouped = ResultGroups.IsGrouped(_searchedMedia);
+        var sections = grouped
+            ? ResultGroups.Group(ordered, _expanded)
+            : ordered.Count == 0 ? [] : [new ResultSection(_searchedMedia[0], "", ordered.Count, ordered)];
+
+        for (var i = Sections.Count - 1; i >= 0; i--)
+            if (sections.All(s => s.Id != Sections[i].Id)) Sections.RemoveAt(i);
+        for (var i = 0; i < sections.Count; i++)
         {
-            var queues = _byProvider.Values.Select(l => new Queue<AssetCardViewModel>(l.Where(c => c.Tier == tier))).ToList();
-            while (queues.Any(q => q.Count > 0))
-                foreach (var q in queues)
-                    if (q.TryDequeue(out var c)) ordered.Add(c);
+            var s = sections[i];
+            var vm = Sections.FirstOrDefault(x => x.Id == s.Id);
+            if (vm is null) Sections.Insert(i, vm = new ResultSectionViewModel(s.Id, s.Label, grouped));
+            else if (Sections.IndexOf(vm) != i) Sections.Move(Sections.IndexOf(vm), i);
+            vm.Total = s.Total;
+            vm.IsExpanded = _expanded.Contains(s.Id);
+            var cards = s.Items.Select(Card).ToList();
+            if (cards.Take(vm.Cards.Count).SequenceEqual(vm.Cards))
+                foreach (var c in cards.Skip(vm.Cards.Count)) vm.Cards.Add(c);
+            else
+            {
+                vm.Cards.Clear();
+                foreach (var c in cards) vm.Cards.Add(c);
+            }
         }
-        // Append-only when possible so already-visible cards don't jump around while streaming.
-        var existing = Results.Select(r => r.Uid).ToHashSet();
-        if (ordered.Take(Results.Count).Select(r => r.Uid).SequenceEqual(Results.Select(r => r.Uid)))
-        {
-            foreach (var c in ordered.Skip(Results.Count)) Results.Add(c);
-        }
-        else
-        {
-            Results.Clear();
-            foreach (var c in ordered) Results.Add(c);
-        }
-        _ = existing;
+        OnPropertyChanged(nameof(IsGrouped));
         OnPropertyChanged(nameof(ShowNoResults));
         OnPropertyChanged(nameof(ResultSummary));
         OnPropertyChanged(nameof(LensMeta));
     }
+
+    private AssetCardViewModel Card(ScoredAsset s) => _cards.TryGetValue(s.Uid, out var c) ? c : _cards[s.Uid] = new AssetCardViewModel(s);
 
     [RelayCommand]
     private async Task OpenAsync(AssetCardViewModel card)
@@ -271,11 +388,7 @@ public sealed partial class SearchViewModel : ViewModelBase
     [RelayCommand]
     private async Task SuggestAsync(string query)
     {
-        Query = query;
-        if (query is "monospace") { foreach (var m in Media) m.IsSelected = m.Value == MediaType.Font; }
-        else if (query is "arrow") { foreach (var m in Media) m.IsSelected = m.Value == MediaType.Icon; }
-        else if (query.Contains("rain")) { foreach (var m in Media) m.IsSelected = m.Value == MediaType.Audio; }
-        else if (query.Contains("concrete")) { foreach (var m in Media) m.IsSelected = m.Value is MediaType.Texture or MediaType.Image; }
+        Query = query; // "monospace font", "… sfx": the query words pick the media, as on the web
         await SearchAsync();
     }
 

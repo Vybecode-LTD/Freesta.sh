@@ -17,7 +17,7 @@ Claude Desktop (`claude_desktop_config.json`):
 
 | Tool | What it does |
 |---|---|
-| `search_assets(query, media_types, use_case, max_tier, providers, limit_per_provider, page)` | Federated search, compact results with tier, reasons, obligations, attribution |
+| `search_assets(query, media_types, use_case, max_tier, providers, limit_per_provider, page, literal)` | Federated search, compact results with tier, reasons, obligations, attribution. Without `media_types`, words like "sfx" or "font" pick the media (`read_as`, `searched_for`); `literal` keeps every word |
 | `get_asset(uid)` | Full detail + renditions + verdicts for all five use cases |
 | `download_asset(uid, use_case, project, dest_dir, rendition, prefer, force)` | File + `.license.json` sidecar + ledger entry. Refuses RED unless `force` |
 | `check_license(license, trust, media_type, year)` | Triage any license string or URL |

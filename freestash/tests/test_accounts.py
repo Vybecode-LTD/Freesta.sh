@@ -69,6 +69,7 @@ def test_sign_up_validation(client):
 
 def test_everything_needs_a_session(client):
     assert client.get("/api/collections").status_code == 401
+    assert client.get("/api/search/parse", params={"q": "rain sfx"}).status_code == 401
     assert client.get("/api/collections", headers={"Authorization": "Bearer garbage"}).status_code == 401
     assert client.get("/api/health").json()["signup_open"] is True
     assert client.get("/api/keys/catalog").status_code == 200  # public

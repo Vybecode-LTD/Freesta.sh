@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from freestash.categories_data import CATEGORIES
 from freestash.config import get_settings
 from freestash.export import attribution_markdown, credits_html, ledger_csv
 from freestash.licenses import evaluate_all, normalize_license, us_public_domain_cutoff
@@ -46,10 +47,21 @@ def search(
     limit: Annotated[int, typer.Option("--limit", "-n", help="Per provider")] = 8,
     page: int = 1,
     as_json: Annotated[bool, typer.Option("--json", help="Raw JSON output")] = False,
+    literal: Annotated[bool, typer.Option("--literal", help='Search every word, even "sfx" or "font"')] = False,
 ) -> None:
-    """Search every enabled source at once and score results for your use case."""
+    """Search every enabled source at once and score results for your use case.
+
+    Without --media, words like "sfx", "font" or "3d model" pick the media and leave the query."""
+    from freestash.query_words import parse_query
     from freestash.search import Freestash
 
+    if not media and not literal:
+        parsed = parse_query(q)
+        if parsed.picks:
+            labels = {c["id"]: c["label"] for c in CATEGORIES}
+            read = ", ".join(f'"{p.word}" as {labels[p.media_type.value]}' for p in parsed.picks)
+            console.print(f'[dim]Read {read} · searching "{parsed.q}" (--literal keeps every word)[/]', soft_wrap=True)
+            q, media = parsed.q, parsed.media_types
     query = Q(q=q, media_types=media or [MediaType.IMAGE], use_case=use, max_tier=max_tier,
               providers=provider or None, limit_per_provider=limit, page=page)
 

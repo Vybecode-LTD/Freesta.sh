@@ -1,0 +1,22 @@
+{
+  "$comment": "The result categories both apps group by, in display order, and the query words that select each one (contract dev plans/contracts/grouped-results.md). Edit here, then run `python scripts/export_shared.py` in freestash/: it writes the engine's categories_data.py, the web's lib/categories.ts and the desktop's Categories.g.cs. Words are lowercase; a phrase has spaces. Pick words that name a format, not a subject: a wrong pick shows as a chip the user removes.",
+  "categories": [
+    { "id": "image", "label": "Images",
+      "words": ["image", "images", "photo", "photos", "photograph", "photographs", "picture", "pictures"] },
+    { "id": "audio", "label": "Audio",
+      "words": ["audio", "sfx", "sound", "sounds", "sound effect", "sound effects", "foley", "ambience",
+                "field recording", "field recordings", "music"] },
+    { "id": "video", "label": "Video",
+      "words": ["video", "videos", "footage", "stock footage", "b-roll", "clip", "clips"] },
+    { "id": "texture", "label": "Textures",
+      "words": ["texture", "textures", "pbr", "pbr texture", "pbr textures", "pbr material", "pbr materials"] },
+    { "id": "hdri", "label": "HDRIs",
+      "words": ["hdri", "hdris", "hdr", "skybox", "skyboxes", "environment map", "environment maps"] },
+    { "id": "model", "label": "3D",
+      "words": ["3d", "3d model", "3d models", "mesh", "meshes", "glb", "gltf", "fbx"] },
+    { "id": "font", "label": "Fonts",
+      "words": ["font", "fonts", "typeface", "typefaces"] },
+    { "id": "icon", "label": "Icons",
+      "words": ["icon", "icons", "glyph", "glyphs", "pictogram", "pictograms"] }
+  ]
+}
