@@ -41,6 +41,10 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
   `/freestash`, Dockerfile build, healthcheck `/api/health`, watch `/freestash/**`. **Builds from
   `main`** (switched from the PR branch when PR #1 merged, 2026-11-01).
 - Postgres (template), referenced as `DATABASE_URL=${{Postgres.DATABASE_URL}}`. Schema is created at startup.
+  **Re-created 2026-11-01**: the first Postgres service was deleted (not by an agent), its volume came back empty,
+  and accounts made before then are gone. Now service `Postgres` (`2a2d55fd-60ee-4558-a1f9-d8945e492c51`) on volume
+  `postgres-volume` (`723549e5-…`). The template's spare volume `postgres-volume-EFLf` is detached and empty.
+  Accounts mode refuses to start if `DATABASE_URL` is empty (PR #4), so a lost database shows up as a failed deploy.
 - Variables: `FREESTASH_AUTH_MODE=accounts`, `FREESTASH_PUBLIC_URL`, `FREESTASH_CORS_ORIGINS=["https://freesta.sh"]`,
   `FREESTASH_SIGNUP_OPEN=true`, and the two secrets, generated and set through the CLI's stdin (never shown):
   `FREESTASH_SECRET_KEY` (signs sessions) and `FREESTASH_SECRETS_KEY` (encrypts users' keys: **copy it from the
@@ -53,7 +57,7 @@ Europeana, plus a Wikimedia OAuth 2.0 owner-only token and an Openverse app regi
 Owner steps left:
 1. Reset email (decision 0002), **without which password reset doesn't work** (no email goes out; links are never
    logged, since log access would be account takeover):
-   - Railway must be on the **Pro plan**: outbound SMTP is blocked on Free, Trial and Hobby.
+   - Railway must be on the **Pro plan** (outbound SMTP is blocked below it). It is: the owner confirmed it on 2026-11-01.
    - Create the Spacemail mailbox (e.g. `hello@freesta.sh`) and let Spaceship add its MX, SPF and DKIM records.
    - Set `FREESTASH_SMTP_USERNAME` (the full address) and pipe the password in:
      `railway variable set FREESTASH_SMTP_PASSWORD --stdin`. Set `FREESTASH_EMAIL_FROM` if the mailbox isn't `hello@`.

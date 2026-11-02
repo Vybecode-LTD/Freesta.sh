@@ -21,6 +21,7 @@ PASSWORD = "correct horse battery"
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("FREESTASH_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("FREESTASH_DATABASE_URL", f"sqlite:///{tmp_path / 'freestash.db'}")
     monkeypatch.setenv("FREESTASH_AUTH_MODE", "accounts")
     monkeypatch.setenv("FREESTASH_SECRET_KEY", "s" * 40)
     monkeypatch.setenv("FREESTASH_SECRETS_KEY", Fernet.generate_key().decode())
@@ -241,6 +242,24 @@ def test_accounts_mode_refuses_to_start_without_a_signing_key(tmp_path):
     s = Settings(data_dir=tmp_path, auth_mode="accounts", secret_key="short", _env_file=None)
     with pytest.raises(RuntimeError, match="FREESTASH_SECRET_KEY"):
         AccountService(Store(settings=s), s)
+
+
+def test_accounts_mode_refuses_to_start_without_a_database(tmp_path, monkeypatch):
+    """With its Postgres service deleted, Railway left DATABASE_URL empty, and accounts went to a SQLite file inside
+    the container, which every deploy wiped (production, 2026-11-01). Refuse to start instead."""
+    from freestash.store import Store
+
+    monkeypatch.delenv("FREESTASH_DATABASE_URL", raising=False)
+    monkeypatch.setenv("DATABASE_URL", "")  # a reference to a deleted service resolves to an empty string
+    s = Settings(data_dir=tmp_path, auth_mode="accounts", secret_key="s" * 40, _env_file=None)
+    with pytest.raises(RuntimeError, match="DATABASE_URL"):
+        AccountService(Store(settings=s), s)
+
+    explicit = Settings(data_dir=tmp_path, auth_mode="accounts", secret_key="s" * 40, _env_file=None,
+                        database_url=f"sqlite:///{tmp_path / 'chosen.db'}")  # a chosen SQLite file is fine (dev_accounts.py)
+    AccountService(Store(settings=explicit), explicit)
+    local = Settings(data_dir=tmp_path, _env_file=None)  # the single-user local mode keeps its default file
+    AccountService(Store(settings=local), local)
 
 
 def test_password_hashing_runs_off_the_event_loop(client, monkeypatch):

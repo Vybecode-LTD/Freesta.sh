@@ -119,6 +119,9 @@ class AccountService:
         self.settings = settings
         if settings.auth_mode == "accounts" and (not settings.secret_key or len(settings.secret_key) < 32):
             raise RuntimeError("FREESTASH_SECRET_KEY must be set (32+ characters) when FREESTASH_AUTH_MODE=accounts")
+        if settings.auth_mode == "accounts" and not settings.database_configured:
+            # The fallback SQLite file lives inside the container, and every deploy wipes it (production, 2026-11-01).
+            raise RuntimeError("DATABASE_URL (or FREESTASH_DATABASE_URL) must be set when FREESTASH_AUTH_MODE=accounts")
         self._fernet = Fernet(settings.secrets_key) if settings.secrets_key else None
 
     # ------------------------------------------------------------------ users + tokens
