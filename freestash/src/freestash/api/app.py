@@ -12,17 +12,20 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 from freestash import __version__
 from freestash.accounts import AccountService
+from freestash.admin import AdminService
 from freestash.api import account as account_routes
+from freestash.api import admin as admin_routes
 from freestash.api import auth as auth_routes
-from freestash.api.auth import CurrentUser, current_user, optional_user
+from freestash.api.auth import CurrentUser, current_user, limiter, optional_user
 from freestash.api.csp import SecurityHeaders, content_security_policy
 from freestash.config import Settings, get_settings
 from freestash.export import attribution_markdown, credits_html, ledger_csv
@@ -36,6 +39,7 @@ from freestash.models import (
     Asset,
     LedgerEntry,
     MediaType,
+    ProviderStatus,
     ScoredAsset,
     SearchQuery,
     SearchResponse,
@@ -44,7 +48,7 @@ from freestash.models import (
     UseCase,
 )
 from freestash.providers import PROVIDERS
-from freestash.providers.keys import settings_with_keys
+from freestash.providers.keys import settings_with_keys, site_keyed_providers
 from freestash.search import Freestash
 from freestash.store import Store, entry_from_scored
 
@@ -57,7 +61,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     app.state.engine = Freestash(settings)
     app.state.store = Store(settings=settings)
-    app.state.accounts = AccountService(app.state.store, settings)
+    admin = app.state.admin = AdminService(app.state.store, settings)
+    app.state.accounts = AccountService(app.state.store, settings, signup_open=lambda: admin.site().signup_open)
     yield
     await app.state.engine.http.aclose()
 
@@ -73,6 +78,7 @@ MaybeUser = Annotated[CurrentUser | None, Depends(optional_user)]
 
 app.include_router(auth_routes.router)
 app.include_router(account_routes.router)
+app.include_router(admin_routes.router)
 
 
 def engine(request: Request) -> Freestash:
@@ -83,21 +89,52 @@ def store(request: Request) -> Store:
     return request.app.state.store
 
 
-def user_settings(request: Request, user: CurrentUser | None) -> Settings:
-    """Engine settings for this caller: in accounts mode, search runs with the caller's own provider keys."""
+def search_settings(request: Request, user: CurrentUser | None) -> tuple[Settings, set[str]]:
+    """Engine settings for this caller, and the providers they'd search on the site's key (the shared quota).
+
+    In accounts mode: the member's own key, else the admin's stored key, else env (decision 0003), and the sources
+    the admin turned off on top of env's."""
     settings = get_settings()
     if settings.auth_mode != "accounts":
-        return settings
-    keys = request.app.state.accounts.key_values(user.id) if user and not user.local else {}
-    return settings_with_keys(settings, keys, share_server_keys=settings.share_server_keys)
+        return settings, set()
+    own = request.app.state.accounts.key_values(user.id) if user and not user.local else {}
+    admin: AdminService = request.app.state.admin
+    site = admin.site_key_values()
+    off = sorted(set(settings.disabled_providers) | set(admin.site().disabled_providers))
+    merged = settings_with_keys(settings, own, site).model_copy(update={"disabled_providers": off})
+    return merged, site_keyed_providers(settings, own, site)
+
+
+def user_settings(request: Request, user: CurrentUser | None) -> Settings:
+    return search_settings(request, user)[0]
+
+
+def before_search(request: Request, user: CurrentUser) -> None:
+    """The per-member search cap (admins are exempt) and the user list's "last seen"."""
+    if get_settings().auth_mode != "accounts" or user.local:
+        return
+    svc: AccountService = request.app.state.accounts
+    svc.touch_seen(user.id)
+    if svc.is_admin(user.id):
+        return
+    per_hour = request.app.state.admin.site().searches_per_hour
+    if not limiter.allow(f"search:{user.id}", per_hour, 3600):
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS,
+                            f"You've reached this hour's limit of {per_hour} searches. Try again in a little while.")
+
+
+async def record_usage(request: Request, shared: set[str], statuses: list[ProviderStatus]) -> None:
+    counts = {st.provider: (1, 0 if st.ok else 1) for st in statuses if st.provider in shared}
+    if counts:
+        await run_in_threadpool(request.app.state.admin.record_usage, counts)
 
 
 # --------------------------------------------------------------------------------- meta
 @app.get("/api/health")
-async def health() -> dict[str, Any]:
+async def health(request: Request) -> dict[str, Any]:
     s = get_settings()
     return {"ok": True, "version": __version__, "auth_mode": s.auth_mode,
-            "signup_open": s.auth_mode == "accounts" and s.signup_open}
+            "signup_open": s.auth_mode == "accounts" and request.app.state.admin.site().signup_open}
 
 
 @app.get("/api/me")
@@ -124,7 +161,11 @@ async def pd_cutoff() -> dict[str, int]:
 # --------------------------------------------------------------------------------- search
 @app.post("/api/search", response_model=SearchResponse)
 async def search(query: SearchQuery, user: User, request: Request) -> SearchResponse:
-    return await engine(request).search(query, settings=user_settings(request, user))
+    before_search(request, user)
+    settings, shared = search_settings(request, user)
+    response = await engine(request).search(query, settings=settings)
+    await record_usage(request, shared, response.providers)
+    return response
 
 
 @app.get("/api/search/stream")
@@ -142,15 +183,22 @@ async def search_stream(
     """Server-sent events: one `batch` event per provider as it finishes, then `done`."""
     query = SearchQuery(q=q, media_types=media, use_case=use, max_tier=max_tier, providers=providers,
                         limit_per_provider=limit, page=page)
+    before_search(request, user)
+    settings, shared = search_settings(request, user)
 
     async def events() -> AsyncIterator[str]:
-        async for batch in engine(request).search_stream(query, settings=user_settings(request, user)):
-            if await request.is_disconnected():
-                break
-            payload = {"status": batch.status.model_dump(mode="json"), "hidden": batch.hidden,
-                       "results": [r.model_dump(mode="json") for r in batch.results]}
-            yield f"event: batch\ndata: {json.dumps(payload)}\n\n"
-        yield "event: done\ndata: {}\n\n"
+        statuses: list[ProviderStatus] = []
+        try:
+            async for batch in engine(request).search_stream(query, settings=settings):
+                statuses.append(batch.status)
+                if await request.is_disconnected():
+                    break
+                payload = {"status": batch.status.model_dump(mode="json"), "hidden": batch.hidden,
+                           "results": [r.model_dump(mode="json") for r in batch.results]}
+                yield f"event: batch\ndata: {json.dumps(payload)}\n\n"
+            yield "event: done\ndata: {}\n\n"
+        finally:
+            await record_usage(request, shared, statuses)  # what was sent counts, even if the reader left
 
     return StreamingResponse(events(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

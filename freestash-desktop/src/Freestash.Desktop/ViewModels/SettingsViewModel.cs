@@ -43,32 +43,38 @@ public sealed partial class KeyRowViewModel : ObservableObject
     [ObservableProperty] public partial bool IsRevealed { get; set; }
     [ObservableProperty] public partial string? SavedHint { get; set; } // cloud: the last 4 characters the account holds
     [ObservableProperty] public partial bool Removing { get; set; }
+    [ObservableProperty] public partial bool SiteKey { get; set; } // cloud: Freesta.sh searches this source on its own key
 
     public bool HasSaved => SavedHint is not null || OriginalValue.Length > 0;
     public bool IsDirty => Removing || Value.Trim() != OriginalValue.Trim();
     public char Mask => IsRevealed ? '\0' : '•';
-    public string StatusText => Removing ? "WILL BE REMOVED" : HasSaved ? (SavedHint is { } h ? $"SET · …{h}" : "SET") : Spec.Optional ? "OPTIONAL" : "NOT SET";
-    public bool IsSet => HasSaved && !Removing;
-    public bool IsMissing => !HasSaved && !Spec.Optional;
-    public bool ShowsOptional => Spec.Optional && !IsSet; // a saved optional key shows only its green SET badge
+    // One rule for both apps (KeyStatus, the web's memberKeyStatus): exactly one of the badges below is visible.
+    private (KeyTone Tone, string Text) Status => KeyStatus.For(HasSaved, SavedHint, Removing, SiteKey, Spec.Optional);
+    public string StatusText => Status.Text;
+    public bool IsSet => Status.Tone == KeyTone.Set;
+    public bool IsSite => Status.Tone == KeyTone.Site;
+    public bool IsMissing => Status.Tone == KeyTone.Missing;
+    public bool ShowsOptional => Status.Tone == KeyTone.Optional;
+    public bool IsRemoving => Status.Tone == KeyTone.Removing;
     public string Placeholder => SavedHint is { } h && Value.Length == 0 ? $"Saved key ending in {h}. Paste a new one to replace it." : $"Paste your {Spec.Label}";
 
     partial void OnValueChanged(string value) => Refresh();
     partial void OnSavedHintChanged(string? value) => Refresh();
     partial void OnRemovingChanged(bool value) => Refresh();
+    partial void OnSiteKeyChanged(bool value) => Refresh();
     partial void OnIsRevealedChanged(bool value) => OnPropertyChanged(nameof(Mask));
 
     private void Refresh()
     {
-        foreach (var p in new[] { nameof(HasSaved), nameof(IsDirty), nameof(StatusText), nameof(IsSet), nameof(IsMissing), nameof(ShowsOptional), nameof(Placeholder) })
+        foreach (var p in new[] { nameof(HasSaved), nameof(IsDirty), nameof(StatusText), nameof(IsSet), nameof(IsSite), nameof(IsMissing), nameof(ShowsOptional), nameof(IsRemoving), nameof(Placeholder) })
             OnPropertyChanged(p);
     }
 
     /// <summary>Local mode: the plaintext from this machine's encrypted store.</summary>
-    public void LoadLocal(string? value) { OriginalValue = value ?? ""; SavedHint = null; Removing = false; Value = OriginalValue; IsRevealed = false; Refresh(); }
+    public void LoadLocal(string? value) { OriginalValue = value ?? ""; SavedHint = null; SiteKey = false; Removing = false; Value = OriginalValue; IsRevealed = false; Refresh(); }
 
     /// <summary>Cloud mode: only the masked state; the value is fetched on Reveal.</summary>
-    public void LoadCloud(KeyState? state) { OriginalValue = ""; Value = ""; Removing = false; IsRevealed = false; SavedHint = state is { Set: true } ? state.Hint ?? "" : null; Refresh(); }
+    public void LoadCloud(KeyState? state) { OriginalValue = ""; Value = ""; Removing = false; IsRevealed = false; SavedHint = state is { Set: true } ? state.Hint ?? "" : null; SiteKey = state?.Site ?? false; Refresh(); }
 
     [RelayCommand]
     private async Task ToggleRevealAsync()
@@ -177,8 +183,13 @@ public sealed partial class SettingsViewModel : ViewModelBase
     /// <summary>Keys and preferences live in the account (synced) rather than on this machine.</summary>
     public bool KeysInAccount => _services.UsesAccounts && IsSignedIn;
     public int KeysSet => Keys.Count(k => k.IsSet);
+    public int KeysSite => Keys.Count(k => k.SiteKey);
+    // Same words as the web's Settings → API keys (decision 0003: members search on the site's keys).
+    public string KeysIntro => KeysInAccount
+        ? "Optional. Searches use Freesta.sh's own keys where it has them; add yours to raise your limits, or to turn on a source it has no key for."
+        : "All free. Sources without a key stay off; everything else works without any.";
     public string KeysSummary => KeysInAccount
-        ? $"{KeysSet} of {Keys.Count} set · encrypted in your account, synced with freesta.sh"
+        ? $"{KeysSite} of {Keys.Count} covered by Freesta.sh · {KeysSet} of your own, encrypted in your account"
         : $"{KeysSet} of {Keys.Count} set · encrypted on this computer, used by the local engine";
     public string SaveNote => KeysInAccount
         ? "Keys and preferences save to your account and sync with the website."
@@ -187,7 +198,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     partial void OnIsLocalChanged(bool value) { if (value) IsRemote = false; }
     partial void OnIsRemoteChanged(bool value) { if (value) IsLocal = false; }
-    partial void OnIsSignedInChanged(bool value) { OnPropertyChanged(nameof(KeysInAccount)); OnPropertyChanged(nameof(KeysSummary)); OnPropertyChanged(nameof(SaveNote)); }
+    partial void OnIsSignedInChanged(bool value) { OnPropertyChanged(nameof(KeysInAccount)); OnPropertyChanged(nameof(KeysIntro)); OnPropertyChanged(nameof(KeysSummary)); OnPropertyChanged(nameof(SaveNote)); }
 
     private void RefreshAccount()
     {

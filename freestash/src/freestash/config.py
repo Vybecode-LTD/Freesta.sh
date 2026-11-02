@@ -57,7 +57,6 @@ class Settings(BaseSettings):
     secrets_key: str | None = None  # Fernet key that encrypts users' provider keys at rest
     token_days: int = 30
     signup_open: bool = True
-    share_server_keys: bool = False  # True: users without their own key fall back to the server's env keys
     public_url: str = "https://freesta.sh"  # used in password-reset links
     trust_cf_connecting_ip: bool = False  # True only when Cloudflare proxies the domain: otherwise clients can forge it
     # Reset email over SMTP from a Spacemail mailbox (decision 0002). Sends only once both login fields are set.

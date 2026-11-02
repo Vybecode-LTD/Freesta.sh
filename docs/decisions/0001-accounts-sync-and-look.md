@@ -11,6 +11,7 @@ Date: 2026-10-31 · Decided by: the owner (answers in session) · Status: accept
 | The look of both apps | **B · Aperture** (cold glass strata, warm sodium accent, live source aperture). Board: `dev plans/design-directions.html` | A · Provenance (archival serif, clearance rail) and C · Index (Swiss editorial, light-first) |
 
 Consequences:
-- Server env provider keys are **not** shared with users unless `FREESTASH_SHARE_SERVER_KEYS=true`, so one user can't burn the owner's quota.
+- ~~Server env provider keys are **not** shared with users unless `FREESTASH_SHARE_SERVER_KEYS=true`, so one user can't burn the owner's quota.~~
+  **Superseded by decision 0003 (2026-11-01):** the admin's keys serve every member, with per-member caps; the flag is retired.
 - Web and desktop are one product: same API, same account data, same screens. Anything only one platform can do is listed in `shared/parity.json` with the reason.
 - Supabase migrations and supabase-js are removed; the schema is created by SQLAlchemy at startup (Alembic before the first breaking schema change).

@@ -95,7 +95,7 @@
           <Grid ColumnDefinitions="260,*">
             <StackPanel Spacing="8" Margin="0,0,32,0">
               <StackPanel Orientation="Horizontal" Spacing="10"><c:Icon Data="{StaticResource IconKey}" Size="17" Foreground="{DynamicResource AccentTextBrush}" /><TextBlock Text="API keys" Classes="h3" FontSize="16" /></StackPanel>
-              <TextBlock Classes="muted small" TextWrapping="Wrap" LineHeight="19" Text="All free. Sources without a key stay off; everything else works without any." />
+              <TextBlock Classes="muted small" TextWrapping="Wrap" LineHeight="19" Text="{Binding KeysIntro}" />
               <TextBlock Text="{Binding KeysSummary}" Classes="mono" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
             </StackPanel>
             <ItemsControl Grid.Column="1" ItemsSource="{Binding Keys}">
@@ -109,8 +109,10 @@
                         <TextBlock Grid.Column="1" Text="{Binding Label}" Classes="mono" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="10,0,0,0" VerticalAlignment="Center" />
                         <Panel Grid.Column="2">
                           <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource GreenBrush}" IsVisible="{Binding IsSet}" />
+                          <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource AccentTextBrush}" IsVisible="{Binding IsSite}" />
                           <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource YellowBrush}" IsVisible="{Binding IsMissing}" />
                           <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding ShowsOptional}" />
+                          <TextBlock Classes="verdict" Text="{Binding StatusText}" Foreground="{DynamicResource RedBrush}" IsVisible="{Binding IsRemoving}" />
                         </Panel>
                       </Grid>
                       <Grid ColumnDefinitions="*,Auto,Auto">

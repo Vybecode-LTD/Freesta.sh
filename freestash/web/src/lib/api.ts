@@ -1,8 +1,8 @@
 import { ledgerPath, type LedgerQuery } from "./ledgerPages";
 import { getSession, sessionEpoch, setSession, type Session, type SessionUser } from "./session";
 import type {
-  Asset, AssetDetail, Collection, KeySpec, KeyState, LedgerEntry, MediaType, Prefs, ProviderInfo, ProviderStatus,
-  ScoredAsset, Tier, UseCase, Verdict,
+  AdminKey, AdminUser, Asset, AssetDetail, AuditEntry, Collection, KeySpec, KeyState, LedgerEntry, MediaType, Prefs,
+  ProviderInfo, ProviderStatus, ScoredAsset, SiteSettings, Tier, UsageRow, UseCase, Verdict,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE ?? "";
@@ -57,7 +57,12 @@ export async function searchStream(p: SearchParams, onBatch: (b: StreamBatch) =>
   const sentAt = sessionEpoch();
   const res = await fetch(`${BASE}/api/search/stream?${qs}`, { headers: { Accept: "text/event-stream" }, credentials: CREDENTIALS, signal });
   if (res.status === 401) signOutIfStill(sentAt);
-  if (!res.ok || !res.body) throw new ApiError(res.status, await res.text());
+  if (!res.ok || !res.body) {
+    const text = await res.text();
+    let detail: unknown = text || res.statusText; // an empty body would make an empty toast
+    try { detail = (JSON.parse(text) as { detail?: unknown }).detail ?? text; } catch { /* not JSON */ }
+    throw new ApiError(res.status, detail); // e.g. the hourly search cap's own words
+  }
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
   let buf = "";
   for (;;) {
@@ -128,4 +133,17 @@ export const api = {
     req<LedgerEntry>("/api/ledger", { method: "POST", body: json(body) }),
   exportLedger: (format: "md" | "html" | "csv", project?: string) =>
     req<string>(`/api/ledger/export?format=${format}${project ? `&project=${encodeURIComponent(project)}` : ""}`),
+
+  // ---- admin (contract admin-shared-keys); the server answers 403 to anyone else
+  adminKeys: () => req<AdminKey[]>("/api/admin/keys"),
+  saveAdminKeys: (values: Record<string, string | null>) => req<AdminKey[]>("/api/admin/keys", { method: "PUT", body: json({ values }) }),
+  testAdminKey: (name: string) =>
+    req<{ ok: boolean; elapsed_ms: number; error: string | null }>(`/api/admin/keys/${encodeURIComponent(name)}/test`, { method: "POST" }),
+  siteSettings: () => req<SiteSettings>("/api/admin/settings"),
+  saveSiteSettings: (changes: Partial<SiteSettings>) => req<SiteSettings>("/api/admin/settings", { method: "PUT", body: json(changes) }),
+  usage: () => req<UsageRow[]>("/api/admin/usage"),
+  adminUsers: (q?: string) => req<AdminUser[]>(`/api/admin/users${q ? `?q=${encodeURIComponent(q)}` : ""}`),
+  updateUser: (id: string, flags: { is_admin?: boolean; disabled?: boolean }) =>
+    req<AdminUser>(`/api/admin/users/${encodeURIComponent(id)}`, { method: "PATCH", body: json(flags) }),
+  audit: (before?: string) => req<AuditEntry[]>(`/api/admin/audit${before ? `?before=${encodeURIComponent(before)}` : ""}`),
 };

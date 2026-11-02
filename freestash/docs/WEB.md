@@ -17,6 +17,15 @@ website signs in with an **HttpOnly cookie**: its auth calls send `X-Freestash-S
 `lib/session.ts` keeps only the signed-in user in localStorage. Cookie-signed writes need the site's own `Origin`.
 The desktop keeps `Authorization: Bearer`. Contract: `../../dev plans/contracts/web-cookie-session.md`.
 
+**Site administration** (`#/admin`, web only; contract `../../dev plans/contracts/admin-shared-keys.md`): an admin
+sees "Site administration" in Settings → Account. The first admin is granted on the server, never by an email address
+(sign-up doesn't prove an address is yours): `railway ssh -s freestash -- python -m freestash admin grant <email>`
+(`revoke`, `list`); more admins are made on the screen. It holds the
+site's provider keys (every member searches on them unless they add their own), the per-member hourly search cap,
+sign-up open or closed, sources on or off, the shared-quota meter, users (make admin, disable) and the audit log.
+It isn't in the nav, so the web and desktop navs stay the same. On the dev server, sign up and then run
+`python scripts/dev_accounts.py --grant-admin <email>`.
+
 ## Views
 
 Search (streaming, media chips, use-case selector, tier filter, source health strip) · asset drawer

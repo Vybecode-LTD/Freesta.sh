@@ -40,7 +40,8 @@ Surfaces, all sharing one Python core:
 7. **Models are the contract.** `src/freestash/models.py` + `accounts.py` ↔ `web/src/lib/types.ts` ↔
    `../freestash-desktop/src/Freestash.Client/{Models.cs,Account/AccountModels.cs}` must stay in sync.
 9. **Accounts:** never store a provider key unencrypted, never return one except to its owner
-   (`GET /api/me/keys/{name}`), never log one. Server env keys reach users only with `FREESTASH_SHARE_SERVER_KEYS=true`.
+   (`GET /api/me/keys/{name}`), never log one. The site's keys (stored on `#/admin`, or env) serve every member
+   (decision 0003); they're encrypted the same way, never returned at all, and the audit log records only their names.
 8. The ledger is **append-only** for members (RLS enforces it). Don't add update paths.
 
 ## Commands
@@ -58,6 +59,7 @@ python -m freestash download cleveland:173965 -u bundled --project aurora-templa
 python -m freestash check "CC BY-SA 4.0" --trust community
 python -m freestash ledger export -f md --project aurora-template -o ATTRIBUTION.md
 python -m freestash pd-cutoff
+python -m freestash admin grant you@example.com   # the first site admin (accounts mode; on Railway via railway ssh)
 
 python -m freestash serve --reload            # API on :8787, local mode (serves web/dist if built)
 python scripts/dev_accounts.py --port 8790    # accounts mode, as on Railway (throwaway DB + secrets in %LOCALAPPDATA%)

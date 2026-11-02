@@ -71,7 +71,7 @@ export interface KeySpec {
   name: string; setting: string; provider: string; provider_name: string; label: string; url: string; url_label: string;
   steps: string[]; limits: string | null; unlocks: string; optional: boolean; notice: string | null; action: string | null;
 }
-export interface KeyState { name: string; set: boolean; hint: string | null; updated_at: string | null }
+export interface KeyState { name: string; set: boolean; hint: string | null; updated_at: string | null; site?: boolean }
 
 export type Theme = "dark" | "light";
 export type Accent = "sodium" | "iris" | "teal" | "cobalt";
@@ -113,3 +113,18 @@ export const USE_CASES: { id: UseCase; label: string; hint: string }[] = [
   { id: "bundled", label: "Bundled", hint: "Ships inside a product: template download, factory library, app." },
   { id: "merch", label: "Merch", hint: "Printed or pressed onto goods for sale." },
 ];
+
+// ---- the admin screen (contract admin-shared-keys); only admins can read these
+export interface AdminKey {
+  name: string; provider: string; provider_name: string; label: string; limits: string | null; optional: boolean;
+  source: "admin" | "env" | null; hint: string | null; updated_at: string | null; unreadable: boolean;
+  last_ok_at: string | null; last_error: string | null; last_error_at: string | null;
+}
+export interface SiteSettings { signup_open: boolean; searches_per_hour: number; disabled_providers: string[] }
+export interface UsageCount { calls: number; errors: number }
+export interface UsageRow { provider: string; provider_name: string; limits: string | null; today: UsageCount; month: UsageCount }
+export interface AdminUser {
+  id: string; email: string; display_name: string | null; created_at: string | null; last_seen_at: string | null;
+  is_admin: boolean; disabled: boolean;
+}
+export interface AuditEntry { at: string; admin_email: string | null; action: string; target: string | null; detail: Record<string, unknown> }

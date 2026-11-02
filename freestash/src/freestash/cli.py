@@ -23,6 +23,9 @@ from freestash.providers import PROVIDERS
 app = typer.Typer(help="Freestash: federated search for public domain and openly licensed assets.", no_args_is_help=True)
 ledger_app = typer.Typer(help="The license ledger: every asset you've actually taken.", no_args_is_help=True)
 app.add_typer(ledger_app, name="ledger")
+admin_app = typer.Typer(help="Site admins of the hosted app. Run it on the server (railway ssh); the account must exist.",
+                        no_args_is_help=True)
+app.add_typer(admin_app, name="admin")
 console = Console()
 
 TIER_STYLE = {Tier.GREEN: "bold green", Tier.YELLOW: "bold yellow", Tier.RED: "bold red"}
@@ -299,3 +302,46 @@ def mcp() -> None:
 
 if __name__ == "__main__":
     app()
+
+
+# --------------------------------------------------------------------------------- site admins
+def _admin_services():
+    from freestash.accounts import AccountService
+    from freestash.admin import AdminService
+    from freestash.store import Store
+
+    settings = get_settings()
+    store = Store(settings=settings)
+    return AccountService(store, settings), AdminService(store, settings)
+
+
+def _set_admin(email: str, value: bool) -> None:
+    """Out-of-band on purpose: sign-up doesn't prove an address is yours, so no address makes an admin by itself."""
+    accounts, admin = _admin_services()
+    user = accounts.find_user(email)
+    if user is None:
+        console.print(f"[red]No account for {email.strip()}.[/] Sign up on the site first, then run this again.")
+        raise typer.Exit(1)
+    accounts.set_flags(user.id, is_admin=value)
+    admin.audit(None, "user.update", user.email, {"is_admin": value})
+    console.print(f"{user.email} is {'now an admin' if value else 'no longer an admin'}.")
+
+
+@admin_app.command("grant")
+def admin_grant(email: Annotated[str, typer.Argument(help="An existing account's email")]) -> None:
+    """Make an existing account an admin (the first admin is made this way)."""
+    _set_admin(email, True)
+
+
+@admin_app.command("revoke")
+def admin_revoke(email: Annotated[str, typer.Argument(help="An existing account's email")]) -> None:
+    """Take admin away from an account."""
+    _set_admin(email, False)
+
+
+@admin_app.command("list")
+def admin_list() -> None:
+    """Every admin account."""
+    accounts, _ = _admin_services()
+    for user in accounts.list_admins():
+        console.print(user.email)

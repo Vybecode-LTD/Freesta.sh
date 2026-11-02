@@ -45,6 +45,10 @@ def main() -> None:
     if "onedrive" in str(base).lower():
         raise SystemExit(f"refusing to write into a OneDrive folder: {base}")
     prepare_environment(port, base, os.environ)
+    if "--grant-admin" in sys.argv:  # after signing up on the dev server: python scripts/dev_accounts.py --grant-admin EMAIL
+        from freestash.cli import app as cli
+
+        cli(["admin", "grant", sys.argv[sys.argv.index("--grant-admin") + 1]])
     import uvicorn
 
     uvicorn.run("freestash.api.app:app", host="127.0.0.1", port=int(port))

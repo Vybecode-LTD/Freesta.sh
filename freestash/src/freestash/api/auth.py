@@ -170,9 +170,13 @@ class ResetIn(BaseModel):
     new_password: str
 
 
-def user_out(u: UserRow) -> dict:
+def user_out(u: UserRow, is_admin: bool = False) -> dict:
     return {"id": u.id, "email": u.email, "display_name": u.display_name,
-            "created_at": u.created_at.isoformat() if u.created_at else None}
+            "created_at": u.created_at.isoformat() if u.created_at else None, "is_admin": is_admin}
+
+
+def _user_out(request: Request, u: UserRow) -> dict:
+    return user_out(u, accounts(request).is_admin(u.id))
 
 
 def _auth_response(svc: AccountService, u: UserRow, request: Request, response: Response, settings: Settings) -> dict:
@@ -180,8 +184,8 @@ def _auth_response(svc: AccountService, u: UserRow, request: Request, response: 
     token = svc.issue_token(u)
     if _wants_cookie(request):
         set_session_cookie(response, request, settings, token)
-        return {"token_type": "cookie", "user": user_out(u)}
-    return {"access_token": token, "token_type": "bearer", "user": user_out(u)}
+        return {"token_type": "cookie", "user": _user_out(request, u)}
+    return {"access_token": token, "token_type": "bearer", "user": _user_out(request, u)}
 
 
 def _check_cookie_request(request: Request, settings: Settings) -> None:
@@ -259,16 +263,16 @@ async def login(body: LoginIn, request: Request, response: Response, settings: S
 @router.get("/me")
 async def me(user: User, request: Request) -> dict:
     if user.local:
-        return {"id": user.id, "email": None, "display_name": "This computer", "created_at": None}
+        return {"id": user.id, "email": None, "display_name": "This computer", "created_at": None, "is_admin": False}
     row = accounts(request).get(user.id)
     assert row is not None
-    return user_out(row)
+    return _user_out(request, row)
 
 
 @router.patch("/me")
 async def update_me(body: ProfileIn, user: User, request: Request, settings: Settings = Depends(get_settings)) -> dict:
     _require_accounts(settings)
-    return user_out(await _call(accounts(request).update_profile, user.id, body.display_name))
+    return _user_out(request, await _call(accounts(request).update_profile, user.id, body.display_name))
 
 
 @router.post("/change-password")
