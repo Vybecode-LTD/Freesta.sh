@@ -12,22 +12,19 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 - No email address makes an admin: grants go only through `python -m freestash admin grant`.
 
 ## 3. State (verified 2026-11-02, end of session)
-- `main` = `origin/main` = **2cfc414** (PR #6 merge), deployed as Railway `ac05d804`.
-- **PR #7 open** on `feat/pr7-grouped-results`: grouped results and query-word chips, both apps. Check its head and
-  CI with `gh pr view 7 --json headRefOid,statusCheckRollup` (it was pushed at the end of the session). Not merged.
+- `main` = `origin/main` = **f1737d6** (PR #7 merge), deployed and verified on production (the parse route answers
+  401; the bundle carries PR #7's strings). No open PRs; next #8.
+- The checkout is `feat/pr8-packs`, cut from f1737d6: one local docs commit, not pushed, no upstream. It goes in with PR #8.
 - The owner hasn't stored provider keys on `#/admin` yet.
 
 ## 4. First job, then the order
-1. **PR #7:** read its CI and any review comments; fix what's red. Ask the owner whether to merge. After a merge,
-   verify on production: `GET /api/search/parse?q=x` answers 401 signed out (404 before the deploy).
-2. **PR #8: packs and brush/shape/sprite** (plan `dev plans/2026-11-01-packs-web-admin-plan.md` §2, asks 1 and 5).
+1. **PR #8: packs and brush/shape/sprite** (plan `dev plans/2026-11-01-packs-web-admin-plan.md` §2, asks 1 and 5).
    Contract first. Model mirrors gain `is_pack`/`item_count`/`formats` and three media types; brush policy rows
    (ground rule 1); new rows and pack words in `shared/categories.json`; packs lead each section (`lib/results.ts` ↔
    `ResultGroups.cs`); Iconify sets, Freesound and Internet Archive packs.
-3. Then GitHub + curated packs, then web or AI search (decision 0003's order).
+2. Then GitHub + curated packs, then web or AI search (decision 0003's order).
 
 ## 5. Open owner decisions (ask, don't decide)
-- Merge PR #7?
 - AI Search (plan §2b) instead of Brave web search.
 - The Unsplash production application; Wikimedia (a normal OAuth consumer, or drop the token).
 - The infrastructure items in `docs/HANDOFF.md` → Next 5.

@@ -1,10 +1,17 @@
 # Handoff — Freesta.sh (2026-11-02, end of the fourth session)
 
 ## State (verified at the end of the session)
-- `main` = `origin/main` = **2cfc414**, the merge of PR #6. PRs #1–#6 are merged and **live** (Railway deploy
-  `ac05d804`). The owner is the only production admin; production has 1 account.
-- **PR #7 is open, not merged:** `feat/pr7-grouped-results`, grouped results and query words, both apps.
-  Contract: `dev plans/contracts/grouped-results.md` (one dated build change, logged there).
+- `main` = `origin/main` = **f1737d6**, the merge of PR #7. PRs #1–#7 are merged and **live**. The owner is the only
+  production admin; production has 1 account. No PRs are open; the next is #8.
+- The checkout is on `feat/pr8-packs`, cut from f1737d6, with this handoff as a local commit (not pushed).
+- **PR #7 (merged on the owner's "Yes, merge when green", CI green on its head 62fe94a):** grouped results and query
+  words, both apps. Contract: `dev plans/contracts/grouped-results.md` (dated changes logged there).
+  - **Verified on production after the deploy:** `GET /api/search/parse` answers 401 on both hosts (404 before the
+    deploy, and a made-up path still answers 404), and the served bundle contains strings only PR #7 emits. Not checked
+    signed in on production (that's the owner's account).
+  - **Review fixes** (Codex, CodeRabbit), each with a test that failed first: a chip typed with punctuation ("SFX!")
+    can be removed; the CLI's read-as note goes to stderr, so `--json` stays one JSON document; only the latest submit or
+    chip removal applies its read, in both apps; `.claude/launch.json`'s `freestash-local` runs from `freestash/`.
   - `shared/categories.json` (the eight media: label, order, query words) → `export_shared.py` writes
     `categories_data.py` (engine), `web/src/lib/categories.ts` and `Freestash.Client/Categories.g.cs`. Both apps'
     Media pills now come from it.
@@ -17,7 +24,8 @@
     `Freestash.Client/ResultGroups.cs`, with mirrored tests.
   - **Contract change:** `groupResults` / `ResultGroups.Group` dropped an unused `media` argument; the desktop's jump
     bar sits above its scrolling results; both apps share one example list (three use query words).
-- Gates on the branch: pytest 167 · ruff · export check · vitest 39 · web build · dotnet build 0 warnings · dotnet 54.
+- Gates at the merge: pytest 167 · ruff · export check · vitest 39 · web build · dotnet build 0 warnings · dotnet 54;
+  CI engine, web and desktop green.
   - Mutation pass: 10 of 10 killed (parser and web helpers).
   - Rendered contrast on the grouped search page (chips, jump bar, section heads, Show all, all three verdict tones):
     dark and light, 1440 and 390, hovers, **0 failing**; the positive control fails (1.28:1).
@@ -29,8 +37,7 @@
     the jump and the toggle.
 
 ## Next
-1. **Owner:** review PR #7 and say whether to merge. After the merge, check it on https://freesta.sh:
-   `GET /api/search/parse` answers 401 signed out (404 before the deploy); then a signed-in "rain sfx" shows the chip.
+1. **Owner (optional):** signed in on https://freesta.sh, search "rain sfx": the "Read as" chip shows and Audio is picked.
 2. **Owner:** sign in → Settings → Site administration → paste the provider keys → Test each. Apply for Unsplash
    production first: demo mode allows 50 requests an hour for everyone. Decide on Wikimedia: a normal OAuth consumer,
    or drop the owner-only token.

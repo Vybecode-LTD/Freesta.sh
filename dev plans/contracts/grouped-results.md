@@ -1,6 +1,6 @@
 ---
 feature: grouped-results
-status: approved
+status: done
 approved: 2026-11-01 (decision 0003: the owner accepted plan §3·4 and its order; "First job: PR #7" 2026-11-02)
 plan: dev plans/2026-11-01-packs-web-admin-plan.md (§3 ask 4, §4 step 3)
 pr: 7
