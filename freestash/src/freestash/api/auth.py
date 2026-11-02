@@ -1,8 +1,10 @@
 """Auth for the web API.
 
 AUTH_MODE=none      single local user, no team: the CLI-equivalent, and what the desktop's local engine runs
-AUTH_MODE=accounts  open sign-up on this server; clients send `Authorization: Bearer <token>` from
-                    /api/auth/login or /api/auth/register. One account works on the website and the desktop app.
+AUTH_MODE=accounts  open sign-up on this server. One account works on the website and the desktop app:
+                    the desktop sends `Authorization: Bearer <token>` from /api/auth/login or /register; the website
+                    asks for an HttpOnly cookie instead (`X-Freestash-Session: cookie`) and never sees the token.
+                    Cookie-signed writes must come from the site itself (Origin check; contract web-cookie-session).
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ import ipaddress
 import logging
 from dataclasses import dataclass, field
 from typing import Annotated
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel
@@ -26,6 +29,10 @@ LOCAL_USER_ID = "00000000-0000-0000-0000-000000000001"  # AUTH_MODE=none
 log = logging.getLogger("freestash.auth")
 
 limiter = RateLimiter()
+
+SESSION_COOKIE = "freestash_session"
+_LOOPBACK = frozenset({"localhost", "127.0.0.1", "::1"})
+_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 @dataclass
@@ -48,6 +55,39 @@ def _bearer(authorization: str | None) -> str | None:
     return None
 
 
+def _wants_cookie(request: Request) -> bool:
+    return request.headers.get("x-freestash-session", "").lower() == "cookie"
+
+
+def _is_loopback(request: Request) -> bool:
+    return (urlsplit(f"//{request.headers.get('host', '')}").hostname or "") in _LOOPBACK
+
+
+def check_origin(request: Request, settings: Settings) -> None:
+    """CSRF guard for cookie-signed writes: the Origin (else the Referer) must be this site.
+
+    "This site" is the Host the request arrived on, the public URL, or a configured CORS origin (the Vite dev server).
+    Browsers send Origin on every cross-site write, and SameSite=Lax already withholds the cookie from most of them;
+    this catches the rest (a same-site subdomain, an old browser). A missing or "null" Origin is refused.
+    """
+    source = request.headers.get("origin") or request.headers.get("referer") or ""
+    netloc = urlsplit(source).netloc.lower()
+    allowed = {request.headers.get("host", "").lower(),
+               *(urlsplit(u).netloc.lower() for u in (settings.public_url, *settings.cors_origins))} - {""}
+    if not netloc or netloc not in allowed:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Cross-site request refused.")
+
+
+def set_session_cookie(response: Response, request: Request, settings: Settings, token: str) -> None:
+    """Secure everywhere but loopback: uvicorn behind Railway's edge sees plain http, so the scheme can't decide."""
+    response.set_cookie(SESSION_COOKIE, token, max_age=settings.token_days * 86400, path="/api", httponly=True,
+                        samesite="lax", secure=not _is_loopback(request))
+
+
+def clear_session_cookie(response: Response, request: Request) -> None:
+    response.delete_cookie(SESSION_COOKIE, path="/api", httponly=True, samesite="lax", secure=not _is_loopback(request))
+
+
 def _resolve(request: Request, token: str, team_header: str | None) -> CurrentUser:
     try:
         user = accounts(request).user_for_token(token)
@@ -67,6 +107,8 @@ async def current_user(
     if settings.auth_mode != "accounts":
         return CurrentUser(id=LOCAL_USER_ID, email=None, team_id=None, local=True)
     token = _bearer(authorization)
+    if not token and (token := request.cookies.get(SESSION_COOKIE)) and request.method not in _SAFE_METHODS:
+        check_origin(request, settings)  # a cross-site request can carry the cookie, never a bearer header
     if not token:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sign in to continue.")
     return _resolve(request, token, x_freestash_team)
@@ -77,13 +119,16 @@ async def optional_user(
     authorization: str | None = Header(default=None),
     settings: Settings = Depends(get_settings),
 ) -> CurrentUser | None:
-    """The caller if they sent a valid token, else None. For public endpoints that personalize."""
+    """The caller if they sent a valid token or session cookie, else None. For public endpoints that personalize."""
     if settings.auth_mode != "accounts":
         return CurrentUser(id=LOCAL_USER_ID, email=None, team_id=None, local=True)
-    token = _bearer(authorization)
+    bearer = _bearer(authorization)
+    token = bearer or request.cookies.get(SESSION_COOKIE)
     if not token:
         return None
     try:
+        if not bearer and request.method not in _SAFE_METHODS:
+            check_origin(request, settings)
         return _resolve(request, token, None)
     except HTTPException:
         return None
@@ -130,8 +175,19 @@ def user_out(u: UserRow) -> dict:
             "created_at": u.created_at.isoformat() if u.created_at else None}
 
 
-def _auth_response(svc: AccountService, u: UserRow) -> dict:
-    return {"access_token": svc.issue_token(u), "token_type": "bearer", "user": user_out(u)}
+def _auth_response(svc: AccountService, u: UserRow, request: Request, response: Response, settings: Settings) -> dict:
+    """The desktop gets the token in the body; the website gets it only as an HttpOnly cookie."""
+    token = svc.issue_token(u)
+    if _wants_cookie(request):
+        set_session_cookie(response, request, settings, token)
+        return {"token_type": "cookie", "user": user_out(u)}
+    return {"access_token": token, "token_type": "bearer", "user": user_out(u)}
+
+
+def _check_cookie_request(request: Request, settings: Settings) -> None:
+    """A cross-site page must not sign a browser into an account (login CSRF)."""
+    if _wants_cookie(request):
+        check_origin(request, settings)
 
 
 def _require_accounts(settings: Settings) -> None:
@@ -180,20 +236,24 @@ async def _send_quietly(settings: Settings, to: str, subject: str, text: str) ->
 
 
 @router.post("/register", status_code=201)
-async def register(body: RegisterIn, request: Request, settings: Settings = Depends(get_settings)) -> dict:
+async def register(body: RegisterIn, request: Request, response: Response,
+                   settings: Settings = Depends(get_settings)) -> dict:
     _require_accounts(settings)
+    _check_cookie_request(request, settings)
     _limit(f"register:{_ip(request, settings)}", 5, 3600)
     svc = accounts(request)
-    return _auth_response(svc, await _call(svc.register, body.email, body.password, body.display_name))
+    user = await _call(svc.register, body.email, body.password, body.display_name)
+    return _auth_response(svc, user, request, response, settings)
 
 
 @router.post("/login")
-async def login(body: LoginIn, request: Request, settings: Settings = Depends(get_settings)) -> dict:
+async def login(body: LoginIn, request: Request, response: Response, settings: Settings = Depends(get_settings)) -> dict:
     _require_accounts(settings)
+    _check_cookie_request(request, settings)
     _limit(f"login-ip:{_ip(request, settings)}", 30, 300)
     _limit(f"login:{_ip(request, settings)}:{body.email.strip().lower()}", 8, 300)
     svc = accounts(request)
-    return _auth_response(svc, await _call(svc.authenticate, body.email, body.password))
+    return _auth_response(svc, await _call(svc.authenticate, body.email, body.password), request, response, settings)
 
 
 @router.get("/me")
@@ -212,19 +272,34 @@ async def update_me(body: ProfileIn, user: User, request: Request, settings: Set
 
 
 @router.post("/change-password")
-async def change_password(body: ChangePasswordIn, user: User, request: Request,
+async def change_password(body: ChangePasswordIn, user: User, request: Request, response: Response,
                           settings: Settings = Depends(get_settings)) -> dict:
     _require_accounts(settings)
+    _check_cookie_request(request, settings)
     _limit(f"change-password:{user.id}", 8, 300)
     svc = accounts(request)
-    return _auth_response(svc, await _call(svc.change_password, user.id, body.current_password, body.new_password))
+    changed = await _call(svc.change_password, user.id, body.current_password, body.new_password)
+    return _auth_response(svc, changed, request, response, settings)
 
 
 @router.post("/logout-all", status_code=204)
 async def logout_all(user: User, request: Request, settings: Settings = Depends(get_settings)) -> Response:
     _require_accounts(settings)
     accounts(request).sign_out_everywhere(user.id)
-    return Response(status_code=204)
+    response = Response(status_code=204)
+    clear_session_cookie(response, request)
+    return response
+
+
+@router.post("/logout", status_code=204)
+async def logout(request: Request, settings: Settings = Depends(get_settings)) -> Response:
+    """Signs this browser out by clearing its cookie. The token stays valid until it expires or "Sign out
+    everywhere" revokes it: there's no server-side session to end (contract web-cookie-session §6)."""
+    if request.cookies.get(SESSION_COOKIE):
+        check_origin(request, settings)
+    response = Response(status_code=204)
+    clear_session_cookie(response, request)
+    return response
 
 
 @router.post("/forgot")

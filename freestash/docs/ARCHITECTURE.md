@@ -47,7 +47,8 @@
 ## Auth (accounts mode, the hosted app)
 
 Open sign-up on the API itself (no third-party auth): `POST /api/auth/register|login` → an HS256 JWT carrying the
-user id and `token_version` (bumped by password change and sign-out-everywhere, which kills old tokens). The website
-and the desktop app send it as `Authorization: Bearer`. Each account owns a personal team, so every store query stays
+user id and `token_version` (bumped by password change and sign-out-everywhere, which kills old tokens). The desktop
+app sends it as `Authorization: Bearer`; the website gets it only as an HttpOnly cookie and cookie-signed writes must
+carry the site's own `Origin` (`api/auth.py::check_origin`, contract `dev plans/contracts/web-cookie-session.md`). Each account owns a personal team, so every store query stays
 team-scoped. Provider keys are Fernet-encrypted per account and merged into that user's engine settings for each
 search (`providers/keys.py::settings_with_keys`). Data lives in Railway Postgres; decision: `../../docs/decisions/0001`.

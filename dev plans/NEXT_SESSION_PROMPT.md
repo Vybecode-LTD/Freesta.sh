@@ -13,8 +13,9 @@ Avalonia 12). Monorepo `C:\DEV\Freesta.sh`, GitHub `Vybecode-LTD/Freesta.sh`. Re
   emails), deleting Railway resources, and computer-use.
 
 ## 3. State (verified 2026-11-01, end of session)
-- `main` = the PR #3 merge (bfdae9b). PRs #1–#3 are live. **PR #4** (`feat/pr4-followups`): accounts mode refuses
-  to start without `DATABASE_URL`, plus docs. Open; the next PR is #5.
+- `main` = the PR #4 merge (a683d67). PRs #1–#4 are live (deploy af809fd6, verified 2026-11-02). PR #4 is the
+  guard: accounts mode won't start without `DATABASE_URL`. No PRs are open; the next is #5. The checkout is on
+  `feat/pr5-followups` (one local docs commit).
 - **Database incident 2026-11-01:** the first Postgres service was deleted, and its data is gone. A new `Postgres`
   service runs on `postgres-volume`, with `DATABASE_URL=${{Postgres.DATABASE_URL}}`. 9 tables, 0 users at 23:58.
 - Verified on production: path-traversal fix, CSP (an injected script is blocked), health `auth_mode: accounts`.
@@ -23,7 +24,7 @@ Avalonia 12). Monorepo `C:\DEV\Freesta.sh`, GitHub `Vybecode-LTD/Freesta.sh`. Re
 - Desktop: CI artifact `freestash-desktop-win-x64` from `main`. Local build `freestash-desktop/publish/Freestash.exe`.
 
 ## 4. First job, then the order
-1. Check PR #4 (merge needs the owner's OK). Confirm production is on Postgres: run
+1. Confirm production is on Postgres: run
    `railway ssh -s Postgres -- psql -U postgres -d railway -tAc 'select count(*) from users'`.
 2. Once the owner has re-registered, have them request a reset and confirm the email arrives. Logs show only
    `SMTP send failed: <type> <code>`.

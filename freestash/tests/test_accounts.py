@@ -90,6 +90,90 @@ def test_change_password_and_sign_out_everywhere_revoke_old_tokens(client):
     assert client.get("/api/auth/me", headers=new).status_code == 401
 
 
+# ---------------------------------------------------------------- the website's cookie session (contract web-cookie-session)
+WEB = {"X-Freestash-Session": "cookie", "Origin": "http://testserver"}
+
+
+def _cookie(r: httpx.Response) -> tuple[str, str]:
+    """(token, the whole Set-Cookie line) for freestash_session."""
+    line = next(v for k, v in r.headers.multi_items() if k == "set-cookie" and v.startswith("freestash_session="))
+    return line.split(";", 1)[0].split("=", 1)[1].strip('"'), line
+
+
+def _web_signup(c: TestClient) -> dict[str, str]:
+    r = c.post("/api/auth/register", headers=WEB, json={"email": "ada@example.com", "password": PASSWORD})
+    assert r.status_code == 201, r.text
+    return {"Cookie": f"freestash_session={_cookie(r)[0]}", "Origin": "http://testserver"}
+
+
+def test_web_sign_in_sets_an_httponly_cookie_and_returns_no_token(client):
+    r = client.post("/api/auth/register", headers=WEB, json={"email": "ada@example.com", "password": PASSWORD})
+    assert r.status_code == 201 and r.json()["token_type"] == "cookie" and "access_token" not in r.json()
+    token, line = _cookie(r)
+    flags = {f.strip().lower() for f in line.split(";")[1:]}
+    assert token and {"httponly", "secure", "samesite=lax", "path=/api"} <= flags
+    assert f"max-age={30 * 86400}" in flags
+
+    again = client.post("/api/auth/login", headers=WEB, json={"email": "ada@example.com", "password": PASSWORD})
+    assert again.status_code == 200 and "access_token" not in again.json() and _cookie(again)[0]
+
+
+def test_the_cookie_signs_requests_in(client):
+    web = _web_signup(client)
+    assert client.get("/api/auth/me", headers={"Cookie": web["Cookie"]}).json()["email"] == "ada@example.com"
+    assert client.post("/api/collections", headers=web, json={"name": "Hero images"}).status_code in (200, 201)
+    assert client.get("/api/collections", headers={"Cookie": "freestash_session=garbage"}).status_code == 401
+
+
+def test_a_cross_site_write_with_the_cookie_is_refused(client):
+    web = _web_signup(client)
+    for origin in ({"Origin": "https://evil.example"}, {"Origin": "null"}, {}):
+        r = client.post("/api/collections", headers={"Cookie": web["Cookie"], **origin}, json={"name": "x"})
+        assert r.status_code == 403, origin
+    referer = client.post("/api/collections", json={"name": "y"},
+                          headers={"Cookie": web["Cookie"], "Referer": "http://testserver/#/collections"})
+    assert referer.status_code in (200, 201)
+    # the site's public URL counts as the site, whatever Host the edge forwards
+    public = client.post("/api/collections", json={"name": "z"},
+                         headers={"Cookie": web["Cookie"], "Origin": "https://freesta.sh"})
+    assert public.status_code in (200, 201)
+    # reads are not checked, and bearer callers (the desktop) never are
+    assert client.get("/api/collections", headers={"Cookie": web["Cookie"], "Origin": "https://evil.example"}).status_code == 200
+    bearer = signup(client, "bob@example.com")
+    assert client.post("/api/collections", headers={**bearer, "Origin": "https://evil.example"},
+                       json={"name": "b"}).status_code in (200, 201)
+    # a cross-site page can't sign a browser into someone else's account either
+    login = client.post("/api/auth/login", headers={**WEB, "Origin": "https://evil.example"},
+                        json={"email": "ada@example.com", "password": PASSWORD})
+    assert login.status_code == 403
+
+
+def test_logout_clears_the_cookie(client):
+    web = _web_signup(client)
+    r = client.post("/api/auth/logout", headers=web)
+    assert r.status_code == 204
+    token, line = _cookie(r)
+    assert token == "" and "max-age=0" in line.lower() and "path=/api" in line.lower()
+    out = client.post("/api/auth/logout-all", headers=web)
+    assert out.status_code == 204 and _cookie(out)[0] == ""
+    assert client.get("/api/auth/me", headers={"Cookie": web["Cookie"]}).status_code == 401  # revoked
+
+
+def test_desktop_sign_in_is_unchanged(client):
+    r = client.post("/api/auth/register", json={"email": "ada@example.com", "password": PASSWORD})
+    assert r.json()["token_type"] == "bearer" and r.json()["access_token"]
+    assert not any(k == "set-cookie" for k, _ in r.headers.multi_items())
+
+
+def test_cookie_is_not_secure_only_on_loopback(client):
+    for host, secure in (("127.0.0.1:8790", False), ("localhost:5173", False), ("[::1]:8790", False),
+                         ("freesta.sh", True), ("freestash-production.up.railway.app", True)):
+        r = client.post("/api/auth/register", headers={**WEB, "Host": host, "Origin": f"http://{host}"},
+                        json={"email": f"u{abs(hash(host))}@example.com", "password": PASSWORD})
+        assert r.status_code == 201, (host, r.text)
+        assert ("secure" in {f.strip().lower() for f in _cookie(r)[1].split(";")}) is secure, host
+
+
 def test_collections_and_ledger_are_private_to_each_account(client):
     ada, bob = signup(client), signup(client, "bob@example.com")
     coll = client.post("/api/collections", headers=ada, json={"name": "Hero images"}).json()

@@ -229,7 +229,7 @@ function AccountSection({ onToast }: Toast) {
         </div>
       </form>
       <div className="row wrap">
-        <button className="btn" onClick={() => setSession(null)}><Icon name="signOut" size={16} />Sign out</button>
+        <button className="btn" onClick={() => void api.signOut()}><Icon name="signOut" size={16} />Sign out</button>
         <button className="btn btn-ghost" onClick={everywhere}>Sign out everywhere</button>
       </div>
     </Section>
