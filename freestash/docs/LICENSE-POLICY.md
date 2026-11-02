@@ -67,7 +67,7 @@ artwork is never an unaltered copy. Client and merch verdicts say so in their re
 (an Iconify set, an Internet Archive item), the pack is judged on it at the publisher's trust, like any asset.
 When the source licenses each file (Freesound), the pack is judged against every distinct member license and the
 strictest wins, reasons and obligations merged. If fewer files were read than the pack holds, or the count is
-unknown, every use is 🟡 at best.
+unknown, every use but reference is 🟡 at best (reference is judged on the licenses that were read).
 
 | Files inside | Trust | reference | demo | client | bundled | merch |
 |---|---|---|---|---|---|---|
@@ -75,7 +75,7 @@ unknown, every use is 🟡 at best.
 | CC0 + CC BY | community | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 |
 | CC0 + CC BY | uploader | 🟢 | 🟢 | 🟡 | 🟡 | 🟡 |
 | CC BY-SA + CC BY-ND | community | 🟢 | 🟡 | 🟡 | 🔴 | 🔴 |
-| CC0, 1 of 24 files read | institution | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
+| CC0, 1 of 24 files read | institution | 🟢 | 🟡 | 🟡 | 🟡 | 🟡 |
 | One CC0 license for the pack | curated | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 |
 
 GREEN still carries obligations: credit lines for CC BY, a license file for MIT/OFL when bundled,

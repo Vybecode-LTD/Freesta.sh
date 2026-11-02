@@ -21,6 +21,38 @@ def engine(settings):
     return Freestash(settings, HttpClient(settings))
 
 
+async def test_one_page_found_as_two_kinds_keeps_both(engine, monkeypatch):
+    """A page matching the sprite and the brush queries is two results with one landing URL (CodeRabbit, PR #8)."""
+    from freestash.models import Asset, LicenseInfo, Trust
+    from freestash.providers import PROVIDERS, Provider, ProviderInfo
+    from freestash.providers.base import ProviderPage
+
+    def asset(kind, url="https://archive.org/details/x"):
+        return Asset(provider="twin", source_id=f"{kind.value}:x", title="x", media_type=kind, landing_url=url,
+                     license=LicenseInfo(id="CC0-1.0", label="CC0"), trust=Trust.CURATED)
+
+    class Twin(Provider):
+        info = ProviderInfo(id="twin", name="Twin", homepage="https://example.com", default_trust=Trust.CURATED,
+                            media_types=frozenset({MediaType.SPRITE, MediaType.BRUSH, MediaType.IMAGE}))
+
+        async def search(self, q, media_types, limit, page, hints):
+            return ProviderPage(assets=[asset(MediaType.SPRITE), asset(MediaType.BRUSH), asset(MediaType.IMAGE, "https://archive.org/details/y/")])
+
+    monkeypatch.setattr("freestash.providers.PROVIDERS", [Twin, *PROVIDERS])
+    monkeypatch.setattr("freestash.providers._BY_ID", {Twin.info.id: Twin})
+    resp = await engine.search(SearchQuery(q="x", media_types=[MediaType.SPRITE, MediaType.BRUSH, MediaType.IMAGE], providers=["twin"]))
+    assert sorted(r.asset.media_type.value for r in resp.results) == ["brush", "image", "sprite"]
+    # the same page twice as the same kind is still one result
+    class Dup(Twin):
+        async def search(self, q, media_types, limit, page, hints):
+            return ProviderPage(assets=[asset(MediaType.SPRITE), asset(MediaType.SPRITE, "https://archive.org/details/x/")])
+
+    monkeypatch.setattr("freestash.providers._BY_ID", {Twin.info.id: Dup})
+    monkeypatch.setattr("freestash.providers.PROVIDERS", [Dup])
+    resp = await engine.search(SearchQuery(q="x", media_types=[MediaType.SPRITE], providers=["twin"]))
+    assert len(resp.results) == 1
+
+
 @respx.mock
 async def test_federated_search_merges_scores_and_survives_failures(engine):
     respx.get("https://openaccess-api.clevelandart.org/api/artworks/").mock(

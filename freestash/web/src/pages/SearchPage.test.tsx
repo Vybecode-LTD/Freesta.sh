@@ -78,6 +78,24 @@ describe("SearchPage", () => {
     expect(host.querySelector(".read-as")!.textContent).toContain("“pack” → Packs");
   });
 
+  it("filters changed while the query is being read are the ones searched (CodeRabbit, PR #8)", async () => {
+    let answer!: (p: ParsedQuery) => void;
+    api.parseQuery.mockReturnValueOnce(new Promise<ParsedQuery>((resolve) => { answer = resolve; }));
+    await act(async () => root.render(<SearchPage onToast={() => undefined} />));
+
+    await submit("knight");  // its read is slow
+    const preset = [...host.querySelectorAll<HTMLButtonElement>("button.pill")].find((b) => b.textContent === "Game assets")!;
+    await act(async () => { preset.click(); });
+    await act(async () => answer({ original: "knight", q: "knight", media_types: [], packs: false, picks: [] }));
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+
+    expect(searchStream).toHaveBeenCalledTimes(1);
+    expect(searchStream.mock.calls[0][0]).toMatchObject({
+      q: "knight", media: ["audio", "texture", "model", "font", "icon", "sprite"], packs: true,
+    });
+    expect(preset.getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("Game assets picks its media and packs, and searches again once", async () => {
     api.parseQuery.mockResolvedValueOnce({ original: "knight", q: "knight", media_types: [], packs: false, picks: [] } satisfies ParsedQuery);
     await act(async () => root.render(<SearchPage onToast={() => undefined} />));

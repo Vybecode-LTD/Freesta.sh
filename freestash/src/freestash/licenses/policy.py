@@ -136,7 +136,8 @@ def _trust_rules(acc: _Acc, asset: Asset, lic: LicenseDef, use: UseCase, today: 
 
 
 def _pack_rules(acc: _Acc, asset: Asset) -> None:
-    """A pack licensed file by file is cleared only as far as its files' licenses were read."""
+    """A pack licensed file by file is cleared only as far as its files' licenses were read (not for reference use,
+    which is judged on the licenses that were read, as for any asset)."""
     checked, count = asset.members_checked or 0, asset.item_count
     if count is None:
         acc.bump(Tier.YELLOW, f"Licenses were read for {checked} files in this pack, which may hold more: "
@@ -156,7 +157,7 @@ def evaluate(asset: Asset, use: UseCase, today: date | None = None) -> Verdict:
     for info, lic in zip(infos, lics, strict=True):
         _license_rules(acc, lic, use, info.label, brush)
         _trust_rules(acc, asset, lic, use, today)
-    if per_file:
+    if per_file and use != UseCase.REFERENCE:
         _pack_rules(acc, asset)
 
     if use != UseCase.REFERENCE and acc.tier != Tier.RED:

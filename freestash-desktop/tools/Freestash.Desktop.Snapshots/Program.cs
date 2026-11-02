@@ -199,6 +199,11 @@ async Task Script()
     Console.WriteLine($"  game assets: {string.Join(", ", gameMedia)} · packs {vm.Search.Packs} · chips {vm.Search.Picks.Count}");
     if (!vm.Search.Packs || !gameMedia.SequenceEqual(Categories.Presets[0].Media) || vm.Search.Picks.Count != 0 || !vm.Search.Presets[0].IsSelected)
         throw new InvalidOperationException("Game assets didn't set its media and packs");
+    window.Width = 760; // a narrow window: the eleven media pills and the preset wrap instead of running off (CodeRabbit, PR #8)
+    await Wait(1500);
+    await Shot("09g-search-narrow.png");
+    window.Width = 1440;
+    await Wait(800);
     vm.Search.PacksOptions[0].IsSelected = true; // Packs off again for the shots below
 
     // ---- Frost (light) + icons/fonts/textures mix

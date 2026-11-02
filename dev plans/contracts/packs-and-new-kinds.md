@@ -113,3 +113,9 @@ None.
   `SearchParams.packs` send it. A pack word's chip reads `“pack” → Packs`, and removing it restores the user's own Packs setting.
 - 2026-11-02 (live): the first Iconify pack search after a restart can time out while `/collections` is fetched cold
   (the desktop snapshot run failed once on it); the catalogue is cached for a day after that.
+- 2026-11-02 (review, CodeRabbit): an unread-files pack is Check at best for every use **but reference**, as §2 says (the code
+  and the matrix row floored reference too); `search.py::_dedupe_key` now includes the media type, so a page found as a
+  sprite and as a brush stays two results.
+- 2026-11-02 (review, Codex + CodeRabbit): assets saved before packs have no pack fields, so the web's pack helpers default
+  them; a query read that answers after the user changed the media or Packs searches with the latest ones; the desktop's
+  Media pills wrap (`09g-search-narrow.png`).

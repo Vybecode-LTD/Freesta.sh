@@ -135,8 +135,8 @@ def make_pack(members: list[str], *, trust: Trust = Trust.UPLOADER, checked: int
     (["CC0-1.0", "CC-BY-4.0"], Trust.COMMUNITY, 2, 2, (GREEN, GREEN, GREEN, GREEN, GREEN)),
     (["CC0-1.0", "CC-BY-4.0"], Trust.UPLOADER, 2, 2, (GREEN, GREEN, YELLOW, YELLOW, YELLOW)),
     (["CC-BY-SA-4.0", "CC-BY-ND-4.0"], Trust.COMMUNITY, 2, 2, (GREEN, YELLOW, YELLOW, RED, RED)),
-    (["CC0-1.0"], Trust.INSTITUTION, 1, 24, (YELLOW, YELLOW, YELLOW, YELLOW, YELLOW)),  # 23 files unread: check at best
-    (["CC0-1.0"], Trust.INSTITUTION, 3, None, (YELLOW, YELLOW, YELLOW, YELLOW, YELLOW)),  # count unknown: the same
+    (["CC0-1.0"], Trust.INSTITUTION, 1, 24, (GREEN, YELLOW, YELLOW, YELLOW, YELLOW)),  # 23 files unread: check at best,
+    (["CC0-1.0"], Trust.INSTITUTION, 3, None, (GREEN, YELLOW, YELLOW, YELLOW, YELLOW)),  # but reference stays as its files
     ([], Trust.CURATED, None, 40, (GREEN, GREEN, GREEN, GREEN, GREEN)),  # one licence for the pack, its publisher's
 ])
 def test_pack_policy_matrix(members, trust, checked, count, expected):
@@ -148,6 +148,11 @@ def test_pack_policy_matrix(members, trust, checked, count, expected):
 def test_pack_merges_every_files_obligations():
     v = evaluate(make_pack(["CC0-1.0", "CC-BY-4.0"], trust=Trust.COMMUNITY), UseCase.BUNDLED)
     assert any("Credit required" in o for o in v.obligations)
+
+
+def test_reference_is_not_held_back_by_unread_files():
+    v = evaluate(make_pack(["CC0-1.0"], trust=Trust.INSTITUTION, checked=1, count=24), UseCase.REFERENCE)
+    assert v.tier == GREEN and not any("Licenses were read" in r for r in v.reasons)
 
 
 def test_incomplete_pack_says_how_much_was_read():
