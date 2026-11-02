@@ -7,7 +7,9 @@ import pytest
 import respx
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
+from typer.testing import CliRunner
 
+from freestash.cli import app as cli
 from freestash.config import Settings, get_settings
 from freestash.providers.keys import KEY_CATALOG, settings_with_keys
 
@@ -28,7 +30,6 @@ def make_client(tmp_path, monkeypatch, auth_mode: str = "accounts", **env: str):
     monkeypatch.setenv("FREESTASH_SECRETS_KEY", Fernet.generate_key().decode())
     monkeypatch.setenv("FREESTASH_HTTP_RETRIES", "0")
     monkeypatch.setenv("FREESTASH_CACHE_TTL_SECONDS", "0")
-    monkeypatch.setenv("FREESTASH_ADMIN_EMAILS", f" {OWNER.upper()} , other-owner@example.com")
     for spec in KEY_CATALOG:  # the developer's own .env/environment must not leak into these tests
         monkeypatch.delenv(spec.name, raising=False)
         monkeypatch.delenv(f"FREESTASH_{spec.name}", raising=False)
@@ -57,6 +58,17 @@ def signup(c: TestClient, email: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
+def grant(email: str, *, revoke: bool = False):
+    """The only way to make the first admin: a command run on the server (`railway ssh ... python -m freestash admin grant`)."""
+    return CliRunner().invoke(cli, ["admin", "revoke" if revoke else "grant", email])
+
+
+def signup_admin(c: TestClient, email: str = OWNER) -> dict[str, str]:
+    hdr = signup(c, email)
+    assert grant(email).exit_code == 0
+    return hdr
+
+
 def test_key_order_is_own_then_site_then_env():
     base = Settings(pexels_api_key="env-key", _env_file=None)
     assert settings_with_keys(base, {}, {}).pexels_api_key == "env-key"
@@ -66,8 +78,8 @@ def test_key_order_is_own_then_site_then_env():
 
 
 def test_only_admins_reach_the_admin_routes(client):
-    owner, ada = signup(client, OWNER), signup(client, "ada@example.com")
-    assert client.get("/api/auth/me", headers=owner).json()["is_admin"] is True  # FREESTASH_ADMIN_EMAILS, any case
+    owner, ada = signup_admin(client), signup(client, "ada@example.com")
+    assert client.get("/api/auth/me", headers=owner).json()["is_admin"] is True
     assert client.get("/api/auth/me", headers=ada).json()["is_admin"] is False
     login = client.post("/api/auth/login", json={"email": OWNER, "password": PASSWORD}).json()
     assert login["user"]["is_admin"] is True
@@ -75,6 +87,31 @@ def test_only_admins_reach_the_admin_routes(client):
         assert client.get(path, headers=ada).status_code == 403, path
         assert client.get(path, headers=owner).status_code == 200, path
     assert client.get("/api/admin/keys").status_code == 401
+
+
+def test_an_email_address_alone_never_makes_an_admin(tmp_path, monkeypatch):
+    """PR #6 review (Codex P1): sign-up doesn't prove an address is yours, so whoever first registered an address in
+    the retired FREESTASH_ADMIN_EMAILS became an admin. Admins are now granted only by a command on the server."""
+    with make_client(tmp_path, monkeypatch, FREESTASH_ADMIN_EMAILS=OWNER) as c:
+        squatter = signup(c, OWNER)
+        assert c.get("/api/auth/me", headers=squatter).json()["is_admin"] is False
+        assert c.get("/api/admin/keys", headers=squatter).status_code == 403
+
+
+def test_admins_are_granted_and_revoked_from_the_server_command(client):
+    ada = signup(client, "ada@example.com")
+    assert grant("ADA@example.com ").exit_code == 0  # normalised the way sign-in normalises
+    assert client.get("/api/admin/keys", headers=ada).status_code == 200
+    listed = CliRunner().invoke(cli, ["admin", "list"])
+    assert listed.exit_code == 0 and "ada@example.com" in listed.output
+    assert grant("ada@example.com", revoke=True).exit_code == 0
+    assert client.get("/api/admin/keys", headers=ada).status_code == 403
+    missing = grant("nobody@example.com")
+    assert missing.exit_code == 1 and "sign up" in missing.output.lower()
+    owner = signup_admin(client)
+    audit = client.get("/api/admin/audit", headers=owner).json()
+    assert audit[0]["admin_email"] == "server command" and audit[0]["target"] == OWNER
+    assert audit[0]["detail"] == {"is_admin": True}
 
 
 def test_admin_routes_are_off_without_accounts(tmp_path, monkeypatch):
@@ -85,7 +122,7 @@ def test_admin_routes_are_off_without_accounts(tmp_path, monkeypatch):
 def test_site_keys_are_encrypted_never_returned_and_audited_without_values(client):
     from freestash.admin import ServerSecretRow
 
-    owner = signup(client, OWNER)
+    owner = signup_admin(client)
     r = client.put("/api/admin/keys", headers=owner, json={"values": {"PEXELS_API_KEY": "  site-pexels-9876 "}})
     assert r.status_code == 200
     row = next(k for k in r.json() if k["name"] == "PEXELS_API_KEY")
@@ -107,7 +144,7 @@ def test_site_keys_are_encrypted_never_returned_and_audited_without_values(clien
 @respx.mock
 def test_member_search_runs_on_the_site_key_and_their_own_key_wins(tmp_path, monkeypatch):
     with make_client(tmp_path, monkeypatch, PEXELS_API_KEY="env-pexels") as client:
-        owner, ada, bob = signup(client, OWNER), signup(client, "ada@example.com"), signup(client, "bob@example.com")
+        owner, ada, bob = signup_admin(client), signup(client, "ada@example.com"), signup(client, "bob@example.com")
         route = respx.get(PEXELS).mock(return_value=httpx.Response(200, json=load("pexels_search")))
 
         def key_used(hdr: dict[str, str]) -> str:
@@ -136,7 +173,7 @@ def test_member_search_runs_on_the_site_key_and_their_own_key_wins(tmp_path, mon
 
 @respx.mock
 def test_members_are_capped_per_hour_and_admins_are_not(client):
-    owner, ada = signup(client, OWNER), signup(client, "ada@example.com")
+    owner, ada = signup_admin(client), signup(client, "ada@example.com")
     respx.get(SMK).mock(return_value=httpx.Response(200, json=load("smk_search")))
     assert client.put("/api/admin/settings", headers=owner, json={"searches_per_hour": 2}).json()["searches_per_hour"] == 2
     codes = [client.post("/api/search", headers=ada, json={"q": "x", "providers": ["smk"]}).status_code for _ in range(3)]
@@ -148,19 +185,19 @@ def test_members_are_capped_per_hour_and_admins_are_not(client):
 
 
 def test_closing_sign_up_refuses_new_accounts(client):
-    owner = signup(client, OWNER)
+    owner = signup_admin(client)
     assert client.put("/api/admin/settings", headers=owner, json={"signup_open": False}).json()["signup_open"] is False
     assert client.get("/api/health").json()["signup_open"] is False
     assert client.post("/api/auth/register", json={"email": "late@example.com", "password": PASSWORD}).status_code == 403
     client.put("/api/admin/settings", headers=owner, json={"signup_open": True})
     assert client.post("/api/auth/register", json={"email": "late@example.com", "password": PASSWORD}).status_code == 201
     actions = [a["action"] for a in client.get("/api/admin/audit", headers=owner).json()]
-    assert actions[:2] == ["settings.update", "settings.update"]
+    assert actions[:3] == ["settings.update", "settings.update", "user.update"]  # the last one: the grant
 
 
 @respx.mock
 def test_a_source_the_admin_turns_off_is_not_searched(client):
-    owner, ada = signup(client, OWNER), signup(client, "ada@example.com")
+    owner, ada = signup_admin(client), signup(client, "ada@example.com")
     route = respx.get(SMK).mock(return_value=httpx.Response(200, json=load("smk_search")))
     client.put("/api/admin/settings", headers=owner, json={"disabled_providers": ["smk"]})
     r = client.post("/api/search", headers=ada, json={"q": "x", "providers": ["smk"]}).json()
@@ -170,9 +207,9 @@ def test_a_source_the_admin_turns_off_is_not_searched(client):
 
 
 def test_admin_can_disable_a_member_and_promote_another(client):
-    owner, ada, bob = signup(client, OWNER), signup(client, "ada@example.com"), signup(client, "bob@example.com")
+    owner, ada, bob = signup_admin(client), signup(client, "ada@example.com"), signup(client, "bob@example.com")
     users = {u["email"]: u for u in client.get("/api/admin/users", headers=owner).json()}
-    assert users[OWNER]["bootstrap"] is True and users[OWNER]["is_admin"] is True
+    assert users[OWNER]["is_admin"] is True and "bootstrap" not in users[OWNER]
     assert users["ada@example.com"]["is_admin"] is False and users["ada@example.com"]["disabled"] is False
     ada_id, bob_id = users["ada@example.com"]["id"], users["bob@example.com"]["id"]
 
@@ -186,7 +223,7 @@ def test_admin_can_disable_a_member_and_promote_another(client):
     assert client.patch(f"/api/admin/users/{bob_id}", headers=owner, json={"is_admin": True}).json()["is_admin"] is True
     assert client.get("/api/admin/keys", headers=bob).status_code == 200
     owner_id = users[OWNER]["id"]
-    assert client.patch(f"/api/admin/users/{owner_id}", headers=bob, json={"disabled": True}).status_code == 403
+    assert client.patch(f"/api/admin/users/{owner_id}", headers=owner, json={"disabled": True}).status_code == 400
     assert client.patch(f"/api/admin/users/{bob_id}", headers=bob, json={"is_admin": False}).status_code == 400
     assert client.patch("/api/admin/users/00000000-0000-0000-0000-00000000dead", headers=owner,
                         json={"disabled": True}).status_code == 404
@@ -199,7 +236,7 @@ def test_admin_can_disable_a_member_and_promote_another(client):
 
 @respx.mock
 def test_key_test_records_success_and_failure(client):
-    owner = signup(client, OWNER)
+    owner = signup_admin(client)
     client.put("/api/admin/keys", headers=owner, json={"values": {"PEXELS_API_KEY": "site-pexels"}})
     route = respx.get(PEXELS).mock(return_value=httpx.Response(200, json=load("pexels_search")))
     ok = client.post("/api/admin/keys/PEXELS_API_KEY/test", headers=owner).json()
@@ -213,3 +250,17 @@ def test_key_test_records_success_and_failure(client):
 
     assert client.post("/api/admin/keys/UNSPLASH_ACCESS_KEY/test", headers=owner).status_code == 400  # nothing to test
     assert client.post("/api/admin/keys/NOT_A_KEY/test", headers=owner).status_code == 404
+
+
+@respx.mock
+def test_key_test_never_answers_from_the_cache(tmp_path, monkeypatch):
+    """PR #6 review (Codex P2): with the hour-long HTTP cache on, a second Test got the first one's success back
+    without asking the provider, so a key revoked in between still passed."""
+    with make_client(tmp_path, monkeypatch, FREESTASH_CACHE_TTL_SECONDS="3600") as client:
+        owner = signup_admin(client)
+        client.put("/api/admin/keys", headers=owner, json={"values": {"PEXELS_API_KEY": "site-pexels"}})
+        route = respx.get(PEXELS).mock(return_value=httpx.Response(200, json=load("pexels_search")))
+        assert client.post("/api/admin/keys/PEXELS_API_KEY/test", headers=owner).json()["ok"] is True
+        route.mock(return_value=httpx.Response(401, json={"error": "revoked"}))
+        again = client.post("/api/admin/keys/PEXELS_API_KEY/test", headers=owner).json()
+        assert again["ok"] is False and route.call_count == 2

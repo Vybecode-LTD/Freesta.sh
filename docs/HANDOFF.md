@@ -9,7 +9,8 @@
     per-member hourly cap (60), sign-up open, sources on or off, the shared-quota meter, users (admin, disable) and an
     audit log that never holds a key value;
   - members search on the admin's key, then env, unless they add their own;
-  - `FREESTASH_SHARE_SERVER_KEYS` is retired and `FREESTASH_ADMIN_EMAILS` is new;
+  - `FREESTASH_SHARE_SERVER_KEYS` is retired. Admins are granted only by `python -m freestash admin grant <email>` on
+    the server (review fix: an email setting let anyone who signed up first with that address become admin);
   - new tables only (`user_status`, `server_secrets`, `site_settings`, `provider_usage`, `admin_audit`), so no Alembic;
   - both apps' key rows say "Freesta.sh's key".
   - Verified on the dev server:
@@ -36,7 +37,7 @@
     - the served bundle asks for the cookie.
   - A real sign-in on production hasn't been checked: no production account exists yet.
 - Gates at the PR #5 merge: pytest 128 · ruff · export check · vitest 19 · web build · CI green. On the PR #6 branch:
-  pytest 137 · ruff · export check · vitest 26 · web build · dotnet 34, 0 warnings.
+  pytest 140 · ruff · export check · vitest 26 · web build · dotnet 34, 0 warnings.
 - **Decision 0003 (owner, 2026-11-01):**
   - Admin-held provider keys shared with every member, with caps of 60 searches an hour and 20 web searches a day.
   - Admin screen on the web only; web finds are always CHECK.
@@ -53,9 +54,9 @@
 ## Next
 1. **Owner:** sign up again on https://freesta.sh (earlier accounts are gone). That is also the last PR #5 check: a
    search works, and Sign out returns to the sign-in page.
-2. **PR #6: merge, then the owner's OK for one production variable:** `FREESTASH_ADMIN_EMAILS` = the owner's address,
-   set with `railway variable set --stdin`. Then the owner signs in, opens Settings → Site administration, stores the
-   provider keys and presses Test on each. Any provider keys already in Railway's env are shared with every member
+2. **PR #6: merge, then (owner's OK) make the owner the first admin:** once the owner has signed up on freesta.sh,
+   run `railway ssh -s freestash -- python -m freestash admin grant <owner's email>`. Then the owner signs in, opens
+   Settings → Site administration, stores the provider keys and presses Test on each. Any provider keys already in Railway's env are shared with every member
    from the deploy onwards (decision 0003); the meter shows their use.
 3. Then grouped results, packs and new kinds, GitHub and curated packs, and web or AI search (the owner chooses first).
 4. Still open from before: the owner re-registers on production; test reset email; Postgres volume backups; delete the

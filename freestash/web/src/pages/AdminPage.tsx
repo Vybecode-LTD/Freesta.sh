@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
 import { ago, countCell, siteKeyStatus } from "../lib/admin";
 import { api } from "../lib/api";
+import { useSession } from "../lib/session";
 import type { AdminKey, AdminUser, AuditEntry, KeySpec, ProviderInfo, SiteSettings, UsageRow } from "../lib/types";
 import { KeyHelp, Section } from "./SettingsPage";
 
@@ -169,6 +170,7 @@ function UsageSection() {
 function UsersSection({ onToast }: Toast) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [q, setQ] = useState("");
+  const me = useSession()?.user.id; // the server refuses changes to your own flags; another admin makes them
   const load = useCallback((query: string) => api.adminUsers(query).then(setUsers).catch((e) => onToast(msg(e))), [onToast]);
   useEffect(() => { void load(""); }, [load]);
 
@@ -193,9 +195,9 @@ function UsersSection({ onToast }: Toast) {
               <td className="mono nowrap">{u.created_at?.slice(0, 10) ?? "—"}</td>
               <td className="mono nowrap">{ago(u.last_seen_at)}</td>
               <td className="nowrap">{u.disabled ? <span className="status s-removing">Disabled</span>
-                : u.is_admin ? <span className="status s-set">{u.bootstrap ? "Admin · server-set" : "Admin"}</span>
+                : u.is_admin ? <span className="status s-set">Admin</span>
                 : <span className="status">Member</span>}</td>
-              <td>{!u.bootstrap && (
+              <td>{u.id !== me && (
                 <div className="row nowrap">
                   <button className="btn btn-sm btn-ghost" onClick={() => flip(u, { is_admin: !u.is_admin },
                     u.is_admin ? `Make ${u.email} a member again?` : `Make ${u.email} an admin? They'll see and change everything here.`)}>

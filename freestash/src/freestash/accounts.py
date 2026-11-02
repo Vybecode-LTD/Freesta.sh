@@ -200,15 +200,21 @@ class AccountService:
         if status and status.disabled:
             raise AccountError(403, "This account is disabled.")
 
-    def is_admin(self, user_id: str, email: str | None) -> bool:
-        if email and email.strip().lower() in self.settings.admin_email_set:
-            return True
+    def is_admin(self, user_id: str) -> bool:
+        """Only the flag counts, never an email address: sign-up doesn't prove an address is yours (PR #6 review).
+        The first admin is granted on the server (`python -m freestash admin grant`), the rest on #/admin."""
         with self.store.session() as s:
             status = s.get(UserStatusRow, user_id)
         return bool(status and status.is_admin)
 
-    def is_bootstrap_admin(self, email: str | None) -> bool:
-        return bool(email) and email.strip().lower() in self.settings.admin_email_set
+    def find_user(self, email: str) -> UserRow | None:
+        with self.store.session() as s:
+            return s.scalar(select(UserRow).where(UserRow.email == normalize_email(email)))
+
+    def list_admins(self) -> list[UserRow]:
+        with self.store.session() as s:
+            return list(s.scalars(select(UserRow).join(UserStatusRow, UserStatusRow.user_id == UserRow.id)
+                                  .where(UserStatusRow.is_admin.is_(True)).order_by(UserRow.email)))
 
     def set_flags(self, user_id: str, *, is_admin: bool | None = None, disabled: bool | None = None) -> None:
         with self.store.session() as s, s.begin():
@@ -242,12 +248,10 @@ class AccountService:
         return [self.user_admin_view(u, st) for u, st in rows]
 
     def user_admin_view(self, u: UserRow, st: UserStatusRow | None) -> dict[str, Any]:
-        bootstrap = self.is_bootstrap_admin(u.email)
         return {"id": u.id, "email": u.email, "display_name": u.display_name,
                 "created_at": _as_utc(u.created_at).isoformat() if u.created_at else None,
                 "last_seen_at": _as_utc(st.last_seen_at).isoformat() if st and st.last_seen_at else None,
-                "is_admin": bootstrap or bool(st and st.is_admin), "bootstrap": bootstrap,
-                "disabled": bool(st and st.disabled)}
+                "is_admin": bool(st and st.is_admin), "disabled": bool(st and st.disabled)}
 
     def user_admin_row(self, user_id: str) -> dict[str, Any] | None:
         with self.store.session() as s:

@@ -17,8 +17,9 @@ optional and raises only their limits. The admin can also:
 - read an audit log of every admin change.
 
 ## 2. Interfaces
-- **Settings:** `FREESTASH_ADMIN_EMAILS`, comma-separated. Those accounts are always admins, and the screen can't
-  demote them. `FREESTASH_SHARE_SERVER_KEYS` is **retired**: decision 0003 makes the shared keys the rule.
+- **Admins:** granted only by `python -m freestash admin grant|revoke|list <email>` on the server (Railway:
+  `railway ssh`), or by another admin on the screen. No email address makes an admin by itself (see Changes after
+  approval). `FREESTASH_SHARE_SERVER_KEYS` is **retired**: decision 0003 makes the shared keys the rule.
 - **Key order** (`providers/keys.py::settings_with_keys(base, own, site)`): the member's own key, then the admin's
   stored key, then the env key.
 - **Admin routes.** All are `/api/admin/*`. A non-admin gets 403. With `FREESTASH_AUTH_MODE=none` they all answer 404.
@@ -30,9 +31,8 @@ optional and raises only their limits. The admin can also:
   - `PUT  /admin/settings`, with any subset of those → the full settings
   - `GET  /admin/usage` → `[{provider, provider_name, today, month, limits}]`. `today` and `month` are
     `{calls, errors}`, counting searches sent with the **site's** key (UTC days).
-  - `GET  /admin/users?q=` → `[{id, email, display_name, created_at, last_seen_at, is_admin, bootstrap, disabled}]` (newest 200)
-  - `PATCH /admin/users/{id}` `{is_admin?, disabled?}` → that user. An admin can't change their own flags, or a
-    bootstrap admin's.
+  - `GET  /admin/users?q=` → `[{id, email, display_name, created_at, last_seen_at, is_admin, disabled}]` (newest 200)
+  - `PATCH /admin/users/{id}` `{is_admin?, disabled?}` → that user. An admin can't change their own flags.
   - `GET  /admin/audit?before=<iso>` → `[{at, admin_email, action, target, detail}]`, newest 50
 - **Changed routes:**
   - `GET /api/auth/me` and the auth responses' `user` gain `is_admin`.
@@ -90,7 +90,7 @@ New tables only. No existing table changes, so there's still no Alembic: `create
 
 ## 7. Acceptance
 - **`test_admin.py`:**
-  - the bootstrap admin, a 403 for members, a 404 in local mode;
+  - an admin granted by the server command, a 403 for members, a 404 in local mode; an email address alone never makes an admin;
   - a stored key is encrypted and never returned, and its audit row has no value;
   - member search uses the site key, a member's own key wins, and the env key is the last fallback;
   - the cap returns 429 and admins are exempt;
@@ -101,7 +101,7 @@ New tables only. No existing table changes, so there's still no Alembic: `create
   - Test records ok or error;
   - `is_admin` appears in `/api/auth/me`, and `site` in the member's key list.
 - **`admin.test.ts`:** the status and usage helpers. **Desktop:** a `KeyState` JSON test.
-- **Live (dev server :8790, `FREESTASH_ADMIN_EMAILS` set):**
+- **Live (dev server :8790, the admin granted with `dev_accounts.py --grant-admin`):**
   - sign up as the admin, store a key, run Test, and check a second member's search uses it;
   - pass the cap;
   - check the screen in the rendered-contrast gate in both themes at 1440 and 390.
@@ -110,10 +110,15 @@ New tables only. No existing table changes, so there's still no Alembic: `create
 None. The owner's answers are decision 0003.
 
 ## Changes after approval
+- 2026-11-02, PR #6 review (Codex):
+  - **P1:** `FREESTASH_ADMIN_EMAILS` made whoever first signed up with a listed address an admin. Sign-up doesn't
+    verify email, so that's a takeover. It's removed: admins come from `python -m freestash admin grant` on the
+    server (audited as "server command"), and `dev_accounts.py --grant-admin` does the same locally.
+  - **P2:** the key Test ran on the shared HTTP client, so an hour-old cached success passed a revoked key. It now
+    runs on a fresh client.
 - 2026-11-02, during the build:
   - The usage table has separate "Today" and "This month" columns (`lib/admin.ts::countCell`), because the
     one-line summary wrapped at 1440.
   - Openverse's site key gets a "register in your own Settings, then paste the pair here" note instead of a
     disabled Register button.
-  - `scripts/dev_accounts.py` defaults `FREESTASH_ADMIN_EMAILS` to `admin@example.test`.
   - The search stream's error carries the server's own words: the cap's 429 showed raw JSON in the toast.

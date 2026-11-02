@@ -60,7 +60,7 @@ class AdminAuditRow(Base):
     __tablename__ = "admin_audit"
     id: Mapped[str] = mapped_column(UUID, primary_key=True, default=lambda: str(uuid.uuid4()))
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, index=True)
-    admin_id: Mapped[str] = mapped_column(UUID)
+    admin_id: Mapped[str | None] = mapped_column(UUID, nullable=True)  # None: `python -m freestash admin` on the server
     action: Mapped[str] = mapped_column(String(40))
     target: Mapped[str | None] = mapped_column(String(320), nullable=True)
     detail: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
@@ -245,7 +245,7 @@ class AdminService:
         return out
 
     # ------------------------------------------------------------------ audit log
-    def audit(self, admin_id: str, action: str, target: str | None, detail: dict[str, Any]) -> None:
+    def audit(self, admin_id: str | None, action: str, target: str | None, detail: dict[str, Any]) -> None:
         with self.store.session() as s, s.begin():
             s.add(AdminAuditRow(admin_id=admin_id, action=action, target=target, detail=detail))
 
@@ -256,5 +256,5 @@ class AdminService:
             stmt = stmt.where(AdminAuditRow.at < before)
         with self.store.session() as s:
             rows = s.execute(stmt).all()
-        return [{"at": _iso(r.at), "admin_email": email, "action": r.action, "target": r.target, "detail": r.detail}
-                for r, email in rows]
+        return [{"at": _iso(r.at), "admin_email": email if r.admin_id else "server command", "action": r.action,
+                 "target": r.target, "detail": r.detail} for r, email in rows]

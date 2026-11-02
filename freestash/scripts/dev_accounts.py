@@ -37,7 +37,6 @@ def prepare_environment(port: str, base: Path, environ: MutableMapping[str, str]
         "FREESTASH_PUBLIC_URL": f"http://127.0.0.1:{port}", "FREESTASH_LOG_EMAILS": "true",  # reset links in the console
     })
     environ.setdefault("FREESTASH_CONTACT_EMAIL", "dev@freesta.sh")
-    environ.setdefault("FREESTASH_ADMIN_EMAILS", "admin@example.test")  # sign up as this to reach #/admin locally
 
 
 def main() -> None:
@@ -46,6 +45,10 @@ def main() -> None:
     if "onedrive" in str(base).lower():
         raise SystemExit(f"refusing to write into a OneDrive folder: {base}")
     prepare_environment(port, base, os.environ)
+    if "--grant-admin" in sys.argv:  # after signing up on the dev server: python scripts/dev_accounts.py --grant-admin EMAIL
+        from freestash.cli import app as cli
+
+        cli(["admin", "grant", sys.argv[sys.argv.index("--grant-admin") + 1]])
     import uvicorn
 
     uvicorn.run("freestash.api.app:app", host="127.0.0.1", port=int(port))

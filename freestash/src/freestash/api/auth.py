@@ -176,7 +176,7 @@ def user_out(u: UserRow, is_admin: bool = False) -> dict:
 
 
 def _user_out(request: Request, u: UserRow) -> dict:
-    return user_out(u, accounts(request).is_admin(u.id, u.email))
+    return user_out(u, accounts(request).is_admin(u.id))
 
 
 def _auth_response(svc: AccountService, u: UserRow, request: Request, response: Response, settings: Settings) -> dict:

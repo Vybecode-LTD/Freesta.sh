@@ -59,6 +59,7 @@ python -m freestash download cleveland:173965 -u bundled --project aurora-templa
 python -m freestash check "CC BY-SA 4.0" --trust community
 python -m freestash ledger export -f md --project aurora-template -o ATTRIBUTION.md
 python -m freestash pd-cutoff
+python -m freestash admin grant you@example.com   # the first site admin (accounts mode; on Railway via railway ssh)
 
 python -m freestash serve --reload            # API on :8787, local mode (serves web/dist if built)
 python scripts/dev_accounts.py --port 8790    # accounts mode, as on Railway (throwaway DB + secrets in %LOCALAPPDATA%)

@@ -14,6 +14,7 @@ from freestash.accounts import AccountError
 from freestash.admin import AdminService
 from freestash.api.auth import CurrentUser, User, accounts
 from freestash.config import Settings, get_settings
+from freestash.http import HttpClient
 from freestash.models import MediaType, SearchQuery
 from freestash.providers import provider_class
 from freestash.providers.keys import key_spec, settings_with_keys
@@ -28,7 +29,7 @@ def admin_service(request: Request) -> AdminService:
 async def require_admin(user: User, request: Request, settings: Settings = Depends(get_settings)) -> CurrentUser:
     if settings.auth_mode != "accounts" or user.local:
         raise HTTPException(404, "There's no admin screen without accounts (FREESTASH_AUTH_MODE=none).")
-    if not accounts(request).is_admin(user.id, user.email):
+    if not accounts(request).is_admin(user.id):
         raise HTTPException(403, "Admins only.")
     return user
 
@@ -77,7 +78,11 @@ async def test_key(name: str, admin: Admin, request: Request, settings: Settings
     media = sorted(cls.info.media_types, key=lambda m: m != MediaType.IMAGE)[:1]  # images when it has them
     query = SearchQuery(q="landscape", media_types=media, providers=[spec.provider], limit_per_provider=1)
     started = time.perf_counter()
-    status, _ = await request.app.state.engine.run_provider(cls, query, run_settings)
+    http = HttpClient(run_settings)  # a fresh, empty cache: an hour-old success must not pass a key revoked since
+    try:
+        status, _ = await request.app.state.engine.run_provider(cls, query, run_settings, http)
+    finally:
+        await http.aclose()
     error = None if status.ok else (status.error or "failed")
     await run_in_threadpool(svc.record_test, name, error)
     return {"ok": status.ok, "elapsed_ms": int((time.perf_counter() - started) * 1000), "error": error}
@@ -118,8 +123,6 @@ async def patch_user(user_id: str, body: UserFlagsIn, admin: Admin, request: Req
     target = await _call(svc.user_admin_row, user_id)
     if target is None:
         raise HTTPException(404, "No such user.")
-    if target["bootstrap"]:
-        raise HTTPException(403, "This admin is set by FREESTASH_ADMIN_EMAILS on the server; change it there.")
     changes = body.model_dump(exclude_none=True)
     if changes:
         await _call(svc.set_flags, user_id, **changes)

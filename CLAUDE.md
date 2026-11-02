@@ -55,7 +55,8 @@ client of the same API (`Freestash.Client/Account/*`), hosted engine by default,
   `FREESTASH_TRUST_CF_CONNECTING_IP=true` (forged rotation got past the login limit on production, 2026-11-01).
 - The SPA catch-all serves only files inside `web/dist` (`api/app.py::spa_file`): route paths arrive percent-decoded,
   so `/..%2f..%2fpyproject.toml` read the server's own files on production until PR #2 (2026-11-01).
-- Admins: `FREESTASH_ADMIN_EMAILS` (always admins) or promoted on `#/admin`. Members search on the site's keys (admin-stored,
+- Admins are granted only by `python -m freestash admin grant <email>` on the server, or on `#/admin`; never by an
+  email address, since sign-up doesn't prove an address (PR #6 review). Members search on the site's keys (admin-stored,
   then env) unless they add their own; caps and the meter are in-process / per UTC day (one replica). Admin routes take
   `api/admin.py::Admin`; every admin write goes to `admin_audit`, never with a key value.
 - The website signs in with an HttpOnly cookie (`freestash_session`, Path `/api`); the desktop uses bearer. The CSRF

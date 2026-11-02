@@ -100,11 +100,11 @@ class Freestash:
         self.recent.flush()
         await self.http.aclose()
 
-    async def _run(self, cls: type[Provider], query: SearchQuery,
-                   settings: Settings) -> tuple[ProviderStatus, list[Asset]]:
+    async def _run(self, cls: type[Provider], query: SearchQuery, settings: Settings,
+                   http: HttpClient | None = None) -> tuple[ProviderStatus, list[Asset]]:
         media = set(query.media_types)
         hints = SearchHints(commercial_only=query.use_case != UseCase.REFERENCE)
-        provider = cls(self.http, settings)
+        provider = cls(http or self.http, settings)
         started = time.perf_counter()
         try:
             page = await asyncio.wait_for(
@@ -121,10 +121,11 @@ class Freestash:
         return ProviderStatus(provider=cls.info.id, ok=False, error=err,
                               elapsed_ms=int((time.perf_counter() - started) * 1000)), []
 
-    async def run_provider(self, cls: type[Provider], query: SearchQuery,
-                           settings: Settings) -> tuple[ProviderStatus, list[Asset]]:
-        """One provider on its own, outside a federated search (the admin's key test)."""
-        return await self._run(cls, query, settings)
+    async def run_provider(self, cls: type[Provider], query: SearchQuery, settings: Settings,
+                           http: HttpClient | None = None) -> tuple[ProviderStatus, list[Asset]]:
+        """One provider on its own, outside a federated search (the admin's key test). `http` replaces the engine's
+        shared client, e.g. a fresh one whose empty cache can't answer for the provider."""
+        return await self._run(cls, query, settings, http)
 
     async def search_stream(self, query: SearchQuery, settings: Settings | None = None) -> AsyncIterator[ProviderBatch]:
         """`settings` overrides the engine's own for one call: the API passes each user's keys this way."""

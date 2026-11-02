@@ -125,6 +125,6 @@ export interface UsageCount { calls: number; errors: number }
 export interface UsageRow { provider: string; provider_name: string; limits: string | null; today: UsageCount; month: UsageCount }
 export interface AdminUser {
   id: string; email: string; display_name: string | null; created_at: string | null; last_seen_at: string | null;
-  is_admin: boolean; bootstrap: boolean; disabled: boolean;
+  is_admin: boolean; disabled: boolean;
 }
 export interface AuditEntry { at: string; admin_email: string | null; action: string; target: string | null; detail: Record<string, unknown> }

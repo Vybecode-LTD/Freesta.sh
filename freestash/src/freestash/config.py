@@ -57,8 +57,6 @@ class Settings(BaseSettings):
     secrets_key: str | None = None  # Fernet key that encrypts users' provider keys at rest
     token_days: int = 30
     signup_open: bool = True
-    # Comma-separated. These accounts are always admins (decision 0003); the admin screen can't demote them.
-    admin_emails: str = ""
     public_url: str = "https://freesta.sh"  # used in password-reset links
     trust_cf_connecting_ip: bool = False  # True only when Cloudflare proxies the domain: otherwise clients can forge it
     # Reset email over SMTP from a Spacemail mailbox (decision 0002). Sends only once both login fields are set.
@@ -74,10 +72,6 @@ class Settings(BaseSettings):
     @property
     def full_user_agent(self) -> str:
         return f"{self.user_agent}; {self.contact_email}" if self.contact_email else self.user_agent
-
-    @property
-    def admin_email_set(self) -> frozenset[str]:
-        return frozenset(e.strip().lower() for e in self.admin_emails.split(",") if e.strip())
 
     @property
     def database_configured(self) -> bool:

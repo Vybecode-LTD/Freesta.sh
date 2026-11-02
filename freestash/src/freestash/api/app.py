@@ -115,7 +115,7 @@ def before_search(request: Request, user: CurrentUser) -> None:
         return
     svc: AccountService = request.app.state.accounts
     svc.touch_seen(user.id)
-    if svc.is_admin(user.id, user.email):
+    if svc.is_admin(user.id):
         return
     per_hour = request.app.state.admin.site().searches_per_hour
     if not limiter.allow(f"search:{user.id}", per_hour, 3600):
