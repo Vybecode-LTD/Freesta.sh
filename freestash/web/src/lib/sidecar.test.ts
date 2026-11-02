@@ -9,6 +9,7 @@ const asset: Asset = {
     { url: "https://openaccess-cdn.clevelandart.org/1930.851/1930.851_web.jpg", label: "web" },
     { url: "https://openaccess-cdn.clevelandart.org/1930.851/1930.851_full.tif", label: "full" },
   ], tags: [], notes: [], tips: [], detail_required: false, extra: {},
+  is_pack: false, item_count: null, formats: [], member_licenses: [], members_checked: null,
 };
 const verdict: Verdict = { use_case: "client", tier: "green", reasons: ["CC0"], obligations: [], attribution: "Lighthouse Village, CC0" };
 

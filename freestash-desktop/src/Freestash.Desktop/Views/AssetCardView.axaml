@@ -16,6 +16,12 @@
         </StackPanel>
         <c:Icon IsVisible="{Binding IsAudio}" Data="{StaticResource IconWave}" Size="54" StrokeThickness="1.5" Classes="muted"
                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <!-- a pack's badge on its own opaque plate (web: .pack-badge), so the preview never sets its contrast -->
+        <Border IsVisible="{Binding IsPack}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Padding="8,4" CornerRadius="6"
+                Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentLineBrush}" BorderThickness="1">
+          <TextBlock Text="{Binding PackBadge}" Classes="mono" FontSize="10.5" FontWeight="SemiBold" LetterSpacing="0.6"
+                     Foreground="{DynamicResource TextBrush}" TextTrimming="CharacterEllipsis" />
+        </Border>
       </Panel>
     </Border>
 

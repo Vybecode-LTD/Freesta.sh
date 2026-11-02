@@ -45,6 +45,8 @@ const json = (body: unknown) => JSON.stringify(body);
 
 export interface SearchParams {
   q: string; media: MediaType[]; use: UseCase; maxTier: Tier; providers?: string[]; limit?: number; page?: number;
+  /** Also look for packs (contract packs-and-new-kinds). */
+  packs?: boolean;
 }
 
 export interface StreamBatch { status: ProviderStatus; hidden: number; results: ScoredAsset[] }
@@ -54,6 +56,7 @@ export async function searchStream(p: SearchParams, onBatch: (b: StreamBatch) =>
   const qs = new URLSearchParams({ q: p.q, use: p.use, max_tier: p.maxTier, limit: String(p.limit ?? 12), page: String(p.page ?? 1) });
   p.media.forEach((m) => qs.append("media", m));
   p.providers?.forEach((x) => qs.append("providers", x));
+  if (p.packs) qs.set("packs", "true");
   const sentAt = sessionEpoch();
   const res = await fetch(`${BASE}/api/search/stream?${qs}`, { headers: { Accept: "text/event-stream" }, credentials: CREDENTIALS, signal });
   if (res.status === 401) signOutIfStill(sentAt);

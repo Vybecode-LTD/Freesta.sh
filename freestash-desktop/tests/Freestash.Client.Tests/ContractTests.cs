@@ -74,6 +74,21 @@ public class ContractTests
     {
         var q = FreestashApiClient.BuildSearchQuery(new SearchRequest("brutalist concrete", [MediaType.Image, MediaType.Hdri], UseCase.Bundled, Tier.Green, ["met", "polyhaven"], 8));
         Assert.Equal("/api/search/stream?q=brutalist%20concrete&use=bundled&max_tier=green&limit=8&page=1&media=image&media=hdri&providers=met&providers=polyhaven", q);
+        var packs = FreestashApiClient.BuildSearchQuery(new SearchRequest("knight", [MediaType.Sprite], UseCase.Demo, Tier.Yellow, Packs: true));
+        Assert.Equal("/api/search/stream?q=knight&use=demo&max_tier=yellow&limit=12&page=1&media=sprite&packs=true", packs);
+    }
+
+    /// <summary>Samples/pack_detail.json came from the real /api/assets/freesound:pack:9876 route (recorded fixtures).</summary>
+    [Fact]
+    public void A_pack_deserializes_with_its_files_and_their_licenses()
+    {
+        var d = JsonSerializer.Deserialize<AssetDetail>(Sample("pack_detail.json"), FreestashJson.Options)!;
+        Assert.True(d.Asset.IsPack);
+        Assert.Equal((4, 4), (d.Asset.ItemCount, d.Asset.MembersChecked));
+        Assert.Equal(["wav", "mp3"], d.Asset.Formats);
+        Assert.Equal(["CC0-1.0", "CC-BY-4.0"], d.Asset.MemberLicenses.Select(l => l.Id));
+        Assert.Equal(Tier.Yellow, d.Verdict.Tier);
+        Assert.Equal("CC0 1.0, CC BY 4.0", PackText.LicensesInside(d.Asset));
     }
 
     [Fact]

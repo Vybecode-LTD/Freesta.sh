@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { dropPick, groupResults, interleave, isGrouped, needsParse, readQuery, SECTION_SIZE, withoutPicks } from "./results";
+import {
+  dropPick, formatList, groupResults, interleave, isGrouped, leadPacks, licensesInside, needsParse, packBadge, readQuery, SECTION_SIZE,
+  withoutPicks,
+} from "./results";
 import type { MediaType, ParsedQuery, ScoredAsset, Tier } from "./types";
 
-const card = (uid: string, media_type: MediaType = "image", tier: Tier = "green"): ScoredAsset => ({
+const card = (uid: string, media_type: MediaType = "image", tier: Tier = "green", is_pack = false): ScoredAsset => ({
   uid,
   asset: { provider: uid.split(":")[0], source_id: uid, title: uid, media_type, license: { id: "CC0-1.0", label: "CC0" },
-           trust: "institution", renditions: [], tags: [], notes: [], tips: [], detail_required: false, extra: {} },
+           trust: "institution", renditions: [], tags: [], notes: [], tips: [], detail_required: false, extra: {},
+           is_pack, item_count: null, formats: [], member_licenses: [], members_checked: null },
   verdict: { use_case: "demo", tier, reasons: [], obligations: [] },
 });
 const many = (n: number, media: MediaType, provider = "p") => Array.from({ length: n }, (_, i) => card(`${provider}:${media}${i}`, media));
-const parsed = (over: Partial<ParsedQuery> = {}): ParsedQuery => ({ original: "rain sfx", q: "rain", media_types: [], picks: [], ...over });
-const SFX = { word: "sfx", media_type: "audio" as MediaType };
+const parsed = (over: Partial<ParsedQuery> = {}): ParsedQuery => ({ original: "rain sfx", q: "rain", media_types: [], packs: false, picks: [], ...over });
+const SFX = { word: "sfx", media_type: "audio" as MediaType, packs: false };
+const FONT = { word: "font", media_type: "font" as MediaType, packs: false };
+const PACK = { word: "pack", media_type: null, packs: true };
 
 describe("interleave", () => {
   it("takes turns across sources, clear results first", () => {
@@ -35,9 +41,60 @@ describe("groupResults", () => {
     expect(open.items).toHaveLength(11);
   });
 
+  it("puts packs first in each section, each group keeping its order", () => {
+    const [images] = groupResults([card("a:1"), card("a:p1", "image", "green", true), card("a:2"), card("a:p2", "image", "yellow", true)], new Set());
+    expect(images.items.map((s) => s.uid)).toEqual(["a:p1", "a:p2", "a:1", "a:2"]);
+  });
+
   it("is only used with more than one medium selected", () => {
     expect(isGrouped(["image"])).toBe(false);
     expect(isGrouped(["image", "font"])).toBe(true);
+  });
+});
+
+describe("leadPacks", () => {
+  it("puts packs first for the one-grid view too, and leaves a list without packs alone", () => {
+    const list = [card("a:1"), card("b:p", "audio", "green", true), card("a:2")];
+    expect(leadPacks(list).map((s) => s.uid)).toEqual(["b:p", "a:1", "a:2"]);
+    const plain = [card("a:1"), card("a:2")];
+    expect(leadPacks(plain)).toEqual(plain);
+  });
+});
+
+describe("pack words", () => {
+  const pack = (over: Partial<ScoredAsset["asset"]>) => ({ ...card("p:1", "audio", "green", true).asset, ...over });
+  it("badge counts the files when the source does", () => {
+    expect(packBadge(pack({ item_count: 4133 }))).toBe("Pack · 4,133 files");
+    expect(packBadge(pack({ item_count: 1 }))).toBe("Pack · 1 file");
+    expect(packBadge(pack({}))).toBe("Pack");
+    expect(formatList(pack({ formats: ["wav", "mp3"] }))).toBe("WAV · MP3");
+  });
+
+  it("says which licenses are inside and how far they were read", () => {
+    const cc0 = { id: "CC0-1.0", label: "CC0 1.0" };
+    const by = { id: "CC-BY-4.0", label: "CC BY 4.0" };
+    expect(licensesInside(pack({}))).toBeNull(); // one license for the whole pack
+    expect(licensesInside(pack({ member_licenses: [cc0, by], members_checked: 4, item_count: 4 }))).toBe("CC0 1.0, CC BY 4.0");
+    expect(licensesInside(pack({ member_licenses: [cc0], members_checked: 1, item_count: 24 }))).toBe("CC0 1.0 · read for 1 of 24 files");
+    expect(licensesInside(pack({ member_licenses: [cc0], members_checked: 3 }))).toBe("CC0 1.0 · read for 3 files");
+    expect(licensesInside(pack({ members_checked: 0, item_count: 5 }))).toBe("None read yet · read for 0 of 5 files");
+  });
+});
+
+describe("assets saved before packs existed", () => {
+  // Collections and ledger snapshots keep the asset as it was saved: no pack fields at all (Codex, PR #8)
+  const old = (): ScoredAsset["asset"] => {
+    const { is_pack, item_count, formats, member_licenses, members_checked, ...rest } = card("old:1").asset;
+    void [is_pack, item_count, formats, member_licenses, members_checked];
+    return rest as ScoredAsset["asset"];
+  };
+  it("read as a single file with no formats or licenses inside", () => {
+    expect(formatList(old())).toBe("");
+    expect(licensesInside(old())).toBeNull();
+    expect(leadPacks([{ ...card("old:1"), asset: old() }]).map((s) => s.uid)).toEqual(["old:1"]);
+  });
+  it("a snapshot that names licenses but no list still doesn't throw", () => {
+    expect(licensesInside({ ...old(), members_checked: 2 })).toBe("None read yet · read for 2 files");
   });
 });
 
@@ -45,7 +102,7 @@ describe("reading query words", () => {
   it("a pick replaces the media and remembers the selection it replaced", () => {
     const { reading, media } = readQuery(parsed({ media_types: ["audio"], picks: [SFX] }), ["image", "font"], null);
     expect(media).toEqual(["audio"]);
-    expect(reading).toEqual({ original: "rain sfx", q: "rain", keep: [], picks: [SFX], before: ["image", "font"] });
+    expect(reading).toEqual({ original: "rain sfx", q: "rain", keep: [], picks: [SFX], before: ["image", "font"], packsBefore: false });
   });
 
   it("a new query without picks leaves the media as they are", () => {
@@ -57,7 +114,7 @@ describe("reading query words", () => {
 
   it("a second picked query still remembers the user's own selection", () => {
     const first = readQuery(parsed({ media_types: ["audio"], picks: [SFX] }), ["image"], null);
-    const second = readQuery(parsed({ original: "font serif", q: "serif", media_types: ["font"], picks: [{ word: "font", media_type: "font" }] }),
+    const second = readQuery(parsed({ original: "font serif", q: "serif", media_types: ["font"], picks: [FONT] }),
       first.media, first.reading);
     expect(second.reading.before).toEqual(["image"]);
   });
@@ -70,11 +127,10 @@ describe("reading query words", () => {
   });
 
   it("removing one of two picks keeps the other's media", () => {
-    const font = { word: "font", media_type: "font" as MediaType };
-    const { reading } = readQuery(parsed({ original: "sfx font x", q: "x", media_types: ["audio", "font"], picks: [SFX, font] }), ["image"], null);
-    const dropped = dropPick(parsed({ original: "sfx font x", q: "sfx x", media_types: ["font"], picks: [font] }), reading, ["sfx"]);
+    const { reading } = readQuery(parsed({ original: "sfx font x", q: "x", media_types: ["audio", "font"], picks: [SFX, FONT] }), ["image"], null);
+    const dropped = dropPick(parsed({ original: "sfx font x", q: "sfx x", media_types: ["font"], picks: [FONT] }), reading, ["sfx"]);
     expect(dropped.media).toEqual(["font"]);
-    expect(dropped.reading.picks).toEqual([font]);
+    expect(dropped.reading.picks).toEqual([FONT]);
   });
 
   it("an unchanged query isn't read again, so a removed pick stays removed", () => {
@@ -84,6 +140,21 @@ describe("reading query words", () => {
     expect(needsParse("  rain sfx ", dropped.reading)).toBe(false);
     expect(needsParse("rain sfx loud", dropped.reading)).toBe(true);
     expect(needsParse("rain", null)).toBe(true);
+  });
+
+  it("a pack word turns packs on, and removing its chip puts back the user's own setting", () => {
+    const read = readQuery(parsed({ original: "rain sfx pack", media_types: ["audio"], packs: true, picks: [SFX, PACK] }), ["image"], null, false);
+    expect([read.media, read.packs, read.reading.packsBefore]).toEqual([["audio"], true, false]);
+    const dropped = dropPick(parsed({ original: "rain sfx pack", q: "rain pack", media_types: ["audio"], picks: [SFX] }), read.reading, ["pack"]);
+    expect([dropped.media, dropped.packs]).toEqual([["audio"], false]);
+    const kept = dropPick(parsed({ original: "rain sfx pack", q: "rain sfx", packs: true, picks: [PACK] }), read.reading, ["sfx"]);
+    expect([kept.media, kept.packs]).toEqual([["image"], true]);
+  });
+
+  it("packs the user turned on stay on through reads without a pack word", () => {
+    const read = readQuery(parsed({ media_types: ["audio"], picks: [SFX] }), ["image"], null, true);
+    expect([read.packs, read.reading.packsBefore]).toEqual([true, true]);
+    expect(dropPick(parsed({ q: "rain sfx" }), read.reading, ["sfx"]).packs).toBe(true);
   });
 
   it("choosing media by hand settles the picks", () => {

@@ -2,7 +2,7 @@
 
 The engine, API and website of **Freesta.sh** (monorepo root: `../CLAUDE.md`, read it first: it holds the
 web/desktop parity rule). **Federated search for public domain and openly licensed assets** (images, audio,
-video, PBR textures, HDRIs, 3D, fonts, icons) across ~20 sources, with every result scored **GREEN / YELLOW / RED
+video, PBR textures, HDRIs, 3D, fonts, icons, brushes, shapes, sprites, and packs of them) across ~20 sources, with every result scored **GREEN / YELLOW / RED
 for a specific use case** (shown to users as Clear / Check / Blocked). Open sign-up; one account on web and desktop.
 
 Surfaces, all sharing one Python core:

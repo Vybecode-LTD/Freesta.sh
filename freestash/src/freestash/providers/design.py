@@ -196,17 +196,25 @@ class FontsourceProvider(Provider):
 ICONIFY = "https://api.iconify.design"
 
 
+ICON_SET_JSON = "https://cdn.jsdelivr.net/npm/@iconify-json/{prefix}/icons.json"  # the set's npm package, every icon
+
+
+def _set_license(c: dict) -> LicenseInfo:
+    lic_meta = c.get("license") or {}
+    lic = normalize_license(lic_meta.get("spdx") or lic_meta.get("title"), lic_meta.get("url"))
+    if lic.id == "RIGHTS-UNKNOWN" and lic_meta.get("title"):
+        lic = LicenseInfo(id="RIGHTS-UNKNOWN", label=f"Unrecognized license ({lic_meta['title']})",
+                          url=lic_meta.get("url"), raw=lic_meta.get("title"))
+    return lic
+
+
 def parse_icons(data: dict) -> list[Asset]:
     colls = data.get("collections") or {}
     out = []
     for full in data.get("icons") or []:
         prefix, name = full.split(":", 1)
         c = colls.get(prefix) or {}
-        lic_meta = c.get("license") or {}
-        lic = normalize_license(lic_meta.get("spdx") or lic_meta.get("title"), lic_meta.get("url"))
-        if lic.id == "RIGHTS-UNKNOWN" and lic_meta.get("title"):
-            lic = LicenseInfo(id="RIGHTS-UNKNOWN", label=f"Unrecognized license ({lic_meta['title']})",
-                              url=lic_meta.get("url"), raw=lic_meta.get("title"))
+        lic = _set_license(c)
         svg = f"{ICONIFY}/{prefix}/{name}.svg"
         author = c.get("author") or {}
         out.append(Asset(
@@ -217,6 +225,34 @@ def parse_icons(data: dict) -> list[Asset]:
             tags=[t for t in [c.get("category"), *(c.get("tags") or [])] if t], raw={"icon": full, "collection": c},
         ))
     return out
+
+
+def parse_icon_set(prefix: str, c: dict) -> Asset:
+    """A whole icon set as one pack: one license for every icon, stated by the set's publisher."""
+    samples = c.get("samples") or []
+    svg = f"{ICONIFY}/{prefix}/{samples[0]}.svg" if samples else None
+    author = c.get("author") or {}
+    return Asset(
+        provider="iconify", source_id=f"set:{prefix}", title=c.get("name") or prefix, media_type=MediaType.ICON,
+        license=_set_license(c), trust=Trust.COMMUNITY, landing_url=f"https://icon-sets.iconify.design/{prefix}/",
+        source_name=c.get("name"), creator=author.get("name"), creator_url=author.get("url"),
+        thumbnail_url=svg, preview_url=svg,
+        renditions=[Rendition(url=ICON_SET_JSON.format(prefix=prefix), label="icons.json (every icon)",
+                              mime="application/json")],
+        tags=[t for t in [c.get("category"), *(c.get("tags") or [])] if t],
+        tips=[f"npm install @iconify-json/{prefix} gives every icon as Iconify JSON; each one also opens as SVG."],
+        is_pack=True, item_count=c.get("total"), formats=["svg", "json"], raw={"collection": c},
+    )
+
+
+def rank_sets(colls: dict, q: str) -> list[tuple[str, dict]]:
+    """Sets that match the query, best first (then the bigger set). Hidden sets are ones Iconify has archived."""
+    q_tokens = tokens(q)
+    scored = [(_score(q_tokens, prefix, c.get("name"), c.get("category"), c.get("tags") or [], c.get("samples") or [],
+                      (c.get("author") or {}).get("name")), prefix, c)
+              for prefix, c in colls.items() if isinstance(c, dict) and not c.get("hidden")]
+    return [(prefix, c) for score, prefix, c in sorted(scored, key=lambda s: (-s[0], -(s[2].get("total") or 0)))
+            if score > 0]
 
 
 class IconifyProvider(Provider):
@@ -230,11 +266,18 @@ class IconifyProvider(Provider):
     async def search(self, q: str, media_types: set[MediaType], limit: int, page: int,
                      hints: SearchHints) -> ProviderPage:
         want = page * limit
+        sets: list[Asset] = []
+        if hints.packs:  # whole sets lead; the catalog changes rarely, so it is cached a day
+            colls = await self.http.get_json(f"{ICONIFY}/collections", cache_ttl=DAY)
+            sets = [parse_icon_set(prefix, c) for prefix, c in rank_sets(colls, q)[(page - 1) * limit:want]]
         data = await self.http.get_json(f"{ICONIFY}/search", params={"query": q, "limit": max(32, min(want, 999))})
         assets = parse_icons(data)[(page - 1) * limit:want]
-        return ProviderPage(assets=assets, total=data.get("total"))
+        return ProviderPage(assets=sets + assets, total=data.get("total"))
 
     async def get(self, source_id: str) -> Asset:
-        prefix = source_id.split(":", 1)[0]
+        kind, _, rest = source_id.partition(":")
+        prefix = rest if kind == "set" else kind
         colls = await self.http.get_json(f"{ICONIFY}/collections", params={"prefixes": prefix}, cache_ttl=DAY)
+        if kind == "set":
+            return parse_icon_set(prefix, colls[prefix])
         return parse_icons({"icons": [source_id], "collections": colls})[0]

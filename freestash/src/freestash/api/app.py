@@ -181,10 +181,11 @@ async def search_stream(
     providers: Annotated[list[str] | None, Query()] = None,
     limit: int = 12,
     page: int = 1,
+    packs: bool = False,
 ) -> StreamingResponse:
     """Server-sent events: one `batch` event per provider as it finishes, then `done`."""
     query = SearchQuery(q=q, media_types=media, use_case=use, max_tier=max_tier, providers=providers,
-                        limit_per_provider=limit, page=page)
+                        limit_per_provider=limit, page=page, packs=packs)
     before_search(request, user)
     settings, shared = search_settings(request, user)
 

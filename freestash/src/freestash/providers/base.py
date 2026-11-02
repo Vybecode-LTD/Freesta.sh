@@ -34,6 +34,7 @@ class SearchHints:
     """Optional narrowing a provider *may* apply server-side to cut noise."""
 
     commercial_only: bool = False  # drop NC/ND/in-copyright at the source when the API supports it
+    packs: bool = False  # also look for packs: sets, sound packs, archives (contract packs-and-new-kinds)
 
 
 @dataclass

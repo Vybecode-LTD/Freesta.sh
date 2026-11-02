@@ -175,6 +175,37 @@ async Task Script()
     await Wait(5000);
     await Shot("09d-search-chip-removed.png");
 
+    // ---- packs: a pack word turns Packs on and Iconify's sets lead the grid (contract packs-and-new-kinds)
+    vm.Search.Query = "game icon pack";
+    await vm.Search.SearchAsync();
+    await WaitFor(() => vm.Search.Results.Any(r => r.IsPack) && !vm.Search.IsSearching, 60_000, "search packs");
+    Console.WriteLine($"  read as: {string.Join(", ", vm.Search.Picks.Select(p => p.Text))} · first: " +
+                      string.Join(", ", vm.Search.Results.Take(3).Select(r => r.IsPack ? r.PackBadge : r.Title)));
+    if (!vm.Search.Packs || vm.Search.Picks.Count != 2 || vm.Search.Query != "game" || vm.Search.Results.FirstOrDefault()?.IsPack != true)
+        throw new InvalidOperationException($"\"pack\" didn't turn Packs on, or no set led the results (packs {vm.Search.Packs}, query '{vm.Search.Query}', "
+            + $"error '{vm.Search.Error}', searched {vm.Search.HasSearched}, sources {vm.Search.ReportedSources}/{vm.Search.TotalSources}, results {vm.Search.Results.Count})");
+    await Wait(5000);
+    await Shot("09e-search-packs.png");
+    await vm.Search.OpenCommand.ExecuteAsync(vm.Search.Results.First(r => r.IsPack));
+    await WaitFor(() => vm.Search.Detail is { IsLoading: false }, 30_000, "pack detail");
+    if (vm.Search.Detail is not { IsPack: true, HasFormats: true })
+        throw new InvalidOperationException("the pack's detail lost its pack rows");
+    await Wait(1500);
+    await Shot("09f-pack-detail.png");
+    vm.Search.CloseDetailCommand.Execute(null);
+    vm.Search.Presets[0].IsSelected = true; // Game assets: its media and packs, then one search
+    await WaitFor(() => vm.Search.Results.Any(r => r.IsPack) && !vm.Search.IsSearching, 60_000, "game assets");
+    var gameMedia = vm.Search.Media.Where(m => m.IsSelected).Select(m => m.Value).ToList();
+    Console.WriteLine($"  game assets: {string.Join(", ", gameMedia)} · packs {vm.Search.Packs} · chips {vm.Search.Picks.Count}");
+    if (!vm.Search.Packs || !gameMedia.SequenceEqual(Categories.Presets[0].Media) || vm.Search.Picks.Count != 0 || !vm.Search.Presets[0].IsSelected)
+        throw new InvalidOperationException("Game assets didn't set its media and packs");
+    window.Width = 760; // a narrow window: the eleven media pills and the preset wrap instead of running off (CodeRabbit, PR #8)
+    await Wait(1500);
+    await Shot("09g-search-narrow.png");
+    window.Width = 1440;
+    await Wait(800);
+    vm.Search.PacksOptions[0].IsSelected = true; // Packs off again for the shots below
+
     // ---- Frost (light) + icons/fonts/textures mix
     services.Theme.Apply(AppTheme.Frost, AccentColor.Sodium);
     foreach (var m in vm.Search.Media) m.IsSelected = m.Value is MediaType.Texture or MediaType.Icon or MediaType.Font or MediaType.Hdri;

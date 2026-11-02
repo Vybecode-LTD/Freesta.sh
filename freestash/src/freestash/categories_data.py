@@ -60,4 +60,34 @@ CATEGORIES: list[dict] = [
             "icon", "icons", "glyph", "glyphs", "pictogram", "pictograms",
         ],
     },
+    {
+        "id": "brush",
+        "label": "Brushes",
+        "words": [
+            "brush", "brushes", "abr", "brushset", "brushsets", "photoshop brush",
+            "photoshop brushes", "procreate brush", "procreate brushes", "krita brush",
+            "krita brushes",
+        ],
+    },
+    {
+        "id": "shape",
+        "label": "Shapes",
+        "words": [
+            "shape", "shapes", "csh", "custom shape", "custom shapes", "vector shape",
+            "vector shapes",
+        ],
+    },
+    {
+        "id": "sprite",
+        "label": "Sprites",
+        "words": [
+            "sprite", "sprites", "spritesheet", "spritesheets", "sprite sheet", "sprite sheets",
+            "tileset", "tilesets", "tile set", "tile sets", "pixel art", "ui kit", "ui kits",
+        ],
+    },
+]
+
+# Words that turn packs on ("sfx pack")
+PACK_WORDS: list[str] = [
+    "pack", "packs", "bundle", "bundles", "asset pack", "asset packs",
 ]

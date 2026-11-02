@@ -51,6 +51,16 @@ def test_search_json_stays_one_json_document_when_words_are_read(tmp_path, monke
     assert 'Read "sfx" as Audio' in result.stderr
 
 
+def test_search_reads_a_pack_word_and_takes_packs(tmp_path, monkeypatch):
+    result, query = _search_cli(monkeypatch, tmp_path, ["rain sfx pack"])
+    assert (query.q, [m.value for m in query.media_types], query.packs) == ("rain", ["audio"], True)
+    assert 'Read "sfx" as Audio, "pack" as Packs' in result.stderr
+    _, flagged = _search_cli(monkeypatch, tmp_path, ["rain", "--packs"])
+    assert flagged.packs is True
+    _, plain = _search_cli(monkeypatch, tmp_path, ["rain sfx"])
+    assert plain.packs is False
+
+
 def test_search_literal_or_explicit_media_keeps_every_word(tmp_path, monkeypatch):
     _, literal = _search_cli(monkeypatch, tmp_path, ["rain sfx", "--literal"])
     assert (literal.q, [m.value for m in literal.media_types]) == ("rain sfx", ["image"])

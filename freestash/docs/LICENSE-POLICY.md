@@ -51,6 +51,33 @@ merch? is it a *claim* (PDM, NoC) rather than a grant (CC0)?
 | V&A terms | institution | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 |
 | In copyright / unknown | any | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 |
 
+**Brushes** (`media_type: brush`): client and merch judge the artwork you paint with the brush; bundled judges the
+brush file. The only difference that makes: a "modified only" merch clause doesn't hold a brush back, since painted
+artwork is never an unaltered copy. Client and merch verdicts say so in their reasons.
+
+| License | Trust | reference | demo | client | bundled | merch |
+|---|---|---|---|---|---|---|
+| Pixabay / Unsplash / Pexels (brush) | community | 🟢 | 🟢 | 🟢 | 🔴 | 🟢 |
+| CC BY-ND (brush) | community | 🟢 | 🟡 | 🟡 | 🔴 | 🔴 |
+| CC BY-SA (brush) | community | 🟢 | 🟢 | 🟡 | 🟡 | 🟡 |
+| CC BY-NC (brush) | community | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 |
+| CC0 (brush) | uploader | 🟢 | 🟢 | 🟡 | 🟡 | 🟡 |
+
+**Packs** (`is_pack`): one result holding many files. When the publisher states one license for the whole pack
+(an Iconify set, an Internet Archive item), the pack is judged on it at the publisher's trust, like any asset.
+When the source licenses each file (Freesound), the pack is judged against every distinct member license and the
+strictest wins, reasons and obligations merged. If fewer files were read than the pack holds, or the count is
+unknown, every use but reference is 🟡 at best (reference is judged on the licenses that were read).
+
+| Files inside | Trust | reference | demo | client | bundled | merch |
+|---|---|---|---|---|---|---|
+| CC0 + CC BY-NC | uploader | 🟡 | 🔴 | 🔴 | 🔴 | 🔴 |
+| CC0 + CC BY | community | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 |
+| CC0 + CC BY | uploader | 🟢 | 🟢 | 🟡 | 🟡 | 🟡 |
+| CC BY-SA + CC BY-ND | community | 🟢 | 🟡 | 🟡 | 🔴 | 🔴 |
+| CC0, 1 of 24 files read | institution | 🟢 | 🟡 | 🟡 | 🟡 | 🟡 |
+| One CC0 license for the pack | curated | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 |
+
 GREEN still carries obligations: credit lines for CC BY, a license file for MIT/OFL when bundled,
 NASA's no-endorsement rule, Unsplash's download ping, and so on. The UI and MCP always show them.
 

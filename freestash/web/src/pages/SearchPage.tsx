@@ -6,6 +6,7 @@ import { Icon } from "../components/Icon";
 import { QueryChips } from "../components/QueryChips";
 import { ResultSections } from "../components/ResultSections";
 import { api, searchStream } from "../lib/api";
+import { PRESETS } from "../lib/categories";
 import { usePrefs } from "../lib/prefs";
 import { dropPick, interleave, needsParse, readQuery, type Reading, withoutPicks } from "../lib/results";
 import type { Collection, MediaType, ProviderStatus, QueryPick, ScoredAsset, Tier, UseCase } from "../lib/types";
@@ -14,7 +15,14 @@ import { MEDIA_TYPES, SHOW_OPTIONS, USE_CASES } from "../lib/types";
 // The same list as the desktop's Suggestions; the last three show query words picking the media.
 const EXAMPLES = ["lighthouse", "art deco poster", "botanical engraving", "weathered concrete texture", "rain on a tin roof sfx", "monospace font"];
 
-const runKey = (q: string, media: MediaType[], use: UseCase, tier: Tier) => JSON.stringify([q, media, use, tier]);
+const runKey = (q: string, media: MediaType[], use: UseCase, tier: Tier, packs: boolean) => JSON.stringify([q, media, use, tier, packs]);
+
+/** The Packs switch, the same words as the desktop (contract packs-and-new-kinds). */
+const PACKS_OPTIONS = [
+  { on: false, label: "Off", hint: "Single files only" },
+  { on: true, label: "On", hint: "Also look for packs: icon sets, sound packs, archives" },
+];
+type Preset = (typeof PRESETS)[number];
 
 export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
   const { prefs } = usePrefs();
@@ -22,6 +30,7 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
   const [media, setMedia] = useState<MediaType[]>(prefs.default_media);
   const [useCase, setUseCase] = useState<UseCase>(prefs.default_use_case);
   const [maxTier, setMaxTier] = useState<Tier>(prefs.default_max_tier);
+  const [packs, setPacks] = useState(false); // per search, not a synced default
   const [byProvider, setByProvider] = useState<Map<string, ScoredAsset[]>>(new Map());
   const [statuses, setStatuses] = useState<ProviderStatus[]>([]);
   const [pending, setPending] = useState<string[]>([]);
@@ -38,6 +47,7 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
   const current = useRef(""); // the query of the search last started
   const lastRun = useRef(""); // its runKey
   const intentRef = useRef(0); // bumped per submit or chip removal: only the latest one's read is applied
+  const filters = useRef({ media: prefs.default_media, packs: false }); // the media and Packs as of the last render
 
   // the account's defaults arrive after first paint when signing in on a new device
   useEffect(() => { setMedia(prefs.default_media); setUseCase(prefs.default_use_case); setMaxTier(prefs.default_max_tier); },
@@ -56,11 +66,11 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
 
   /** Run one search exactly as given. The refs are set before the first await, so the filter effect below sees
    *  this search as current and doesn't start it a second time when a pick has just changed the media. */
-  async function search(query: string, m: MediaType[]) {
+  async function search(query: string, m: MediaType[], withPacks: boolean) {
     query = query.trim();
     if (!query) return;
     current.current = query;
-    lastRun.current = runKey(query, m, useCase, maxTier);
+    lastRun.current = runKey(query, m, useCase, maxTier, withPacks);
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
@@ -71,7 +81,7 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
     setByProvider(new Map()); setStatuses([]); setHidden(0); setSearched(query); setElapsed(0); setRunId((n) => n + 1);
     const started = performance.now();
     try {
-      await searchStream({ q: query, media: m, use: useCase, maxTier, limit: prefs.results_per_source }, (batch) => {
+      await searchStream({ q: query, media: m, use: useCase, maxTier, limit: prefs.results_per_source, packs: withPacks }, (batch) => {
         setByProvider((prev) => new Map(prev).set(batch.status.provider, batch.results));
         setStatuses((prev) => [...prev, batch.status]);
         setPending((prev) => prev.filter((p) => p !== batch.status.provider));
@@ -91,13 +101,15 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
     text = text.trim();
     if (!text) return;
     const intent = ++intentRef.current;
-    if (!needsParse(text, reading)) return search(text, media);
+    if (!needsParse(text, reading)) return search(text, media, packs);
     const parsed = await api.parseQuery(text).catch(() => null);
     if (intent !== intentRef.current) return; // a newer search or chip removal started meanwhile
-    if (!parsed) return search(text, media); // couldn't be read: every word is searched, as before
-    const next = readQuery(parsed, media, reading);
-    setReading(next.reading); setMedia(next.media); setQ(next.reading.q);
-    return search(next.reading.q, next.media);
+    // the user may have changed the media or Packs while the read was out: those are the ones searched
+    const now = filters.current;
+    if (!parsed) return search(text, now.media, now.packs); // couldn't be read: every word is searched, as before
+    const next = readQuery(parsed, now.media, reading, now.packs);
+    setReading(next.reading); setMedia(next.media); setPacks(next.packs); setQ(next.reading.q);
+    return search(next.reading.q, next.media, next.packs);
   }
 
   async function removePick(pick: QueryPick) {
@@ -110,16 +122,17 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
     });
     if (!parsed || intent !== intentRef.current) return;
     const next = dropPick(parsed, reading, keep);
-    setReading(next.reading); setMedia(next.media); setQ(next.reading.q);
-    return search(next.reading.q, next.media);
+    setReading(next.reading); setMedia(next.media); setPacks(next.packs); setQ(next.reading.q);
+    return search(next.reading.q, next.media, next.packs);
   }
 
   // Verdicts depend on the use and filters, so changing them after a search re-runs it (unless that search is running).
   useEffect(() => {
-    if (current.current && runKey(current.current, media, useCase, maxTier) !== lastRun.current) void search(current.current, media);
+    if (current.current && runKey(current.current, media, useCase, maxTier, packs) !== lastRun.current) void search(current.current, media, packs);
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [useCase, maxTier, media]);
+  }, [useCase, maxTier, media, packs]);
 
+  filters.current = { media, packs };
   const results = interleave(byProvider);
   const busy = pending.length > 0;
   const failed = statuses.filter((s) => !s.ok).length;
@@ -129,6 +142,9 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
     setReading(withoutPicks); // choosing media by hand takes over from the chips
     setMedia((prev) => (prev.includes(m) ? (prev.length > 1 ? prev.filter((x) => x !== m) : prev) : [...prev, m]));
   };
+  const choosePacks = (on: boolean) => { setReading(withoutPicks); setPacks(on); };
+  const isPreset = (p: Preset) => packs === p.packs && media.length === p.media.length && p.media.every((m) => media.includes(m));
+  const applyPreset = (p: Preset) => { setReading(withoutPicks); setMedia([...p.media]); setPacks(p.packs); };
   const useLabel = USE_CASES.find((u) => u.id === useCase)!;
   const meta = searched
     ? `${statuses.length} of ${shown} sources reported · ${results.length} results${elapsed ? ` · ${(elapsed / 1000).toFixed(1)} s` : ""}`
@@ -155,6 +171,15 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
           <span className="eyebrow">Media</span>
           {MEDIA_TYPES.map((m) => (
             <button key={m.id} type="button" className="pill" aria-pressed={media.includes(m.id)} onClick={() => toggleMedia(m.id)}>{m.label}</button>
+          ))}
+          {PRESETS.map((p) => (
+            <button key={p.id} type="button" className="pill" aria-pressed={isPreset(p)} title={p.hint} onClick={() => applyPreset(p)}>{p.label}</button>
+          ))}
+        </div>
+        <div className="filter-group" role="group" aria-label="Packs">
+          <span className="eyebrow">Packs</span>
+          {PACKS_OPTIONS.map((o) => (
+            <button key={o.label} type="button" className="pill" aria-pressed={packs === o.on} title={o.hint} onClick={() => choosePacks(o.on)}>{o.label}</button>
           ))}
         </div>
         <div className="filter-group" role="group" aria-label="Use">

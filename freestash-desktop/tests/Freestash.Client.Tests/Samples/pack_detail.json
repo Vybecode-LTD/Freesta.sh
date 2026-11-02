@@ -1,0 +1,125 @@
+{
+  "uid": "freesound:pack:9876",
+  "asset": {
+    "provider": "freesound",
+    "source_id": "pack:9876",
+    "title": "Medieval Swords",
+    "media_type": "audio",
+    "license": {
+      "id": "CC-BY-4.0",
+      "label": "CC BY 4.0",
+      "url": "https://creativecommons.org/licenses/by/4.0/",
+      "raw": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "trust": "uploader",
+    "landing_url": "https://freesound.org/people/ArmouryFoley/packs/9876/",
+    "source_name": null,
+    "creator": "ArmouryFoley",
+    "creator_url": "https://freesound.org/people/ArmouryFoley/",
+    "thumbnail_url": null,
+    "preview_url": null,
+    "renditions": [],
+    "width": null,
+    "height": null,
+    "duration_seconds": null,
+    "date": "2020-05-01T08:55:00",
+    "year": null,
+    "tags": [],
+    "description": "Sword hits, clashes and draws recorded with replica longswords.",
+    "attribution_hint": null,
+    "notes": [],
+    "tips": [
+      "Downloading the whole pack needs a Freesound login: open the pack's page."
+    ],
+    "detail_required": false,
+    "is_pack": true,
+    "item_count": 4,
+    "formats": [
+      "wav",
+      "mp3"
+    ],
+    "member_licenses": [
+      {
+        "id": "CC0-1.0",
+        "label": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "raw": "http://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      {
+        "id": "CC-BY-4.0",
+        "label": "CC BY 4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/",
+        "raw": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    ],
+    "members_checked": 4,
+    "extra": {}
+  },
+  "verdict": {
+    "use_case": "bundled",
+    "tier": "yellow",
+    "reasons": [
+      "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+    ],
+    "obligations": [
+      "Credit required in the product's credits/ATTRIBUTION file."
+    ],
+    "attribution": "“Medieval Swords” by ArmouryFoley is licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: https://freesound.org/people/ArmouryFoley/packs/9876/"
+  },
+  "verdicts": {
+    "reference": {
+      "use_case": "reference",
+      "tier": "green",
+      "reasons": [
+        "CC BY 4.0."
+      ],
+      "obligations": [],
+      "attribution": "“Medieval Swords” by ArmouryFoley is licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: https://freesound.org/people/ArmouryFoley/packs/9876/"
+    },
+    "demo": {
+      "use_case": "demo",
+      "tier": "green",
+      "reasons": [
+        "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+      ],
+      "obligations": [
+        "Credit required on the page or a credits page."
+      ],
+      "attribution": "“Medieval Swords” by ArmouryFoley is licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: https://freesound.org/people/ArmouryFoley/packs/9876/"
+    },
+    "client": {
+      "use_case": "client",
+      "tier": "yellow",
+      "reasons": [
+        "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+      ],
+      "obligations": [
+        "Credit required on the site or in the credits."
+      ],
+      "attribution": "“Medieval Swords” by ArmouryFoley is licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: https://freesound.org/people/ArmouryFoley/packs/9876/"
+    },
+    "bundled": {
+      "use_case": "bundled",
+      "tier": "yellow",
+      "reasons": [
+        "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+      ],
+      "obligations": [
+        "Credit required in the product's credits/ATTRIBUTION file."
+      ],
+      "attribution": "“Medieval Swords” by ArmouryFoley is licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: https://freesound.org/people/ArmouryFoley/packs/9876/"
+    },
+    "merch": {
+      "use_case": "merch",
+      "tier": "yellow",
+      "reasons": [
+        "License is asserted by whoever uploaded it, not verified by the platform. Check the source page (and that the uploader actually owns it)."
+      ],
+      "obligations": [
+        "Credit required on the listing or tag."
+      ],
+      "attribution": "“Medieval Swords” by ArmouryFoley is licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Source: https://freesound.org/people/ArmouryFoley/packs/9876/"
+    }
+  },
+  "attribution_html": "&ldquo;<a href=\"https://freesound.org/people/ArmouryFoley/packs/9876/\">Medieval Swords</a>&rdquo; by <a href=\"https://freesound.org/people/ArmouryFoley/\">ArmouryFoley</a> is licensed under <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>."
+}

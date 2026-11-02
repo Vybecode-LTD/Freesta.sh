@@ -16,12 +16,12 @@
 | europeana | Europeana | image, audio, video, 3D | optional | live | institution | Shared `api2demo` key works for testing. `reusability=open`. |
 | wikimedia | Wikimedia Commons | image, audio, video | optional (OAuth2) | docs | community | 2026 global rate limits; anonymous cloud traffic gets 429. |
 | openverse | Openverse | image, audio | optional | live | per source | 52 image sources + Freesound/Jamendo/Commons audio. Slow at times. Excludes sources covered natively. |
-| internet_archive | Internet Archive | video, audio, image | – | live | uploader | Uploader-asserted licenses. Prelinger/FedFlix collections → curated. |
+| internet_archive | Internet Archive | video, audio, image, brush, shape, sprite | – | live | uploader | Uploader-asserted licenses. Prelinger/FedFlix collections → curated. An item holding a ZIP, RAR or 7z is a **pack** (IA's own "VBR ZIP" bundles aren't); Packs adds a `format:` query for them. Brushes, shapes and sprites: one title/subject keyword query each, image and data items only, so expect misses. |
 | polyhaven | Poly Haven | texture, HDRI, 3D | – | live | curated | All CC0. Catalog cached 24h, ranked locally. `/files/{id}` for maps. |
 | ambientcg | ambientCG | texture, HDRI, 3D | – | live | curated | All CC0. Zip downloads per resolution. |
 | fontsource | Fontsource | font | – | live | curated/community | OFL mostly. Woff2 via jsDelivr. Catalog cached 24h. |
-| iconify | Iconify | icon | – | live | community | ~255 sets, license per set (MIT/Apache/CC-BY mostly; some GPL/NC get flagged). |
-| freesound | Freesound | audio | yes | docs | uploader | Previews only without OAuth2; originals need user login. |
+| iconify | Iconify | icon | – | live | community | ~255 sets, license per set (MIT/Apache/CC-BY mostly; some GPL/NC get flagged). With Packs, whole **sets** from `/collections` (cached 24h, hidden sets skipped) lead; a set downloads as `@iconify-json/<prefix>/icons.json` via jsDelivr. |
+| freesound | Freesound | audio | yes | docs | uploader | Previews only without OAuth2; originals need user login. With Packs: `group_by_pack=1`, then `/packs/<id>/` for up to 6 packs (cached 24h). A pack's verdict comes from its sounds' licenses: one read in search, up to 150 in the detail. Pack downloads need the user's own login. |
 | unsplash | Unsplash | image | yes | docs | community | Must hotlink URLs + ping `download_location` (done in `on_download`). 50 req/h in demo mode. |
 | pexels | Pexels | image, video | yes | docs | community | Credit Pexels + photographer. |
 | pixabay | Pixabay | image, video | yes | docs | community | No hotlinking; cache results 24h. |

@@ -33,7 +33,9 @@ from freestash.providers import Provider, SearchHints, build, select_providers
 
 
 def _dedupe_key(a: Asset) -> str:
-    return (a.landing_url or a.preview_url or a.uid).lower().rstrip("/").replace("http://", "https://")
+    """The same page found as two kinds (a sprite and a brush) is two results, so the kind is part of the key."""
+    url = (a.landing_url or a.preview_url or a.uid).lower().rstrip("/").replace("http://", "https://")
+    return f"{a.media_type.value}|{url}"
 
 
 def _interleave(groups: list[list[ScoredAsset]]) -> list[ScoredAsset]:
@@ -103,7 +105,7 @@ class Freestash:
     async def _run(self, cls: type[Provider], query: SearchQuery, settings: Settings,
                    http: HttpClient | None = None) -> tuple[ProviderStatus, list[Asset]]:
         media = set(query.media_types)
-        hints = SearchHints(commercial_only=query.use_case != UseCase.REFERENCE)
+        hints = SearchHints(commercial_only=query.use_case != UseCase.REFERENCE, packs=query.packs)
         provider = cls(http or self.http, settings)
         started = time.perf_counter()
         try:

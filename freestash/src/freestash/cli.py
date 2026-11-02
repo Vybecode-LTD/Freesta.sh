@@ -49,10 +49,12 @@ def search(
     page: int = 1,
     as_json: Annotated[bool, typer.Option("--json", help="Raw JSON output")] = False,
     literal: Annotated[bool, typer.Option("--literal", help='Search every word, even "sfx" or "font"')] = False,
+    packs: Annotated[bool, typer.Option("--packs", help="Also look for packs: icon sets, sound packs, archives")] = False,
 ) -> None:
     """Search every enabled source at once and score results for your use case.
 
-    Without --media, words like "sfx", "font" or "3d model" pick the media and leave the query."""
+    Without --media, words like "sfx", "font" or "3d model" pick the media and leave the query, and "pack" or
+    "bundle" turns --packs on."""
     from freestash.query_words import parse_query
     from freestash.search import Freestash
 
@@ -60,11 +62,12 @@ def search(
         parsed = parse_query(q)
         if parsed.picks:
             labels = {c["id"]: c["label"] for c in CATEGORIES}
-            read = ", ".join(f'"{p.word}" as {labels[p.media_type.value]}' for p in parsed.picks)
+            read = ", ".join(f'"{p.word}" as {labels[p.media_type.value] if p.media_type else "Packs"}'
+                             for p in parsed.picks)
             notes.print(f'[dim]Read {read} · searching "{parsed.q}" (--literal keeps every word)[/]', soft_wrap=True)
-            q, media = parsed.q, parsed.media_types
+            q, media, packs = parsed.q, parsed.media_types, packs or parsed.packs
     query = Q(q=q, media_types=media or [MediaType.IMAGE], use_case=use, max_tier=max_tier,
-              providers=provider or None, limit_per_provider=limit, page=page)
+              providers=provider or None, limit_per_provider=limit, page=page, packs=packs)
 
     async def go():
         async with Freestash(persist_recent=True) as engine:

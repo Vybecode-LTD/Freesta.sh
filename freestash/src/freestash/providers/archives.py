@@ -155,16 +155,44 @@ _IA_TYPES = {MediaType.VIDEO: "movies", MediaType.AUDIO: "audio", MediaType.IMAG
 _IA_SKIP_FORMATS = {"Thumbnail", "Item Tile", "Metadata", "Archive BitTorrent", "JSON", "Columbia Peaks", "Spectrogram",
                     "PNG", "Text", "Item Image", "Animated GIF"}
 _CURATED_COLLECTIONS = {"prelinger", "prelinger_library", "fedflix", "nasa", "usgovernmentdocuments"}
+# The kinds no media type of IA's covers, each found by title/subject words among image and data items (packs PR #8)
+_IA_KINDS = {
+    MediaType.BRUSH: '(title:(brush OR brushes OR abr) OR subject:(brush OR brushes OR abr OR "photoshop brushes"))',
+    MediaType.SHAPE: '(title:("custom shapes" OR csh OR "vector shapes") '
+                     'OR subject:("custom shapes" OR csh OR "vector shapes"))',
+    MediaType.SPRITE: '(title:(sprite OR sprites OR spritesheet OR tileset OR tilesets) '
+                      'OR subject:(sprite OR sprites OR spritesheet OR "sprite sheet" OR tileset OR "pixel art"))',
+}
+_IA_KIND_MEDIATYPES = " AND mediatype:(image OR data)"
+# IA's format names for content files -> extension. Only these count; derivatives and IA's own bundles ("VBR ZIP") don't.
+_IA_FORMATS = {
+    "zip": "zip", "rar": "rar", "7z": "7z", "vbr mp3": "mp3", "128kbps mp3": "mp3", "64kbps mp3": "mp3", "mp3": "mp3",
+    "ogg vorbis": "ogg", "flac": "flac", "24bit flac": "flac", "wave": "wav", "aiff": "aiff", "png": "png",
+    "jpeg": "jpg", "gif": "gif", "tiff": "tif", "jpeg 2000": "jp2", "mpeg4": "mp4", "h.264": "mp4", "h.264 ia": "mp4",
+    "matroska": "mkv", "webm": "webm", "ogg video": "ogv", "quicktime": "mov", "pdf": "pdf",
+}
+_IA_ARCHIVES = {"zip", "rar", "7z"}
+_IA_FIELDS = ("identifier", "title", "creator", "licenseurl", "mediatype", "date", "description", "collection", "format")
 
 
-def parse_ia_doc(doc: dict) -> Asset:
+def ia_formats(names: list[str]) -> list[str]:
+    """Content formats as extensions, in order, once each."""
+    return list(dict.fromkeys(ext for n in names if (ext := _IA_FORMATS.get(str(n).lower()))))
+
+
+def parse_ia_doc(doc: dict, kind: MediaType | None = None) -> Asset:
+    """An item; one holding an archive (ZIP, RAR, 7z) is a pack. `kind` is set when a kind query found it ("brush")."""
     ident = doc["identifier"]
     mediatype = doc.get("mediatype")
-    media = {"movies": MediaType.VIDEO, "audio": MediaType.AUDIO, "etree": MediaType.AUDIO}.get(mediatype, MediaType.IMAGE)
+    media = kind or {"movies": MediaType.VIDEO, "audio": MediaType.AUDIO, "etree": MediaType.AUDIO}.get(mediatype, MediaType.IMAGE)
     collections = set(doc.get("collection") or []) if isinstance(doc.get("collection"), list) else {doc.get("collection")}
     curated = bool(collections & _CURATED_COLLECTIONS)
+    fmt = doc.get("format")
+    formats = ia_formats(fmt if isinstance(fmt, list) else [fmt] if fmt else [])
     return Asset(
-        provider="internet_archive", source_id=ident, title=first(doc.get("title")) or ident, media_type=media,
+        provider="internet_archive", source_id=f"{kind.value}:{ident}" if kind else ident,
+        title=first(doc.get("title")) or ident, media_type=media, is_pack=bool(_IA_ARCHIVES & set(formats)),
+        formats=formats,
         license=normalize_license(None, doc.get("licenseurl")) if doc.get("licenseurl") else
         LicenseInfo(id="RIGHTS-UNKNOWN", label="No license stated", raw=None),
         trust=Trust.CURATED if curated else Trust.UPLOADER, landing_url=f"{IA}/details/{ident}",
@@ -179,34 +207,57 @@ def parse_ia_doc(doc: dict) -> Asset:
 class InternetArchiveProvider(Provider):
     info = ProviderInfo(
         id="internet_archive", name="Internet Archive", homepage="https://archive.org",
-        media_types=frozenset(_IA_TYPES), default_trust=Trust.UPLOADER,
+        media_types=frozenset(_IA_TYPES) | frozenset(_IA_KINDS), default_trust=Trust.UPLOADER,
         docs_url="https://archive.org/developers/", terms_url="https://archive.org/about/terms",
         notes=("Licenses are uploader-asserted. Live probe found a 2025 TV clip marked 'Public Domain'; "
-               "the date heuristic flags cases like that.",),
+               "the date heuristic flags cases like that.",
+               "Brushes, shapes and sprites are found by title and subject words, so expect some misses.",),
     )
+
+    async def _query(self, query: str, limit: int, page: int, hints: SearchHints,
+                     kind: MediaType | None = None) -> tuple[list[Asset], int]:
+        if hints.commercial_only:
+            query += " AND (licenseurl:*publicdomain* OR licenseurl:*licenses/by/* OR licenseurl:*licenses/by-sa/*)"
+        params = [("q", query), ("rows", limit), ("page", page), ("output", "json")] + [("fl[]", f) for f in _IA_FIELDS]
+        data = await self.http.get_json(f"{IA}/advancedsearch.php", params=params)
+        resp = data.get("response") or {}
+        return [parse_ia_doc(d, kind) for d in resp.get("docs", [])], resp.get("numFound") or 0
 
     async def search(self, q: str, media_types: set[MediaType], limit: int, page: int,
                      hints: SearchHints) -> ProviderPage:
-        kinds = " OR ".join(_IA_TYPES[m] for m in _IA_TYPES if m in media_types)
-        query = f"({q}) AND mediatype:({kinds})"
-        if hints.commercial_only:
-            query += " AND (licenseurl:*publicdomain* OR licenseurl:*licenses/by/* OR licenseurl:*licenses/by-sa/*)"
-        params = [("q", query), ("rows", limit), ("page", page), ("output", "json")] + [
-            ("fl[]", f) for f in ("identifier", "title", "creator", "licenseurl", "mediatype", "date", "description", "collection")]
-        data = await self.http.get_json(f"{IA}/advancedsearch.php", params=params)
-        resp = data.get("response") or {}
-        return ProviderPage(assets=[parse_ia_doc(d) for d in resp.get("docs", [])], total=resp.get("numFound"))
+        """One query for IA's own media types, one more for packs among them, and one per brush/shape/sprite."""
+        calls = []
+        if kinds := " OR ".join(_IA_TYPES[m] for m in _IA_TYPES if m in media_types):
+            base = f"({q}) AND mediatype:({kinds})"
+            calls.append(self._query(base, limit, page, hints))
+            if hints.packs:  # items holding an archive; IA's own derived bundles ("VBR ZIP") match too, and parse out
+                calls.append(self._query(f"{base} AND format:(ZIP OR RAR OR 7z)", limit, page, hints))
+        calls += [self._query(f"({q}) AND {clause}{_IA_KIND_MEDIATYPES}", limit, page, hints, kind)
+                  for kind, clause in _IA_KINDS.items() if kind in media_types]
+        assets: dict[str, Asset] = {}
+        total = 0
+        for found, count in await asyncio.gather(*calls):
+            total += count
+            for a in found:
+                assets.setdefault(a.uid, a)
+        return ProviderPage(assets=list(assets.values()), total=total)
 
     async def get(self, source_id: str) -> Asset:
-        meta = await self.http.get_json(f"{IA}/metadata/{source_id}")
+        prefix, _, rest = source_id.partition(":")
+        kind = MediaType(prefix) if rest else None
+        ident = rest or source_id
+        meta = await self.http.get_json(f"{IA}/metadata/{ident}")
         md = meta.get("metadata") or {}
-        asset = parse_ia_doc({**md, "identifier": source_id})
-        asset.renditions = [
-            Rendition(url=f"{IA}/download/{source_id}/{f['name']}", label=f.get("format") or f["name"],
+        files = meta.get("files", [])
+        asset = parse_ia_doc({**md, "identifier": ident, "format": [f.get("format") for f in files]}, kind)
+        renditions = [
+            Rendition(url=f"{IA}/download/{ident}/{f['name']}", label=f.get("format") or f["name"],
                       bytes=as_int(f.get("size")), width=as_int(f.get("width")), height=as_int(f.get("height")))
-            for f in meta.get("files", [])
+            for f in files
             if f.get("format") not in _IA_SKIP_FORMATS and not f["name"].endswith((".xml", ".sqlite", ".torrent"))
         ]
+        # a pack's archive is the file to take, so it comes first
+        asset.renditions = sorted(renditions, key=lambda r: str(r.label).lower() not in _IA_ARCHIVES)
         asset.detail_required = False
         return asset
 
