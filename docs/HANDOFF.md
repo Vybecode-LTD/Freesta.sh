@@ -1,83 +1,61 @@
-# Handoff — Freesta.sh (2026-11-02, third session)
+# Handoff — Freesta.sh (2026-11-02, end of the third session)
 
-## State
-- `main` = the merge of **PR #6** (2cfc414), merged 2026-11-02 on the owner's OK. PRs #1–#6 are **live**. The
-  repository allows auto-merge (the owner, 2026-11-02). The checkout is on `feat/pr7-grouped-results` (PR #7); its only
-  commit so far is this docs update.
-- **PR #6: site administration and shared keys** (decision 0003; contract `dev plans/contracts/admin-shared-keys.md`).
-  Merged and live. Verified on https://freesta.sh on 2026-11-02, without creating an account:
-  - `/api/admin/keys` answered 404 before the deploy and 401 after;
-  - search without a session gets 401;
-  - the served bundle has the admin page;
-  - the five new tables exist on production Postgres;
-  - production has 1 account.
-
-  Five review findings were fixed before the merge (Codex P1, the email-based admin; P2, the cached key test; three
-  from CodeRabbit). What it holds:
-  - `#/admin` (web only, reached from Settings → Account): site keys (stored encrypted, never returned, Test), the
-    per-member hourly cap (60), sign-up open, sources on or off, the shared-quota meter, users (admin, disable) and an
-    audit log that never holds a key value;
-  - members search on the admin's key, then env, unless they add their own;
-  - `FREESTASH_SHARE_SERVER_KEYS` is retired. Admins are granted only by `python -m freestash admin grant <email>` on
-    the server (review fix: an email setting let anyone who signed up first with that address become admin);
-  - new tables only (`user_status`, `server_secrets`, `site_settings`, `provider_usage`, `admin_audit`), so no Alembic;
-  - both apps' key rows say "Freesta.sh's key".
-  - Verified on the dev server:
-    - the admin sees the link and the page;
-    - a stored key never comes back, and the audit log holds only its name;
-    - a member sees "Freesta.sh's key" and gets "Admins only." on `#/admin`;
-    - the cap gave 200, 200, then 429, with readable words in the search toast.
-  - The rendered-contrast gate passed on the admin page and Settings, in both themes at 1440 and 390 (every status
-    tone), with a positive control that failed as it should.
-- **PR #5: the website signs in with an HttpOnly cookie**, per decision 0002 and the contract
-  `dev plans/contracts/web-cookie-session.md`:
-  - The auth calls send `X-Freestash-Session: cookie`. The server sets `freestash_session` (`SameSite=Lax`,
-    `Path=/api`, `Secure` except on loopback), and the body carries no token.
-  - A cookie-signed write must carry the site's own Origin (or Referer), or it gets 403.
-  - There's a new `POST /api/auth/logout`. "Sign out everywhere" also clears the cookie.
-  - The desktop is unchanged (bearer).
-  - Web localStorage holds only the user. An old saved token is deleted on load, so web users sign in once after the deploy.
-  - Review fix (Codex): the stored session carries a random `gen`, so a password change still reaches other tabs.
-  - Verified on the dev server (:8790): sign-up, script can't read the token, reads, a write and the search stream all
-    work on the cookie alone, and Sign out leaves `/api/auth/me` at 401.
-  - **Verified on https://freesta.sh** (2026-11-02, no account created):
-    - logout answers 204 and clears the cookie with `HttpOnly; Path=/api; SameSite=lax; Secure`;
-    - a web login and a cookie write from another site get 403, and from the site itself 401 (made-up account, bad cookie);
-    - the served bundle asks for the cookie.
-  - A real sign-in on production hasn't been checked: no production account exists yet.
-- Gates at the PR #5 merge: pytest 128 · ruff · export check · vitest 19 · web build · CI green. On the PR #6 branch:
-  pytest 140 · ruff · export check · vitest 27 · web build · dotnet 41, 0 warnings.
-- **Decision 0003 (owner, 2026-11-01):**
-  - Admin-held provider keys shared with every member, with caps of 60 searches an hour and 20 web searches a day.
-  - Admin screen on the web only; web finds are always CHECK.
-  - Order: cookie → admin → grouped results → packs and brush/shape/sprite → GitHub and curated packs → web search.
-  - Plan: `dev plans/2026-11-01-packs-web-admin-plan.md`.
-- **Open:** the owner proposed an "AI Search" screen (Claude Sonnet 5.5 searches, checks licences, and queues
-  downloads) instead of plain Brave web search. The plan's §2b holds the assessment; the owner hasn't decided.
-- Production database: the new `Postgres` service on `postgres-volume` (the first one was deleted 2026-11-01; its data
-  is gone). PR #4 makes accounts mode refuse to start without `DATABASE_URL`.
-- Railway is on Pro, so SMTP is allowed. Reset email is still untested on production.
-- Desktop: CI artifact `freestash-desktop-win-x64` on every push to `main`; local `freestash-desktop/publish/Freestash.exe`.
-  No installer, no signing, no release.
+## State (verified at the end of the session)
+- `main` = `origin/main` = **2cfc414**, the merge of PR #6. PRs #1–#6 are merged and **live**: Railway deploy
+  `ac05d804`, status SUCCESS. **No PRs are open; the next is #7.**
+- The checkout is on `feat/pr7-grouped-results`, local docs commits ahead of `main` and not pushed. They go in with
+  PR #7.
+- The repository allows auto-merge (the owner, 2026-11-02).
+- **PR #5 (the website's cookie session).** The website signs in with an HttpOnly cookie, `freestash_session`
+  (`SameSite=Lax`, `Path=/api`, `Secure` except on loopback), and its body carries no token. Cookie-signed writes
+  need the site's own Origin. There's a new `/api/auth/logout`. The desktop keeps bearer.
+  Contract: `dev plans/contracts/web-cookie-session.md`.
+- **PR #6 (site administration and shared keys, decision 0003).**
+  - `#/admin` is web only and reached from Settings → Account. It holds:
+    - the site's keys (encrypted, never returned, with a Test that ignores the cache);
+    - the per-member hourly search cap (60);
+    - sign-up open or closed, and sources on or off;
+    - the shared-quota meter;
+    - users (make admin, disable);
+    - an append-only audit log.
+  - Members search on the admin's key, then env, unless they add their own.
+  - Admins are granted **only** by `python -m freestash admin grant|revoke|list <email>` on the server, or on the
+    screen. An email-based setting was a takeover (Codex P1).
+  - Contract: `dev plans/contracts/admin-shared-keys.md`.
+- **Production checks (2026-11-02):**
+  - Both PRs were probed without creating an account: the cookie flags; cross-site refusals; the admin routes
+    answered 404 before the deploy and 401 after; the five new tables exist.
+  - The owner (color8studios@gmail.com) is the **only admin**, granted on the owner's OK. It's audited as a server command.
+  - Production has 1 account.
+- Gates on `main`: pytest 140 · ruff · export check · vitest 27 · web build · dotnet 41, 0 warnings. CI is green. The
+  rendered-contrast gate passed on the admin page and Settings (both themes, 1440 and 390, with a positive control).
+- **Decision 0003** sets the order: cookie ✓ → admin ✓ → **grouped results (PR #7)** → packs and brush/shape/sprite →
+  GitHub and curated packs → web or AI search. Plan: `dev plans/2026-11-01-packs-web-admin-plan.md`.
 
 ## Next
-1. **Owner:** sign up again on https://freesta.sh (earlier accounts are gone). That is also the last PR #5 check: a
-   search works, and Sign out returns to the sign-in page.
-2. **Done 2026-11-02 (owner's OK):** `python -m freestash admin grant color8studios@gmail.com` on production
-   (`railway ssh --project ba994460-f01e-4a4d-9e83-994f352b6634 --environment production --service freestash -- …`;
-   this folder isn't `railway link`ed). `admin list` shows it, and `admin_audit` holds a server-command row. **Owner:**
-   sign in, then Settings → Site administration: paste the provider keys and press Test on each. Any keys already in
-   Railway's env serve every member now (decision 0003). Apply for Unsplash production first.
-3. Then grouped results, packs and new kinds, GitHub and curated packs, and web or AI search (the owner chooses first).
-4. Still open from before: the owner re-registers on production; test reset email; Postgres volume backups; delete the
-   spare volume `postgres-volume-EFLf`; `www.freesta.sh`; Google sign-in; the desktop installer; retire `railway.json`
-   before 2026-12-01.
+1. **PR #7: grouped results and query words** (plan §3 ask 4).
+   - Contract first: `_templates/feature-CONTRACT.md` → `dev plans/contracts/`.
+   - A new `shared/categories.json` (id, label, order, query words), exported like the tokens.
+   - Both apps group the results by category: 8 per section with "Show all (n)", a jump bar, and packs first. One
+     category selected looks as it does today.
+   - Query words become removable chips. The parser lives in the engine, so the CLI and MCP get it too.
+   - Parity rows go in the same PR. Rendered-contrast gate on the search page.
+2. **Owner:** sign in → Settings → Site administration → paste the provider keys → Test each. Apply for Unsplash
+   production first: demo mode is 50 requests an hour for everyone. Decide Wikimedia: a normal OAuth consumer, or
+   drop the owner-only token.
+3. Then packs and new kinds (plan §2: the model contract plus policy rows), GitHub and curated packs, then web search.
+   **Open decision:** the owner's AI Search idea (plan §2b) instead of Brave.
+4. Still open from before: test reset email on production; Postgres volume backups; delete the spare volume
+   `postgres-volume-EFLf`; `www.freesta.sh`; Google sign-in; the desktop installer; retire `railway.json` before
+   2026-12-01.
 
 ## Warnings
-- Back up `FREESTASH_SECRETS_KEY` (Railway → Variables) in a password manager.
-- Before sharing keys, the owner applies for Unsplash production (demo mode is 50 requests an hour for everyone) and
-  decides Wikimedia (its token is owner-only).
-- The rate limiter is in-process: one replica only. Pexels has paused new API keys.
-- OpenGameArt's robots.txt bars every Anthropic agent and most bots. itch.io bars `/search` and `/game/download/`.
-  Neither gets scraped (ground rule 2).
-- The local dev database (`%LOCALAPPDATA%\Freestash\dev`) holds throwaway test accounts (`cookie-check@example.test`).
+- Back up `FREESTASH_SECRETS_KEY`: it decrypts both members' and the site's stored keys.
+- Any provider keys in Railway's env now serve every member, so the meter on `#/admin` shows their use.
+- The rate limiter, caps and caches are in-process: one replica only. Pexels has paused new API keys.
+- OpenGameArt's robots.txt bars every Anthropic agent; itch.io bars `/search` and `/game/download/`. Reach them only
+  through web search (ground rule 2).
+- This folder isn't `railway link`ed: pass `--project ba994460-f01e-4a4d-9e83-994f352b6634 --environment production
+  --service <freestash|Postgres>` to `railway ssh`.
+- The local dev database (`%LOCALAPPDATA%\Freestash\dev`) holds throwaway accounts: `cookie-check@example.test`, and
+  `admin@example.test` (an admin there).
