@@ -99,6 +99,9 @@ None. The word lists are a first cut; the chips make a wrong pick one click to u
 - 2026-11-02 (review, Codex): `keep` words are normalised like query tokens (punctuation stripped), so a chip whose
   word was typed as "SFX!" can be removed. The CLI's read-as line goes to stderr, so `--json` stdout stays one JSON
   document.
+- 2026-11-02 (review, CodeRabbit): only the latest submit or chip removal applies its read (`intentRef` on the web,
+  `_intent` on the desktop); an older read that answers late is dropped. Tests: `pages/SearchPage.test.tsx` and the
+  snapshot tool's stale-read check.
 - 2026-11-02 (build): `groupResults(ordered, expanded)` / `ResultGroups.Group(ordered, expanded)` lost the unused `media`
   argument. The desktop's jump bar sits under the results heading, above the scrolling results (the window scrolls
   only the results; the web's page scrolls whole). Both apps' example searches are now one list, and three of them

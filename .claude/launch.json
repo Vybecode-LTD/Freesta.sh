@@ -9,7 +9,8 @@
     },
     {
       "name": "freestash-local",
-      "runtimeExecutable": "freestash/.venv/Scripts/python.exe",
+      "cwd": "freestash",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
       "runtimeArgs": ["-m", "freestash", "serve", "--port", "8791"],
       "port": 8791
     }

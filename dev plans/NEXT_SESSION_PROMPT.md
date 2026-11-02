@@ -35,7 +35,7 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 ## 6. Environment that worked
 - **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (167) · `ruff check src tests scripts` ·
   `python scripts/export_shared.py --check`.
-- **Web and desktop:** `cd freestash/web; npm test` (38) · `npm run build`. Desktop: `dotnet test --project
+- **Web and desktop:** `cd freestash/web; npm test` (39) · `npm run build`. Desktop: `dotnet test --project
   tests/Freestash.Client.Tests` from `freestash-desktop/` (54).
 - **Servers:** `preview_start freestash-accounts` (:8790, accounts mode); `preview_start freestash-local` (:8791, local
   mode, for the desktop snapshot tool: `dotnet run --project tools/Freestash.Desktop.Snapshots -- http://127.0.0.1:8791 <out>`).

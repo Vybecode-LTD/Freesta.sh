@@ -5,6 +5,7 @@
 // The third argument is an accounts-mode server (freestash/scripts/dev_accounts.py): signs up through the real
 // sign-in screen, saves a key and an accent from Settings, and reads them back through the account API.
 
+using System.Reflection;
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Media;
@@ -198,6 +199,24 @@ async Task Script()
     await Wait(1500);
     await Shot("13-iris-accent.png");
 
+    // ---- regression (CodeRabbit, PR #7): a query read that answers after a newer one must not take over
+    var slow = DispatchProxy.Create<IFreestashApi, SlowRead>();
+    ((SlowRead)(object)slow).Inner = services.Api.Current;
+    ((SlowRead)(object)slow).SlowText = "rain sfx";
+    services.Api.Override = slow;
+    vm.Search.Query = "rain sfx";
+    var older = vm.Search.SearchAsync(); // its read waits at the gate
+    vm.Search.Query = "anchor font";
+    await vm.Search.SearchAsync();
+    ((SlowRead)(object)slow).Gate.SetResult();
+    await older;
+    await WaitFor(() => !vm.Search.IsSearching, 60_000, "search after the stale read");
+    services.Api.Override = null;
+    var picks = string.Join(", ", vm.Search.Picks.Select(p => p.Text));
+    Console.WriteLine($"  stale read: query '{vm.Search.Query}' · read as {picks}");
+    if (vm.Search.Query != "anchor" || picks != "“font” → Fonts")
+        throw new InvalidOperationException($"an older read took over: '{vm.Search.Query}', {picks}");
+
     if (accountsUrl is null) return;
 
     // ---- hosted mode: sign up on the sign-in screen, then prove keys and prefs reach the account
@@ -233,4 +252,25 @@ async Task Script()
     if (!keyOk || prefs.Accent != "teal") throw new InvalidOperationException("account sync failed");
     await Wait(800);
     await Shot("16-account-settings.png");
+}
+
+/// <summary>Forwards every call to the real client but holds back one query's read until <see cref="Gate"/> opens.</summary>
+public class SlowRead : DispatchProxy
+{
+    public IFreestashApi Inner { get; set; } = null!;
+    public string SlowText { get; set; } = "";
+    public TaskCompletionSource Gate { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    protected override object? Invoke(MethodInfo? method, object?[]? args)
+    {
+        if (method!.Name == nameof(IFreestashApi.ParseQueryAsync) && args![0] as string == SlowText)
+            return HeldAsync((string)args[0]!, (IReadOnlyList<string>)args[1]!);
+        return method.Invoke(Inner, args);
+    }
+
+    private async Task<ParsedQuery> HeldAsync(string q, IReadOnlyList<string> keep)
+    {
+        await Gate.Task;
+        return await Inner.ParseQueryAsync(q, keep);
+    }
 }

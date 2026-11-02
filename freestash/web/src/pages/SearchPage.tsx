@@ -37,6 +37,7 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const current = useRef(""); // the query of the search last started
   const lastRun = useRef(""); // its runKey
+  const intentRef = useRef(0); // bumped per submit or chip removal: only the latest one's read is applied
 
   // the account's defaults arrive after first paint when signing in on a new device
   useEffect(() => { setMedia(prefs.default_media); setUseCase(prefs.default_use_case); setMaxTier(prefs.default_max_tier); },
@@ -89,8 +90,10 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
   async function submit(text = q) {
     text = text.trim();
     if (!text) return;
+    const intent = ++intentRef.current;
     if (!needsParse(text, reading)) return search(text, media);
     const parsed = await api.parseQuery(text).catch(() => null);
+    if (intent !== intentRef.current) return; // a newer search or chip removal started meanwhile
     if (!parsed) return search(text, media); // couldn't be read: every word is searched, as before
     const next = readQuery(parsed, media, reading);
     setReading(next.reading); setMedia(next.media); setQ(next.reading.q);
@@ -99,12 +102,13 @@ export function SearchPage({ onToast }: { onToast: (m: string) => void }) {
 
   async function removePick(pick: QueryPick) {
     if (!reading) return;
+    const intent = ++intentRef.current;
     const keep = [...reading.keep, pick.word];
     const parsed = await api.parseQuery(reading.original, keep).catch((err: unknown) => {
       onToast(err instanceof Error ? err.message : "Couldn't read the query");
       return null;
     });
-    if (!parsed) return;
+    if (!parsed || intent !== intentRef.current) return;
     const next = dropPick(parsed, reading, keep);
     setReading(next.reading); setMedia(next.media); setQ(next.reading.q);
     return search(next.reading.q, next.media);

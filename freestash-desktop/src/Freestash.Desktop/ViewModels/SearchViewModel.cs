@@ -104,6 +104,7 @@ public sealed partial class SearchViewModel : ViewModelBase
     private QueryReading? _reading;
     private string _current = ""; // the query of the search last started
     private bool _applying; // media being set from a read query, not by hand
+    private int _intent; // bumped per search or chip removal: only the latest one's read is applied (web: intentRef)
 
     public SearchViewModel(AppServices services)
     {
@@ -208,11 +209,13 @@ public sealed partial class SearchViewModel : ViewModelBase
     {
         var text = Query.Trim();
         if (text.Length == 0) return;
+        var intent = ++_intent;
         if (QueryReading.NeedsParse(text, _reading))
         {
             ParsedQuery? parsed = null;
             try { parsed = await _services.Api.Current.ParseQueryAsync(text, []); }
             catch (Exception) { } // couldn't be read: every word is searched, as before
+            if (intent != _intent) return; // a newer search or chip removal started meanwhile
             if (parsed is not null)
             {
                 var (reading, media) = QueryReading.Read(parsed, SelectedMedia, _reading);
@@ -227,10 +230,12 @@ public sealed partial class SearchViewModel : ViewModelBase
     private async Task RemovePickAsync(QueryPickViewModel chip)
     {
         if (_reading is null) return;
+        var intent = ++_intent;
         var keep = _reading.Keep.Append(chip.Pick.Word).ToList();
         ParsedQuery parsed;
         try { parsed = await _services.Api.Current.ParseQueryAsync(_reading.Original, keep); }
         catch (Exception ex) { _services.Toasts.Show(ex.Message); return; }
+        if (intent != _intent || _reading is null) return; // a newer search or chip removal started meanwhile
         var (reading, media) = QueryReading.Drop(parsed, _reading, keep);
         Apply(reading, media);
         await RunAsync(reading.Q);
