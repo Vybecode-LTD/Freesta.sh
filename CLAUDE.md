@@ -28,7 +28,7 @@ Deploys to **Railway** (one service + Railway Postgres). **No Supabase** (owner,
 - **Live** on Railway (project **Freesta.sh**, service `freestash` + Postgres) at **https://freesta.sh** (certificate
   valid 2026-11-01) and https://freestash-production.up.railway.app, building from `main`. IDs and steps:
   `freestash/IMPLEMENTATION.md` → P2.
-- Gates 2026-11-04 (PR #9 branch): pytest 237 · ruff clean · export check · vitest 54 · web build · dotnet 61 · 0 warnings.
+- Gates 2026-11-04 (PR #9 branch): pytest 238 · ruff clean · export check · vitest 54 · web build · dotnet 61 · 0 warnings.
   Rendered contrast on `#/admin` with curated packs (and editing one): both themes, 1440 + 390, hovers, 0 failing,
   positive control fails.
 

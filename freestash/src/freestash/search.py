@@ -73,6 +73,11 @@ class RecentCache:
         raw = self._data.get(uid)
         return Asset.model_validate(raw) if raw else None
 
+    def forget_provider(self, provider: str) -> None:
+        """Drop one source's cached assets, so the next lookup asks it again (the admin changed a curated pack)."""
+        for uid in [u for u in self._data if u.startswith(f"{provider}:")]:
+            del self._data[uid]
+
     def flush(self) -> None:
         if self.path:
             self.path.parent.mkdir(parents=True, exist_ok=True)

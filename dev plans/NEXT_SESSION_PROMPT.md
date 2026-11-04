@@ -15,7 +15,7 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 ## 3. State (verified 2026-11-04, end of session)
 - `main` = `origin/main` = **71a29d6** (PR #8), live.
 - **PR #9 open** from `feat/pr9-github-curated-packs` (the checkout): GitHub game-asset repos as packs and admin-curated
-  packs. Gates green locally (pytest 237, vitest 54, dotnet 61, contrast on `#/admin`). Read its CI and reviews with
+  packs. Gates green locally (pytest 238, vitest 54, dotnet 61, contrast on `#/admin`). Read its CI and reviews with
   `gh pr checks 9` and `gh pr view 9 --comments`; don't trust this line, check.
 
 ## 4. First job, then the order
@@ -32,7 +32,7 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 - The infrastructure items in `docs/HANDOFF.md` → Next 4.
 
 ## 6. Environment that worked
-- **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (237, ~90 s) · `ruff check src tests scripts` ·
+- **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (238, ~90 s) · `ruff check src tests scripts` ·
   `python scripts/export_shared.py --check` (silent, exit 0).
 - **Web / desktop:** `cd freestash/web; npm test` (54) · `npm run build`. `cd freestash-desktop; dotnet build
   Freestash.Desktop.sln; dotnet test --project tests/Freestash.Client.Tests` (61).

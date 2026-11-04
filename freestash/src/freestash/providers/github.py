@@ -164,8 +164,8 @@ class GitHubProvider(Provider):
         if not hints.packs:  # the registry skips this source without packs; this keeps a direct call honest too
             return ProviderPage(assets=[])
         query = f"{' '.join(tokens(q))} topic:{TOPIC}".strip()
-        data = await self._get("/search/repositories", {"q": query, "per_page": min(limit * 3, 50), "page": page},
-                               kind="search")
+        # GitHub's page is the same size as ours: a bigger one cut down to `limit` would skip what was cut on page 2
+        data = await self._get("/search/repositories", {"q": query, "per_page": limit, "page": page}, kind="search")
         assets = [a for item in data.get("items") or [] if (a := parse_github_repo(item)) and a.media_type in media_types]
         return ProviderPage(assets=assets[:limit], total=data.get("total_count"))
 

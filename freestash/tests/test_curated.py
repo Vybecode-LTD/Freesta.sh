@@ -141,6 +141,31 @@ def test_every_member_searches_the_curated_packs(tmp_path, monkeypatch):
         assert c.post("/api/search", headers=ada, json=body).json()["results"] == []
 
 
+def test_an_admins_correction_reaches_a_pack_members_have_already_opened(tmp_path, monkeypatch):
+    """PR #9 review (Codex P1): the engine's recent-results cache kept serving a curated pack after the admin changed
+    its license or removed it, so the drawer and a uid-only ledger entry used the old license."""
+    with make_client(tmp_path, monkeypatch) as c:
+        owner, ada = signup_admin(c), signup(c, "ada@example.com")
+        made = c.post("/api/admin/curated", headers=owner, json=pack()).json()
+        uid = f"curated:{made['id']}"
+        body = {"q": "space shooter", "media_types": ["sprite"], "providers": ["curated"], "use_case": "bundled"}
+        assert c.post("/api/search", headers=ada, json=body).json()["results"][0]["uid"] == uid  # now in the cache
+
+        c.put(f"/api/admin/curated/{made['id']}", headers=owner, json=pack(license_id="CC-BY-NC-4.0"))
+        detail = c.get(f"/api/assets/{uid}?use=bundled", headers=ada).json()
+        assert (detail["asset"]["license"]["id"], detail["verdict"]["tier"]) == ("CC-BY-NC-4.0", "red")
+        # the stale CC0 copy would have been recorded; the corrected license is blocked for bundled, so it isn't
+        assert c.post("/api/ledger", headers=ada, json={"uid": uid, "use_case": "bundled"}).status_code == 409
+
+        c.post("/api/admin/curated/import", headers=owner, json={"packs": [pack(license_id="CC-BY-4.0")]})
+        assert c.get(f"/api/assets/{uid}?use=bundled", headers=ada).json()["asset"]["license"]["id"] == "CC-BY-4.0"
+        entry = c.post("/api/ledger", headers=ada, json={"uid": uid, "use_case": "bundled"})
+        assert entry.status_code == 201 and entry.json()["license_id"] == "CC-BY-4.0"
+
+        c.delete(f"/api/admin/curated/{made['id']}", headers=owner)
+        assert c.get(f"/api/assets/{uid}?use=bundled", headers=ada).status_code == 404
+
+
 @respx.mock
 def test_members_search_github_on_the_sites_token_and_the_key_test_really_calls_it(tmp_path, monkeypatch):
     with make_client(tmp_path, monkeypatch) as c:

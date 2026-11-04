@@ -116,19 +116,30 @@ async def add_curated(body: CuratedPack, admin: Admin, request: Request) -> Cura
     return await _call(admin_service(request).add_curated, admin.id, body)
 
 
+def _curated_changed(request: Request) -> None:
+    """The engine's recent results would keep serving a pack's old license to the drawer and the ledger (PR #9
+    review). Called here, on the event loop, where the cache is written, not from the worker thread of the write."""
+    request.app.state.engine.recent.forget_provider("curated")
+
+
 @router.put("/curated/{pack_id}")
 async def put_curated(pack_id: str, body: CuratedPack, admin: Admin, request: Request) -> CuratedPack:
-    return await _call(admin_service(request).update_curated, admin.id, pack_id, body)
+    pack = await _call(admin_service(request).update_curated, admin.id, pack_id, body)
+    _curated_changed(request)
+    return pack
 
 
 @router.delete("/curated/{pack_id}", status_code=204)
 async def delete_curated(pack_id: str, admin: Admin, request: Request) -> None:
     await _call(admin_service(request).delete_curated, admin.id, pack_id)
+    _curated_changed(request)
 
 
 @router.post("/curated/import")
 async def import_curated(body: CuratedImportIn, admin: Admin, request: Request) -> dict[str, int]:
-    return await _call(admin_service(request).import_curated, admin.id, body.packs)
+    counts = await _call(admin_service(request).import_curated, admin.id, body.packs)
+    _curated_changed(request)
+    return counts
 
 
 # --------------------------------------------------------------------------------- usage, users, audit

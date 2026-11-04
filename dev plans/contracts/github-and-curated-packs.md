@@ -30,7 +30,7 @@ on the publisher's page), and every member's search finds those at curated trust
   `packs=cls.info.packs_only`, so a GitHub token test really calls GitHub.
 - **`providers/github.py` `GitHubProvider`**: id `github`, name `GitHub`, media sprite, model, texture, audio, icon;
   `Trust.UPLOADER`; `packs_only`. Search: `GET https://api.github.com/search/repositories?q=<query words> topic:game-assets`
-  (`per_page` = 3 × limit, ≤ 50), `Authorization: Bearer <token>` when set. Kind from topics, name and description
+  (`per_page` = limit; see Changes), `Authorization: Bearer <token>` when set. Kind from topics, name and description
   (`kind_of`: audio, then model, texture, icon, else sprite). In-process budget per token: 25 searches a minute with one,
   8 without; after a 403 or 429, no search on that token for 60 s, and no retry of the 429 (`HttpClient.get_json` gains
   `retry_on`). Pure parsers `parse_github_repo(item) -> Asset | None` and `parse_github_tree(tree) -> (item_count | None,
@@ -114,6 +114,9 @@ root `CLAUDE.md` (parity, key help, generated files); `dev plans/contracts/admin
 None.
 
 ## Changes after approval
+- 2026-11-04 (review, Codex): GitHub asks for `per_page` = limit, not 3 × limit (cutting a bigger page down skipped the
+  cut repos on the next page); after any curated write the API drops cached `curated:` assets
+  (`RecentCache.forget_provider`), so the drawer and a uid-only ledger entry see the corrected or removed pack.
 - 2026-11-04 (live): a GitHub pack's thumbnail and preview are the owner's avatar (`<avatar_url>&s=240`), not
   `opengraph.githubassets.com/1/<owner>/<name>`: GitHub draws those on request and throttles them per IP (a grid of cards
   got 429s, then every one did). GitHub packs also carry `source_name` `GitHub`, so the drawer's Source row says so.

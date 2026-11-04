@@ -67,7 +67,9 @@ async def test_search_asks_for_game_assets_with_the_token_and_only_for_packs(fix
     page = await provider.search("space-ship: ships", ALL_KINDS, 4, 2, SearchHints(packs=True))
     url, params = http.calls[0]
     assert url == "https://api.github.com/search/repositories"
-    assert params == {"q": "space ship ships topic:game-assets", "per_page": 12, "page": 2}  # words only, no qualifiers
+    # words only, no qualifiers; GitHub's pages are the same size as ours (PR #9 review, Codex P2: asking for 3x and
+    # keeping 4 meant page 2 started at repo 13, so repos 5-12 were never reachable)
+    assert params == {"q": "space ship ships topic:game-assets", "per_page": 4, "page": 2}
     assert http.headers[0]["Authorization"] == "Bearer tok" and http.headers[0]["Accept"] == "application/vnd.github+json"
     assert len(page.assets) == 4 and all(a.is_pack for a in page.assets) and page.total == 12
 
