@@ -12,6 +12,7 @@
 | `contracts/admin-shared-keys.md` | Contract for PR #6: the admin screen, the site's shared keys, caps, usage meter, users and audit log (done) | — |
 | `contracts/grouped-results.md` | Contract for PR #7: `shared/categories.json`, query words read in the engine (`GET /api/search/parse`, chips), results grouped by category in both apps (done) | — |
 | `contracts/packs-and-new-kinds.md` | Contract for PR #8: packs (Iconify sets, Freesound packs, Internet Archive bundles), brush/shape/sprite, the brush and pack policy rules, the Packs switch and the Game assets preset (done) | — |
+| `contracts/github-and-curated-packs.md` | Contract for PR #9: GitHub game-asset repositories as packs (Packs on, the site's token), and packs the admin records by hand on `#/admin` (Kenney, Quaternius) (done) | — |
 | `NEXT_SESSION_PROMPT.md` | The starting prompt for the next session | — |
 
 Desktop screenshots live with the app: `../freestash-desktop/docs/screenshots/`.

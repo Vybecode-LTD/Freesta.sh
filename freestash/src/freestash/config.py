@@ -10,6 +10,8 @@ from typing import Literal
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from freestash.models import CuratedPack
+
 
 def _key(name: str) -> Field:  # type: ignore[valid-type]
     """API keys accept either FREESTASH_<NAME> or the bare <NAME> env var."""
@@ -48,6 +50,10 @@ class Settings(BaseSettings):
     wikimedia_access_token: str | None = _key("WIKIMEDIA_ACCESS_TOKEN")  # OAuth 2.0 owner-only token
     openverse_client_id: str | None = _key("OPENVERSE_CLIENT_ID")
     openverse_client_secret: str | None = _key("OPENVERSE_CLIENT_SECRET")
+    # Not GITHUB_TOKEN: CI and the gh CLI set that one, and it would be searched with silently.
+    github_access_token: str | None = _key("GITHUB_ACCESS_TOKEN")
+    # The admin's curated packs (contract github-and-curated-packs). The API fills this per request from the database.
+    curated_packs: list[CuratedPack] = Field(default_factory=list)
 
     # --- web API / accounts ----------------------------------------------
     # "none" (local, single user) | "accounts" (sign-up + JWT, the hosted app). Anything else fails at startup:

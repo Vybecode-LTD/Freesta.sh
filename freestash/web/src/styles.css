@@ -412,3 +412,7 @@ select.input { padding-right: 8px; } /* native arrow: it follows color-scheme, a
 .page-admin .key-row > .small { margin: 6px 0 0; }
 .page-admin .table td .row { gap: 4px; }
 .page-admin .nowrap { white-space: nowrap; }
+textarea.input { height: auto; padding: 10px 13px; resize: vertical; line-height: 1.5; }
+.curated-form { display: grid; gap: 14px; padding: 16px; border-radius: 13px; background: var(--raised); border: 1px solid var(--border-subtle); scroll-margin-top: 24px; }
+.curated-import summary { cursor: pointer; width: fit-content; font-weight: 600; color: var(--accent-text); }
+.curated-import > * + * { margin-top: 10px; }

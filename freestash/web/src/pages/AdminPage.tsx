@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
-import { ago, countCell, siteKeyStatus } from "../lib/admin";
-import { api } from "../lib/api";
+import {
+  ago, countCell, CURATED_LICENSES, type CuratedDraft, curatedDraft, draftToPack, licenseLabel, parseCuratedImport,
+  siteKeyStatus, utcDay, validationText,
+} from "../lib/admin";
+import { api, ApiError } from "../lib/api";
+import { CATEGORIES } from "../lib/categories";
+import { fileCount } from "../lib/results";
 import { useSession } from "../lib/session";
-import type { AdminKey, AdminUser, AuditEntry, KeySpec, ProviderInfo, SiteSettings, UsageRow } from "../lib/types";
+import type { AdminKey, AdminUser, AuditEntry, CuratedPack, KeySpec, ProviderInfo, SiteSettings, UsageRow } from "../lib/types";
 import { KeyHelp, Section } from "./SettingsPage";
 
 type Toast = { onToast: (m: string) => void };
@@ -24,6 +29,7 @@ export function AdminPage({ onToast }: Toast) {
       {denied ? <p className="notice"><Icon name="warning" size={15} />{denied}</p> : (<>
         <KeysSection onToast={onToast} />
         <LimitsSection onToast={onToast} />
+        <CuratedSection onToast={onToast} />
         <UsageSection />
         <UsersSection onToast={onToast} />
         <AuditSection />
@@ -149,6 +155,129 @@ function LimitsSection({ onToast }: Toast) {
   );
 }
 
+const kindLabel = (id: string) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
+const saveError = (e: unknown) => (e instanceof ApiError && validationText(e.detail)) || msg(e);
+
+/** Packs the admin checked by hand (contract github-and-curated-packs): every member's search finds them at curated
+ *  trust, so the form asks for the license as read on the publisher's page, and the day it was read. */
+function CuratedSection({ onToast }: Toast) {
+  const [packs, setPacks] = useState<CuratedPack[]>([]);
+  const [draft, setDraft] = useState<CuratedDraft>(() => curatedDraft());
+  const [editing, setEditing] = useState<string | null>(null);
+  const [importText, setImportText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(() => api.curatedPacks().then(setPacks).catch((e) => onToast(msg(e))), [onToast]);
+  useEffect(() => { void load(); }, [load]);
+
+  const set = (field: keyof CuratedDraft) => (e: { target: { value: string } }) => setDraft((d) => ({ ...d, [field]: e.target.value }));
+  const reset = () => { setEditing(null); setDraft(curatedDraft()); };
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      if (editing) await api.saveCuratedPack(editing, draftToPack(draft));
+      else await api.addCuratedPack(draftToPack(draft));
+      onToast(editing ? "Saved. Members' searches use it now." : "Added. Members' searches find it now.");
+      reset();
+      await load();
+    } catch (err) { onToast(saveError(err)); } finally { setBusy(false); }
+  }
+  function edit(p: CuratedPack) {
+    setEditing(p.id);
+    setDraft(curatedDraft(p));
+    document.getElementById("curated-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  async function remove(p: CuratedPack) {
+    if (!p.id || !confirm(`Remove ${p.title}? Members' searches stop finding it.`)) return;
+    try { await api.deleteCuratedPack(p.id); if (editing === p.id) reset(); await load(); } catch (err) { onToast(msg(err)); }
+  }
+  async function runImport() {
+    const parsed = parseCuratedImport(importText);
+    if ("error" in parsed) { onToast(parsed.error); return; }
+    setBusy(true);
+    try {
+      const r = await api.importCuratedPacks(parsed.packs);
+      onToast(`Imported: ${r.added} added, ${r.updated} updated.`);
+      setImportText("");
+      await load();
+    } catch (err) { onToast(saveError(err)); } finally { setBusy(false); }
+  }
+
+  const licenses = CURATED_LICENSES.some((l) => l.id === draft.license_id)
+    ? CURATED_LICENSES : [...CURATED_LICENSES, { id: draft.license_id, label: draft.license_id }];
+  return (
+    <Section id="curated" icon="folder" title="Curated packs" sub={<>Packs you've checked by hand: the publisher made them and licenses each one as a whole
+      (Kenney, Quaternius). Members find them at curated trust, so record only the license you read on the publisher's page.
+      <div className="mono faint keys-count">{packs.length} listed</div></>}>
+      <div className="panel table-wrap">
+        <table className="table">
+          <thead><tr><th>Pack</th><th>Kind</th><th>License</th><th>Checked</th><th /></tr></thead>
+          <tbody>{packs.map((p) => (
+            <tr key={p.id}>
+              <td><a className="link" href={p.url} target="_blank" rel="noreferrer">{p.title} ↗</a>
+                <div className="muted small">{[p.publisher, p.item_count != null ? fileCount(p.item_count) : null].filter(Boolean).join(" · ")}</div></td>
+              <td className="nowrap">{kindLabel(p.media_type)}</td>
+              <td className="nowrap">{licenseLabel(p.license_id)}</td>
+              <td className="mono nowrap">{p.license_checked_on}</td>
+              <td><div className="row nowrap">
+                <button type="button" className="btn btn-sm btn-ghost" onClick={() => edit(p)}>Edit</button>
+                <button type="button" className="icon-btn" onClick={() => remove(p)} aria-label={`Remove ${p.title}`}><Icon name="trash" /></button>
+              </div></td>
+            </tr>
+          ))}</tbody>
+        </table>
+        {packs.length === 0 && <p className="muted pad">None yet. Members' searches show curated packs once you add one.</p>}
+      </div>
+
+      <form id="curated-form" className="curated-form" onSubmit={save}>
+        <h3 className="eyebrow">{editing ? `Edit ${draft.title || "pack"}` : "Add a pack"}</h3>
+        <div className="field-grid">
+          <label className="field"><span className="eyebrow">Title</span>
+            <input className="input" required maxLength={200} value={draft.title} onChange={set("title")} /></label>
+          <label className="field"><span className="eyebrow">Page URL</span>
+            <input className="input" type="url" required placeholder="https://kenney.nl/assets/…" value={draft.url} onChange={set("url")} /></label>
+          <label className="field"><span className="eyebrow">Publisher</span>
+            <input className="input" required maxLength={120} placeholder="Kenney" value={draft.publisher} onChange={set("publisher")} /></label>
+          <label className="field"><span className="eyebrow">Kind</span>
+            <select className="input" value={draft.media_type} onChange={set("media_type")}>
+              {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label>
+          <label className="field"><span className="eyebrow">License</span>
+            <select className="input" value={draft.license_id} onChange={set("license_id")}>
+              {licenses.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}</select></label>
+          <label className="field"><span className="eyebrow">License checked on</span>
+            <input className="input" type="date" required max={utcDay()} value={draft.license_checked_on} onChange={set("license_checked_on")} /></label>
+          <label className="field"><span className="eyebrow">Download URL · optional</span>
+            <input className="input" type="url" placeholder="A direct .zip, when there is one" value={draft.download_url} onChange={set("download_url")} /></label>
+          <label className="field"><span className="eyebrow">Preview image URL · optional</span>
+            <input className="input" type="url" value={draft.thumbnail_url} onChange={set("thumbnail_url")} /></label>
+          <label className="field"><span className="eyebrow">Files · optional</span>
+            <input className="input" type="number" min={1} value={draft.item_count} onChange={set("item_count")} /></label>
+          <label className="field"><span className="eyebrow">Formats</span>
+            <input className="input" placeholder="png, svg" value={draft.formats} onChange={set("formats")} /></label>
+          <label className="field"><span className="eyebrow">Tags</span>
+            <input className="input" placeholder="space, shooter" value={draft.tags} onChange={set("tags")} /></label>
+        </div>
+        <label className="field"><span className="eyebrow">Description · optional</span>
+          <textarea className="input" rows={2} maxLength={2000} value={draft.description} onChange={set("description")} /></label>
+        <div className="row">
+          <button className="btn btn-primary" type="submit" disabled={busy}>{editing ? "Save pack" : "Add pack"}</button>
+          {editing && <button type="button" className="btn btn-ghost" onClick={reset}>Cancel</button>}
+        </div>
+      </form>
+
+      <details className="curated-import">
+        <summary>Import JSON</summary>
+        <p className="muted small">A list of packs with the fields above: title, url, publisher, license_id, license_checked_on
+          and media_type are required. A pack whose url is listed already is updated. Nothing is saved if any row is wrong.</p>
+        <textarea className="input mono" rows={6} spellCheck={false} aria-label="Packs as JSON" placeholder='[{"title": "…", "url": "https://…", …}]'
+                  value={importText} onChange={(e) => setImportText(e.target.value)} />
+        <div className="row"><button type="button" className="btn" disabled={busy || !importText.trim()} onClick={runImport}>Import</button></div>
+      </details>
+    </Section>
+  );
+}
+
 function UsageSection() {
   const [rows, setRows] = useState<UsageRow[]>([]);
   useEffect(() => { api.usage().then(setRows).catch(() => {}); }, []);
@@ -214,7 +343,11 @@ function UsersSection({ onToast }: Toast) {
   );
 }
 
-const ACTIONS: Record<string, string> = { "keys.update": "Site keys", "settings.update": "Limits and sources", "user.update": "User" };
+const ACTIONS: Record<string, string> = {
+  "keys.update": "Site keys", "settings.update": "Limits and sources", "user.update": "User",
+  "curated.add": "Curated pack added", "curated.update": "Curated pack edited", "curated.delete": "Curated pack removed",
+  "curated.import": "Curated packs imported",
+};
 
 function AuditSection() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);

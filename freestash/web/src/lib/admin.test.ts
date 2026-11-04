@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ago, countCell, memberKeyStatus, siteKeyStatus } from "./admin";
-import type { AdminKey, KeyState } from "./types";
+import {
+  ago, countCell, curatedDraft, draftToPack, licenseLabel, memberKeyStatus, parseCuratedImport, siteKeyStatus, utcDay,
+  validationText,
+} from "./admin";
+import type { AdminKey, CuratedPack, KeyState } from "./types";
 
 const state = (over: Partial<KeyState> = {}): KeyState => ({ name: "PEXELS_API_KEY", set: false, hint: null, updated_at: null, ...over });
 const key = (over: Partial<AdminKey> = {}): AdminKey => ({
@@ -53,5 +56,47 @@ describe("countCell and ago", () => {
     expect(ago("2026-11-02T07:00:00Z", now)).toBe("5 h ago");
     expect(ago("2026-10-30T12:00:00Z", now)).toBe("3 days ago");
     expect(ago("2026-09-01T12:00:00Z", now)).toBe("2026-09-01");
+  });
+});
+
+const curated: CuratedPack = {
+  id: "p1", title: "Space Kit", url: "https://kenney.nl/assets/space-kit", publisher: "Kenney", license_id: "CC0-1.0",
+  license_checked_on: "2026-11-04", media_type: "model", download_url: null, thumbnail_url: null, item_count: 90,
+  formats: ["glb", "fbx"], tags: ["space"], description: null, updated_at: "2026-11-04T12:00:00+00:00",
+};
+
+describe("curated packs", () => {
+  it("a draft round-trips a pack, and an empty one starts on today in UTC", () => {
+    expect(draftToPack(curatedDraft(curated))).toEqual({ ...curated, id: null, updated_at: null });
+    const blank = curatedDraft(null, "2026-11-04");
+    expect([blank.license_id, blank.license_checked_on, blank.media_type, blank.item_count]).toEqual(["CC0-1.0", "2026-11-04", "sprite", ""]);
+    expect(utcDay(new Date("2026-11-04T23:30:00-05:00"))).toBe("2026-11-05"); // the server's day, not the browser's
+  });
+
+  it("sends lists without blanks, empty fields as null and no count unless one was typed", () => {
+    const p = draftToPack({ ...curatedDraft(null, "2026-11-04"), title: " Tiny Ski ", formats: "png, , svg ,", tags: "",
+      item_count: "  ", download_url: "  " });
+    expect([p.title, p.formats, p.tags, p.item_count, p.download_url]).toEqual(["Tiny Ski", ["png", "svg"], [], null, null]);
+    expect(draftToPack({ ...curatedDraft(), item_count: "12" }).item_count).toBe(12);
+  });
+
+  it("an import takes a list or {packs}, names the row that's wrong, and drops ids", () => {
+    const row = { ...curated };
+    expect(parseCuratedImport(JSON.stringify([row]))).toEqual({ packs: [{ ...curated, id: null, updated_at: null }] });
+    expect("packs" in parseCuratedImport(JSON.stringify({ packs: [row, row] }))).toBe(true);
+    expect(parseCuratedImport("not json")).toEqual({ error: "That isn't valid JSON." });
+    expect(parseCuratedImport("[]")).toHaveProperty("error");
+    expect(parseCuratedImport(JSON.stringify([row, { ...row, url: " ", publisher: undefined }])))
+      .toEqual({ error: "Row 2 has no url, publisher." });
+    expect(parseCuratedImport(JSON.stringify([row, 3]))).toEqual({ error: "Row 2 isn't a pack." });
+  });
+
+  it("says a 422 in the form's own words", () => {
+    expect(validationText([{ loc: ["body", "url"], msg: "Value error, must be an https:// address" }]))
+      .toBe("Page URL: must be an https:// address");
+    expect(validationText([{ loc: ["body", "packs", 1, "license_id"], msg: "Value error, isn't a license Freesta.sh knows: '?'" }]))
+      .toBe("Row 2, License: isn't a license Freesta.sh knows: '?'");
+    expect(validationText("Admins only.")).toBeNull();
+    expect([licenseLabel("CC0-1.0"), licenseLabel("CC-BY-SA-3.0")]).toEqual(["CC0 1.0", "CC-BY-SA-3.0"]);
   });
 });

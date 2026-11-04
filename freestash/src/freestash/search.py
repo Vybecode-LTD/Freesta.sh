@@ -132,7 +132,7 @@ class Freestash:
     async def search_stream(self, query: SearchQuery, settings: Settings | None = None) -> AsyncIterator[ProviderBatch]:
         """`settings` overrides the engine's own for one call: the API passes each user's keys this way."""
         settings = settings or self.settings
-        classes = select_providers(settings, set(query.media_types), query.providers)
+        classes = select_providers(settings, set(query.media_types), query.providers, query.packs)
         seen: set[str] = set()
         tasks = [asyncio.create_task(self._run(c, query, settings)) for c in classes]
         try:
@@ -159,7 +159,7 @@ class Freestash:
 
     async def search(self, query: SearchQuery, settings: Settings | None = None) -> SearchResponse:
         settings = settings or self.settings
-        order = {c.info.id: i for i, c in enumerate(select_providers(settings, set(query.media_types), query.providers))}
+        order = {c.info.id: i for i, c in enumerate(select_providers(settings, set(query.media_types), query.providers, query.packs))}
         batches = [b async for b in self.search_stream(query, settings)]
         batches.sort(key=lambda b: order.get(b.status.provider, 99))  # stable, registry order
         return SearchResponse(

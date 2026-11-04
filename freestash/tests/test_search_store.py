@@ -10,6 +10,7 @@ from freestash.download import pick_rendition
 from freestash.export import attribution_markdown, credits_html, ledger_csv
 from freestash.http import HttpClient
 from freestash.models import MediaType, Rendition, SearchQuery, Tier, UseCase
+from freestash.providers import select_providers
 from freestash.search import Freestash
 from freestash.store import Store, entry_from_scored
 
@@ -104,6 +105,15 @@ async def test_get_asset_uses_recent_cache_then_provider(engine):
     assert scored.uid == uid and scored.verdict.use_case == UseCase.MERCH
     assert not route.called  # served from the recent-results cache
     await engine.http.aclose()
+
+
+def test_a_packs_only_source_is_searched_only_for_packs(settings):
+    """GitHub spends a 30-a-minute quota the whole site shares, so it runs only with Packs on (contract
+    github-and-curated-packs)."""
+    plain = [c.info.id for c in select_providers(settings, {MediaType.SPRITE, MediaType.MODEL})]
+    packs = [c.info.id for c in select_providers(settings, {MediaType.SPRITE, MediaType.MODEL}, packs=True)]
+    assert "github" not in plain and "github" in packs
+    assert [c.info.id for c in select_providers(settings, {MediaType.SPRITE}, ["github"])] == []
 
 
 def test_pick_rendition():

@@ -25,6 +25,8 @@
 | unsplash | Unsplash | image | yes | docs | community | Must hotlink URLs + ping `download_location` (done in `on_download`). 50 req/h in demo mode. |
 | pexels | Pexels | image, video | yes | docs | community | Credit Pexels + photographer. |
 | pixabay | Pixabay | image, video | yes | docs | community | No hotlinking; cache results 24h. |
+| github | GitHub | sprite, 3D, texture, audio, icon | optional (fine-grained token) | live | uploader | **Packs only** (`packs_only`): repo search `<words> topic:game-assets`, one pack per repo under the licence GitHub reads from its license file (`NOASSERTION` and no file → rights unknown). 30 searches a minute with a token, 10 without; in-process budget 25/8 and a 60 s wait after a 403/429, with no retry of the 429. Qualifiers can't be OR'd (0 results), and `sprites`/`sound-effects`/brush topics mostly tag tools, so only `game-assets`. Kind from topics, name, description (else sprite). Detail reads the git tree: asset files by extension and their formats. Thumbnail is the owner's avatar: the social images 429 per IP. Download = the default branch's zip. |
+| curated | Curated packs | every kind | – | live | curated | Entries the site's admin records on `#/admin` (Kenney, Quaternius: the licence read on the publisher's page, and when). Nothing fetched; the API passes the list in `Settings.curated_packs`, so the CLI and MCP have none. Off until the first entry. Shown whenever it matches, Packs or not (no quota). |
 
 ## Adding a provider
 

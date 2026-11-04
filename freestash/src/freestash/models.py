@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class MediaType(StrEnum):
@@ -181,6 +181,90 @@ class SearchResponse(BaseModel):
     providers: list[ProviderStatus]
     hidden_by_tier: int = 0  # results dropped because they exceeded max_tier
     generated_at: datetime
+
+
+def _https(value: str | None) -> str | None:
+    value = (value or "").strip() or None
+    if value and not value.lower().startswith("https://"):
+        raise ValueError("must be an https:// address")
+    return value
+
+
+def _words(values: list[str], strip: str = "") -> list[str]:
+    return list(dict.fromkeys(v.strip().lower().lstrip(strip) for v in values if v.strip().lstrip(strip)))
+
+
+class CuratedPack(BaseModel):
+    """A pack the site's admin recorded by hand (contract github-and-curated-packs): `license_id` is what they read on
+    the publisher's page on `license_checked_on`. Admin-only, so the desktop's Models.cs has no copy."""
+
+    model_config = ConfigDict(extra="forbid")
+    id: str | None = None
+    title: str = Field(min_length=1, max_length=200)
+    url: str = Field(max_length=2048)  # the publisher's page for the pack; one entry per url
+    publisher: str = Field(min_length=1, max_length=120)
+    license_id: str = Field(max_length=40)
+    license_checked_on: date
+    media_type: MediaType
+    download_url: str | None = Field(None, max_length=2048)
+    thumbnail_url: str | None = Field(None, max_length=2048)
+    item_count: int | None = Field(None, ge=1)
+    formats: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    description: str | None = Field(None, max_length=2000)
+    updated_at: datetime | None = None
+
+    @field_validator("title", "publisher")
+    @classmethod
+    def _trim(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("can't be blank")
+        return v.strip()
+
+    @field_validator("url")
+    @classmethod
+    def _page(cls, v: str) -> str:
+        page = _https(v)
+        if page is None:
+            raise ValueError("is required")
+        return page
+
+    @field_validator("download_url", "thumbnail_url")
+    @classmethod
+    def _optional_https(cls, v: str | None) -> str | None:
+        return _https(v)
+
+    @field_validator("license_id")
+    @classmethod
+    def _license(cls, v: str) -> str:
+        from freestash.licenses.normalize import normalize_license  # licenses import this module
+
+        lic = normalize_license(v.strip())
+        if lic.id == "RIGHTS-UNKNOWN":
+            raise ValueError(f"isn't a license Freesta.sh knows: {v!r}")
+        return lic.id
+
+    @field_validator("license_checked_on")
+    @classmethod
+    def _not_future(cls, v: date) -> date:
+        if v > datetime.now(UTC).date():
+            raise ValueError("can't be in the future")
+        return v
+
+    @field_validator("formats")
+    @classmethod
+    def _formats(cls, v: list[str]) -> list[str]:
+        return _words(v, ".")
+
+    @field_validator("tags")
+    @classmethod
+    def _tags(cls, v: list[str]) -> list[str]:
+        return _words(v)
+
+    @field_validator("description")
+    @classmethod
+    def _description(cls, v: str | None) -> str | None:
+        return (v or "").strip() or None
 
 
 class LedgerEntry(BaseModel):

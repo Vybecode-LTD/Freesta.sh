@@ -4,6 +4,7 @@
 - Site settings that override the env defaults at runtime: sign-up open, the per-member search cap, sources off.
 - A usage meter: searches sent to each keyed source on the site's key, per UTC day.
 - An append-only audit log of every admin change. It never holds a key value.
+- Curated packs: packs the admin records by hand, with the license they read (contract github-and-curated-packs).
 
 Everything is cached in-process and invalidated on write: the API runs as one replica (see ratelimit.py).
 """
@@ -20,10 +21,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Date, DateTime, Integer, String, Text, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column
 
 from freestash.accounts import AccountError, UserRow, _as_utc
 from freestash.config import Settings
+from freestash.models import CuratedPack
 from freestash.providers.keys import KEY_CATALOG, KEY_NAMES, key_spec
 from freestash.store import UUID, Base, JSONType, Store, _now
 
@@ -66,6 +69,49 @@ class AdminAuditRow(Base):
     detail: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
 
 
+class CuratedPackRow(Base):
+    __tablename__ = "curated_packs"
+    id: Mapped[str] = mapped_column(UUID, primary_key=True, default=lambda: str(uuid.uuid4()))
+    title: Mapped[str] = mapped_column(String(200))
+    url: Mapped[str] = mapped_column(String(2048), unique=True)
+    publisher: Mapped[str] = mapped_column(String(120))
+    license_id: Mapped[str] = mapped_column(String(40))
+    license_checked_on: Mapped[date] = mapped_column(Date)
+    media_type: Mapped[str] = mapped_column(String(20))
+    download_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    thumbnail_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    item_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    formats: Mapped[list[str]] = mapped_column(JSONType, default=list)
+    tags: Mapped[list[str]] = mapped_column(JSONType, default=list)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_by: Mapped[str | None] = mapped_column(UUID, nullable=True)
+
+
+_PACK_FIELDS = [f for f in CuratedPack.model_fields if f not in ("id", "updated_at")]
+MAX_IMPORT = 500
+
+
+def _pack(row: CuratedPackRow) -> CuratedPack:
+    return CuratedPack.model_validate({**{f: getattr(row, f) for f in _PACK_FIELDS}, "id": row.id,
+                                       "updated_at": _as_utc(row.updated_at)})
+
+
+def _write(row: CuratedPackRow, pack: CuratedPack, admin_id: str) -> dict[str, Any]:
+    """Copy the pack onto the row; returns what changed (JSON-safe), for the audit log."""
+    changed: dict[str, Any] = {}
+    for f in _PACK_FIELDS:
+        value = getattr(pack, f)
+        stored = value.value if f == "media_type" else value
+        if getattr(row, f) != stored:
+            changed[f] = stored.isoformat() if f == "license_checked_on" else stored
+            setattr(row, f, stored)
+    if changed:
+        row.updated_at, row.updated_by = _now(), admin_id
+    return changed
+
+
 class SiteSettings(BaseModel):
     """What the admin can change at runtime. Env gives the defaults; a stored value wins."""
 
@@ -91,6 +137,7 @@ class AdminService:
         self._lock = Lock()
         self._site: SiteSettings | None = None
         self._keys: dict[str, str] | None = None
+        self._curated: list[CuratedPack] | None = None
 
     # ------------------------------------------------------------------ site settings
     def site(self) -> SiteSettings:
@@ -208,6 +255,95 @@ class AdminService:
                 row.last_ok_at = _now()
             else:
                 row.last_error, row.last_error_at = error[:500], _now()
+
+    # ------------------------------------------------------------------ curated packs
+    def curated(self) -> list[CuratedPack]:
+        """Every curated pack, by title. Cached until the next write: every member's search reads it."""
+        with self._lock:
+            if self._curated is None:
+                with self.store.session() as s:
+                    rows = list(s.scalars(select(CuratedPackRow)))
+                self._curated = sorted((_pack(r) for r in rows), key=lambda p: (p.title.lower(), p.url))
+            return list(self._curated)
+
+    def _forget_curated(self) -> None:
+        with self._lock:
+            self._curated = None
+
+    def add_curated(self, admin_id: str, pack: CuratedPack) -> CuratedPack:
+        try:
+            with self.store.session() as s, s.begin():
+                row = CuratedPackRow()
+                _write(row, pack, admin_id)
+                s.add(row)
+                s.flush()
+                s.add(AdminAuditRow(admin_id=admin_id, action="curated.add", target=pack.title,
+                                    detail={"url": pack.url, "license": pack.license_id}))
+                new_id = row.id
+        except IntegrityError as exc:
+            raise AccountError(409, f"{pack.url} is already in the curated list.") from exc
+        self._forget_curated()
+        return next(p for p in self.curated() if p.id == new_id)
+
+    @staticmethod
+    def _pack_id(pack_id: str) -> str:
+        """The id as the database writes it. Postgres refuses a non-UUID outright, which would be a 500, not a 404."""
+        try:
+            return str(uuid.UUID(pack_id))
+        except ValueError:
+            raise AccountError(404, "No such curated pack.") from None
+
+    def update_curated(self, admin_id: str, pack_id: str, pack: CuratedPack) -> CuratedPack:
+        pack_id = self._pack_id(pack_id)
+        try:
+            with self.store.session() as s, s.begin():
+                row = s.get(CuratedPackRow, pack_id)
+                if row is None:
+                    raise AccountError(404, "No such curated pack.")
+                changed = _write(row, pack, admin_id)
+                s.flush()
+                if changed:
+                    s.add(AdminAuditRow(admin_id=admin_id, action="curated.update", target=pack.title, detail=changed))
+        except IntegrityError as exc:
+            raise AccountError(409, f"{pack.url} is already in the curated list.") from exc
+        self._forget_curated()
+        return next(p for p in self.curated() if p.id == pack_id)
+
+    def delete_curated(self, admin_id: str, pack_id: str) -> None:
+        pack_id = self._pack_id(pack_id)
+        with self.store.session() as s, s.begin():
+            row = s.get(CuratedPackRow, pack_id)
+            if row is None:
+                raise AccountError(404, "No such curated pack.")
+            s.add(AdminAuditRow(admin_id=admin_id, action="curated.delete", target=row.title, detail={"url": row.url}))
+            s.delete(row)
+        self._forget_curated()
+
+    def import_curated(self, admin_id: str, packs: list[CuratedPack]) -> dict[str, int]:
+        """Add or update by url, in one transaction: every pack was validated before this runs, so it's all or nothing."""
+        if len(packs) > MAX_IMPORT:
+            raise AccountError(400, f"Import at most {MAX_IMPORT} packs at a time.")
+        urls = [p.url for p in packs]
+        if len(set(urls)) != len(urls):
+            dup = next(u for u in urls if urls.count(u) > 1)
+            raise AccountError(400, f"{dup} is in the import twice.")
+        added = updated = 0
+        with self.store.session() as s, s.begin():
+            existing = {r.url: r for r in s.scalars(select(CuratedPackRow).where(CuratedPackRow.url.in_(urls)))}
+            for pack in packs:
+                row = existing.get(pack.url)
+                if row is None:
+                    row = CuratedPackRow()
+                    _write(row, pack, admin_id)
+                    s.add(row)
+                    added += 1
+                elif _write(row, pack, admin_id):
+                    updated += 1
+            if added or updated:
+                s.add(AdminAuditRow(admin_id=admin_id, action="curated.import",
+                                    detail={"added": added, "updated": updated}))
+        self._forget_curated()
+        return {"added": added, "updated": updated}
 
     # ------------------------------------------------------------------ usage meter
     def record_usage(self, counts: dict[str, tuple[int, int]]) -> None:

@@ -79,7 +79,9 @@ class HttpClient:
         cache_ttl: float | None = None,
         method: str = "GET",
         data: dict[str, Any] | None = None,
+        retry_on: frozenset[int] | set[int] = RETRY_STATUS,
     ) -> Any:
+        """`retry_on`: the statuses worth another try. GitHub passes it without 429, whose wait is longer than ours."""
         ttl = self.settings.cache_ttl_seconds if cache_ttl is None else cache_ttl
         key = json.dumps([method, url, params, sorted((headers or {}).items())], default=str)
         if method == "GET" and ttl > 0 and (hit := self.cache.get(key)) is not None:
@@ -94,7 +96,7 @@ class HttpClient:
                 last_exc = exc
                 await self._sleep(attempt, None)
                 continue
-            if resp.status_code in RETRY_STATUS and attempt < attempts - 1:
+            if resp.status_code in retry_on and attempt < attempts - 1:
                 await self._sleep(attempt, resp.headers.get("Retry-After"))
                 continue
             if resp.status_code >= 400:

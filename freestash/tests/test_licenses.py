@@ -5,7 +5,7 @@ import pytest
 from freestash.licenses import evaluate, evaluate_all, lookup, normalize_license, us_public_domain_cutoff
 from freestash.models import Asset, MediaType, Tier, Trust, UseCase
 
-from .conftest import make_asset
+from .conftest import load, make_asset
 
 # ----------------------------------------------------------------------------- normalization
 
@@ -160,6 +160,34 @@ def test_incomplete_pack_says_how_much_was_read():
     assert "Licenses were read for 1 of 24 files in this pack: check the rest on its page." in v.reasons
     v = evaluate(make_pack(["CC0-1.0"], trust=Trust.INSTITUTION, checked=3), UseCase.DEMO)
     assert "Licenses were read for 3 files in this pack, which may hold more: check the rest on its page." in v.reasons
+
+@pytest.mark.parametrize("repo,expected", [
+    #                                                    reference demo   client  bundled merch
+    ("kweezl/spacecraft-resources", (GREEN, GREEN, YELLOW, YELLOW, YELLOW)),  # MIT, asserted by the repo's owner
+    ("KayKit-Game-Assets/KayKit-Space-Base-Bits-1.0", (YELLOW, RED, RED, RED, RED)),  # a license GitHub can't identify
+    ("RhysBoxGameStudios/space-station-assets", (YELLOW, RED, RED, RED, RED)),  # no license file
+])
+def test_github_packs_are_uploader_trust_under_the_repos_license(repo, expected):
+    """No policy change (contract github-and-curated-packs): uploader trust already holds shipped uses at Check."""
+    from freestash.providers.github import parse_github_repo
+
+    item = next(i for i in load("github_search")["items"] if i["full_name"] == repo)
+    verdicts = evaluate_all(parse_github_repo(item))
+    got = tuple(verdicts[u].tier for u in (UseCase.REFERENCE, UseCase.DEMO, UseCase.CLIENT, UseCase.BUNDLED, UseCase.MERCH))
+    assert got == expected, {u.value: (v.tier.value, v.reasons) for u, v in verdicts.items()}
+    if expected[1] == GREEN:
+        bundled = verdicts[UseCase.BUNDLED].obligations
+        assert any("license text" in o for o in bundled) and any("check the README" in o for o in bundled)
+
+
+def test_a_curated_pack_is_clear_everywhere_under_its_recorded_cc0():
+    from freestash.models import CuratedPack
+    from freestash.providers.curated import curated_asset
+
+    pack = CuratedPack(id="1", title="Space Kit", url="https://kenney.nl/assets/space-kit", publisher="Kenney",
+                       license_id="CC0-1.0", license_checked_on=date(2026, 11, 4), media_type=MediaType.MODEL)
+    assert all(v.tier == GREEN for v in evaluate_all(curated_asset(pack)).values())
+
 
 # ----------------------------------------------------------------------------- public-domain date heuristic
 
