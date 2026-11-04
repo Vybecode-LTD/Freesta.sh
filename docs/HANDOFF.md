@@ -16,7 +16,7 @@
     to every member's search; curated trust; `license.raw` says who recorded the licence and when. Off until the first entry.
   - **Web `#/admin`**: a Curated packs section (table, add/edit form, Import JSON). Desktop: no code (results are packs, which
     it already shows); its key-catalog test now expects 10 keys.
-- **Gates:** pytest 238 · ruff clean · export check clean · vitest 54 · web build · dotnet build 0 warnings · dotnet 61.
+- **Gates:** pytest 241 · ruff clean · export check clean · vitest 54 · web build · dotnet build 0 warnings · dotnet 61.
   Five mutations each turned their test red (packs-only skip, the key test's packs, the budget, the cool-down, curated in
   search). Rendered contrast on `#/admin` with two curated packs, default and editing, dark and light, 1440 + 390, hovers:
   0 failing; the positive control (Import summary at 1.38:1) fails.
@@ -43,7 +43,8 @@
   (a backup went to the session scratchpad in `%TEMP%`). A future column change needs a real migration on production.
 - GitHub search is noisy: `game-assets` also tags tools (a Python CLI showed as an icon pack, `Pack · 0 files`). Many CC0
   repos read `NOASSERTION` (KayKit): add those as curated packs instead.
-- Every Packs search spends one GitHub call from a site-wide 30-a-minute budget; past 25 a minute GitHub is skipped and
-  says so in the aperture. The budget is per process (one replica).
+- Every Packs search spends one GitHub call from an in-process budget per token: 25 a minute with a `GITHUB_ACCESS_TOKEN`
+  (GitHub allows 30), 8 without one (GitHub allows 10, and all tokenless searches share it). Past that, GitHub is skipped
+  and says so in the aperture. One replica only.
 - Back up `FREESTASH_SECRETS_KEY`: it decrypts members' and the site's keys, the GitHub token included.
 - Local dev accounts (`*@example.test`): `pr9-admin-*` and `pr9-web-*` are admins; two test curated packs are in the dev DB.

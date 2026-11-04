@@ -9,13 +9,13 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 - **Parity is binding:** every user-facing change lands in both apps in one PR (`shared/parity.json`).
 - No Supabase. Never print Railway variables or the GitHub token.
 - **Needs the owner's OK:** committing/pushing/merging, DNS, production accounts, deleting Railway resources, computer-use,
-  admin grants, and anything entered on production `#/admin` (tokens, curated packs). Admins come only from
-  `python -m freestash admin grant`.
+  admin grants, and anything entered on production `#/admin` (tokens, curated packs). Admins are granted only by
+  `python -m freestash admin grant` on the server or by an admin on `#/admin`, never by an email address.
 
 ## 3. State (verified 2026-11-04, end of session)
 - `main` = `origin/main` = **71a29d6** (PR #8), live.
 - **PR #9 open** from `feat/pr9-github-curated-packs` (the checkout): GitHub game-asset repos as packs and admin-curated
-  packs. Gates green locally (pytest 238, vitest 54, dotnet 61, contrast on `#/admin`). Read its CI and reviews with
+  packs. Gates green locally (pytest 241, vitest 54, dotnet 61, contrast on `#/admin`). Read its CI and reviews with
   `gh pr checks 9` and `gh pr view 9 --comments`; don't trust this line, check.
 
 ## 4. First job, then the order
@@ -32,7 +32,7 @@ https://freesta.sh on Railway) and the Windows desktop app (`freestash-desktop/`
 - The infrastructure items in `docs/HANDOFF.md` → Next 4.
 
 ## 6. Environment that worked
-- **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (238, ~90 s) · `ruff check src tests scripts` ·
+- **Python:** `cd freestash; .venv/Scripts/python.exe -m pytest` (241, ~2 min) · `ruff check src tests scripts` ·
   `python scripts/export_shared.py --check` (silent, exit 0).
 - **Web / desktop:** `cd freestash/web; npm test` (54) · `npm run build`. `cd freestash-desktop; dotnet build
   Freestash.Desktop.sln; dotnet test --project tests/Freestash.Client.Tests` (61).

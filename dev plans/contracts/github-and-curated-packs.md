@@ -114,6 +114,8 @@ root `CLAUDE.md` (parity, key help, generated files); `dev plans/contracts/admin
 None.
 
 ## Changes after approval
+- 2026-11-04 (review, CodeRabbit): a query with no searchable words (non-Latin text, only symbols) returns an
+  empty GitHub page without a call, instead of searching `topic:game-assets` alone.
 - 2026-11-04 (review, Codex): GitHub asks for `per_page` = limit, not 3 × limit (cutting a bigger page down skipped the
   cut repos on the next page); after any curated write the API drops cached `curated:` assets
   (`RecentCache.forget_provider`), so the drawer and a uid-only ledger entry see the corrected or removed pack.

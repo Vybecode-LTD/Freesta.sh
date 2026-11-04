@@ -77,6 +77,15 @@ async def test_search_asks_for_game_assets_with_the_token_and_only_for_packs(fix
     assert [a.source_id for a in icons.assets] == ["repo:kweezl/spacecraft-resources"]  # "recolored icons"
 
 
+@pytest.mark.parametrize("q", ["космос", "!!! ???", "  "])
+async def test_a_query_with_no_searchable_words_spends_nothing(fixture, settings, q):
+    """PR #9 review (CodeRabbit): with no words left, the search was `topic:game-assets` alone: every game-assets repo,
+    none matching, and a call off the shared budget."""
+    http = FakeHttp([("/search/repositories", fixture("github_search"))])
+    page = await GitHubProvider(http, settings).search(q, ALL_KINDS, 4, 1, SearchHints(packs=True))
+    assert page.assets == [] and http.calls == []
+
+
 async def test_the_search_budget_stops_calls_before_github_does(fixture, settings):
     http = FakeHttp([("/search/repositories", fixture("github_search"))])
     provider = GitHubProvider(http, settings)  # no token: 8 a minute (GitHub allows 10)
