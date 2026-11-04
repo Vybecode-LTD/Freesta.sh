@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from freestash.accounts import AccountError
@@ -15,7 +15,7 @@ from freestash.admin import AdminService
 from freestash.api.auth import CurrentUser, User, accounts
 from freestash.config import Settings, get_settings
 from freestash.http import HttpClient
-from freestash.models import MediaType, SearchQuery
+from freestash.models import CuratedPack, MediaType, SearchQuery
 from freestash.providers import provider_class
 from freestash.providers.keys import key_spec, settings_with_keys
 
@@ -76,7 +76,9 @@ async def test_key(name: str, admin: Admin, request: Request, settings: Settings
     assert cls is not None
     run_settings = settings_with_keys(settings, {}, svc.site_key_values())
     media = sorted(cls.info.media_types, key=lambda m: m != MediaType.IMAGE)[:1]  # images when it has them
-    query = SearchQuery(q="landscape", media_types=media, providers=[spec.provider], limit_per_provider=1)
+    # A packs-only source (GitHub) is only called for packs: without them the test would pass without calling it.
+    query = SearchQuery(q="landscape", media_types=media, providers=[spec.provider], limit_per_provider=1,
+                        packs=cls.info.packs_only)
     started = time.perf_counter()
     http = HttpClient(run_settings)  # a fresh, empty cache: an hour-old success must not pass a key revoked since
     try:
@@ -97,6 +99,47 @@ async def get_site_settings(admin: Admin, request: Request) -> dict[str, Any]:
 @router.put("/settings")
 async def put_site_settings(body: dict[str, Any], admin: Admin, request: Request) -> dict[str, Any]:
     return (await _call(admin_service(request).update_site, admin.id, body)).model_dump()
+
+
+# --------------------------------------------------------------------------------- curated packs
+class CuratedImportIn(BaseModel):
+    packs: list[CuratedPack] = Field(max_length=500)
+
+
+@router.get("/curated")
+async def get_curated(admin: Admin, request: Request) -> list[CuratedPack]:
+    return await _call(admin_service(request).curated)
+
+
+@router.post("/curated", status_code=201)
+async def add_curated(body: CuratedPack, admin: Admin, request: Request) -> CuratedPack:
+    return await _call(admin_service(request).add_curated, admin.id, body)
+
+
+def _curated_changed(request: Request) -> None:
+    """The engine's recent results would keep serving a pack's old license to the drawer and the ledger (PR #9
+    review). Called here, on the event loop, where the cache is written, not from the worker thread of the write."""
+    request.app.state.engine.recent.forget_provider("curated")
+
+
+@router.put("/curated/{pack_id}")
+async def put_curated(pack_id: str, body: CuratedPack, admin: Admin, request: Request) -> CuratedPack:
+    pack = await _call(admin_service(request).update_curated, admin.id, pack_id, body)
+    _curated_changed(request)
+    return pack
+
+
+@router.delete("/curated/{pack_id}", status_code=204)
+async def delete_curated(pack_id: str, admin: Admin, request: Request) -> None:
+    await _call(admin_service(request).delete_curated, admin.id, pack_id)
+    _curated_changed(request)
+
+
+@router.post("/curated/import")
+async def import_curated(body: CuratedImportIn, admin: Admin, request: Request) -> dict[str, int]:
+    counts = await _call(admin_service(request).import_curated, admin.id, body.packs)
+    _curated_changed(request)
+    return counts
 
 
 # --------------------------------------------------------------------------------- usage, users, audit

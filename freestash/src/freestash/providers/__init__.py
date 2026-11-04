@@ -7,12 +7,14 @@ from freestash.http import HttpClient
 from freestash.models import MediaType
 from freestash.providers.archives import EuropeanaProvider, InternetArchiveProvider, LocProvider, NasaProvider
 from freestash.providers.base import Provider, ProviderInfo, ProviderPage, SearchHints
+from freestash.providers.curated import CuratedProvider
 from freestash.providers.design import (
     AmbientCgProvider,
     FontsourceProvider,
     IconifyProvider,
     PolyHavenProvider,
 )
+from freestash.providers.github import GitHubProvider
 from freestash.providers.museums import (
     ArticProvider,
     ClevelandProvider,
@@ -29,12 +31,14 @@ PROVIDERS: list[type[Provider]] = [
     # open culture / public domain first: they're the reason this tool exists
     MetProvider, ArticProvider, ClevelandProvider, SmithsonianProvider, SmkProvider, NasaProvider, LocProvider,
     EuropeanaProvider, WikimediaProvider, OpenverseProvider, InternetArchiveProvider,
-    # CC0 3D / textures / design resources
-    PolyHavenProvider, AmbientCgProvider, FontsourceProvider, IconifyProvider,
+    # CC0 3D / textures / design resources, and packs the site's admin recorded by hand
+    PolyHavenProvider, AmbientCgProvider, FontsourceProvider, IconifyProvider, CuratedProvider,
     # reference-only
     VamProvider,
     # keyed "free to use" platforms
     FreesoundProvider, UnsplashProvider, PexelsProvider, PixabayProvider,
+    # uploader-asserted repositories, searched only for packs
+    GitHubProvider,
 ]
 
 _BY_ID = {p.info.id: p for p in PROVIDERS}
@@ -53,10 +57,13 @@ def all_provider_info() -> list[ProviderInfo]:
     return [p.info for p in PROVIDERS]
 
 
-def select_providers(settings: Settings, media_types: set[MediaType], only: list[str] | None = None) -> list[type[Provider]]:
+def select_providers(settings: Settings, media_types: set[MediaType], only: list[str] | None = None,
+                     packs: bool = False) -> list[type[Provider]]:
     chosen = []
     for cls in PROVIDERS:
         if only and cls.info.id not in only:
+            continue
+        if cls.info.packs_only and not packs:
             continue
         if not cls.is_enabled(settings):
             continue

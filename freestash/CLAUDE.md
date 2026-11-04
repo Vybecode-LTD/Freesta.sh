@@ -109,6 +109,10 @@ tests/                 fixtures are REAL recorded responses except files with "_
 - **MCP SDK is 2.x**: `from mcp.server.mcpserver import MCPServer` (FastMCP was renamed);
   client results use snake_case (`structured_content`, `server_info`).
 - **US public domain**: Jan 1 2026 → works ≤1930, recordings ≤1925. Jan 1 2027 → ≤1931 / ≤1926.
+- **GitHub** (PR #9): repo search allows 30 a minute with a token, 10 without; `topic:a OR topic:b` returns 0, so it's
+  one topic, `game-assets` (the others tag tools). Its social images (`opengraph.githubassets.com`) 429 per IP: use the
+  owner's avatar. Many CC0 asset repos read `NOASSERTION` (KayKit): blocked when shipped, so add those as curated packs.
+  The token's env name is `GITHUB_ACCESS_TOKEN`, never `GITHUB_TOKEN` (CI and `gh` set that one).
 
 ## Design system
 

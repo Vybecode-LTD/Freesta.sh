@@ -26,6 +26,7 @@ class ProviderInfo:
     docs_url: str | None = None
     terms_url: str | None = None
     verified_live: bool = True  # False = adapter written from docs, fixture not yet recorded from a real response
+    packs_only: bool = False  # searched only when the query asks for packs (every result is one; contract github-and-curated-packs)
     notes: tuple[str, ...] = field(default_factory=tuple)
 
 

@@ -88,7 +88,8 @@ In priority order (each = adapter + fixture + test + PROVIDERS.md row):
 3. **Yale LUX** (Linked Art, keyless).
 4. **Musopen / IMSLP** for PD recordings and scores (check API terms first).
 5. **ambientCG decals/atlases** split out as their own media types if the team wants them.
-6. **Kenney** assets (CC0 game art, no API: a curated static index in `providers/static/`).
+6. ~~**Kenney** assets~~: done as **curated packs** (PR #9): the admin records them on `#/admin`, with the licence
+   read on Kenney's page. GitHub game-asset repos arrived in the same PR (`providers/github.py`).
 7. **Sample libraries** from the granular-synth research (VCSL, VSCO 2 CE, Iowa MIS, Karoryfer):
    static manifest provider, since they're GitHub/zip distributions, not APIs.
 

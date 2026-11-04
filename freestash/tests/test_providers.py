@@ -176,9 +176,11 @@ class FakeHttp:
     def __init__(self, routes: list[tuple[str, object]]):
         self.routes = routes
         self.calls: list[tuple[str, object]] = []
+        self.headers: list[dict | None] = []
 
-    async def get_json(self, url, params=None, headers=None, *, cache_ttl=None):
+    async def get_json(self, url, params=None, headers=None, *, cache_ttl=None, retry_on=None):
         self.calls.append((url, params))
+        self.headers.append(headers)
         for fragment, answer in self.routes:
             if fragment in url:
                 if isinstance(answer, Exception):

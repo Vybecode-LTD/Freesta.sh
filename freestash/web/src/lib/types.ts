@@ -139,3 +139,11 @@ export interface AdminUser {
   is_admin: boolean; disabled: boolean;
 }
 export interface AuditEntry { at: string; admin_email: string | null; action: string; target: string | null; detail: Record<string, unknown> }
+
+/** A pack the admin recorded by hand, with the license they read on the publisher's page (contract
+ *  github-and-curated-packs). Mirrors models.py `CuratedPack`; admin-only, so the desktop has no copy. */
+export interface CuratedPack {
+  id: string | null; title: string; url: string; publisher: string; license_id: string; license_checked_on: string;
+  media_type: MediaType; download_url: string | null; thumbnail_url: string | null; item_count: number | null;
+  formats: string[]; tags: string[]; description: string | null; updated_at: string | null;
+}

@@ -13,6 +13,15 @@ def load(name: str):
     return json.loads((FIXTURES / f"{name}.json").read_text(encoding="utf-8"))
 
 
+@pytest.fixture(autouse=True)
+def _fresh_github_budget():
+    """GitHub's search budget and cool-down are per process; each test starts with a full minute."""
+    from freestash.providers import github
+
+    github._budget.reset()
+    github._cool_down.clear()
+
+
 @pytest.fixture
 def fixture():
     return load

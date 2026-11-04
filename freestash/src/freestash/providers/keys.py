@@ -124,6 +124,19 @@ KEY_CATALOG: list[KeySpec] = [
         unlocks="Pairs with the Client ID.",
         optional=True,
     ),
+    KeySpec(
+        name="GITHUB_ACCESS_TOKEN", setting="github_access_token", provider="github",
+        provider_name="GitHub", label="Fine-grained personal access token",
+        url="https://github.com/settings/personal-access-tokens/new", url_label="github.com/settings/personal-access-tokens",
+        steps=("Sign in to GitHub; the link opens a new fine-grained token (Settings → Developer settings → "
+               "Personal access tokens → Fine-grained tokens → Generate new token).",
+               "Enter a Token name and pick an Expiration. Keep Repository access at its narrowest option and add no "
+               "permissions: searching needs only read access to public repositories, which every token has.",
+               "Click Generate token, then copy the token and paste it here."),
+        limits="Repository search: 30 requests a minute (10 without a token)",
+        unlocks="Game-asset repositories on GitHub (tagged game-assets) when Packs is on.",
+        optional=True,
+    ),
 ]
 
 KEY_NAMES: frozenset[str] = frozenset(k.name for k in KEY_CATALOG)

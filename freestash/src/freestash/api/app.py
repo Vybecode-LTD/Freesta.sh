@@ -94,8 +94,8 @@ def store(request: Request) -> Store:
 def search_settings(request: Request, user: CurrentUser | None) -> tuple[Settings, set[str]]:
     """Engine settings for this caller, and the providers they'd search on the site's key (the shared quota).
 
-    In accounts mode: the member's own key, else the admin's stored key, else env (decision 0003), and the sources
-    the admin turned off on top of env's."""
+    In accounts mode: the member's own key, else the admin's stored key, else env (decision 0003), the sources
+    the admin turned off on top of env's, and the admin's curated packs."""
     settings = get_settings()
     if settings.auth_mode != "accounts":
         return settings, set()
@@ -103,7 +103,8 @@ def search_settings(request: Request, user: CurrentUser | None) -> tuple[Setting
     admin: AdminService = request.app.state.admin
     site = admin.site_key_values()
     off = sorted(set(settings.disabled_providers) | set(admin.site().disabled_providers))
-    merged = settings_with_keys(settings, own, site).model_copy(update={"disabled_providers": off})
+    merged = settings_with_keys(settings, own, site).model_copy(
+        update={"disabled_providers": off, "curated_packs": admin.curated()})
     return merged, site_keyed_providers(settings, own, site)
 
 

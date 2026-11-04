@@ -1,7 +1,7 @@
 import { ledgerPath, type LedgerQuery } from "./ledgerPages";
 import { getSession, sessionEpoch, setSession, type Session, type SessionUser } from "./session";
 import type {
-  AdminKey, AdminUser, Asset, AssetDetail, AuditEntry, Collection, KeySpec, KeyState, LedgerEntry, MediaType, ParsedQuery,
+  AdminKey, AdminUser, Asset, AssetDetail, AuditEntry, Collection, CuratedPack, KeySpec, KeyState, LedgerEntry, MediaType, ParsedQuery,
   Prefs, ProviderInfo, ProviderStatus, ScoredAsset, SiteSettings, Tier, UsageRow, UseCase, Verdict,
 } from "./types";
 
@@ -155,4 +155,12 @@ export const api = {
   updateUser: (id: string, flags: { is_admin?: boolean; disabled?: boolean }) =>
     req<AdminUser>(`/api/admin/users/${encodeURIComponent(id)}`, { method: "PATCH", body: json(flags) }),
   audit: (before?: string) => req<AuditEntry[]>(`/api/admin/audit${before ? `?before=${encodeURIComponent(before)}` : ""}`),
+  // contract github-and-curated-packs
+  curatedPacks: () => req<CuratedPack[]>("/api/admin/curated"),
+  addCuratedPack: (pack: CuratedPack) => req<CuratedPack>("/api/admin/curated", { method: "POST", body: json(pack) }),
+  saveCuratedPack: (id: string, pack: CuratedPack) =>
+    req<CuratedPack>(`/api/admin/curated/${encodeURIComponent(id)}`, { method: "PUT", body: json(pack) }),
+  deleteCuratedPack: (id: string) => req<void>(`/api/admin/curated/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  importCuratedPacks: (packs: CuratedPack[]) =>
+    req<{ added: number; updated: number }>("/api/admin/curated/import", { method: "POST", body: json({ packs }) }),
 };

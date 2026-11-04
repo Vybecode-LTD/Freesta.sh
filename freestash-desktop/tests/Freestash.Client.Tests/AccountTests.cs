@@ -166,7 +166,7 @@ public class AccountTests : IDisposable
     public void Key_catalog_is_the_shared_one_with_its_help_text()
     {
         var all = ProviderKeys.All;
-        Assert.Equal(9, all.Count);
+        Assert.Equal(10, all.Count);
         Assert.All(all, k =>
         {
             Assert.StartsWith("https://", k.Url);
@@ -176,6 +176,9 @@ public class AccountTests : IDisposable
         Assert.Contains("paused", all.Single(k => k.Name == "PEXELS_API_KEY").Notice);
         Assert.Equal("openverse_register", all.Single(k => k.Name == "OPENVERSE_CLIENT_ID").Action);
         Assert.True(all.Single(k => k.Name == "WIKIMEDIA_ACCESS_TOKEN").Optional);
+        var github = all.Single(k => k.Name == "GITHUB_ACCESS_TOKEN"); // PR #9: optional, raises GitHub's search limit
+        Assert.True(github.Optional);
+        Assert.Equal("github", github.Provider);
     }
 
     [Fact]
